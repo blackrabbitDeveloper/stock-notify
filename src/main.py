@@ -1,4 +1,5 @@
 import yaml, os
+import pandas as pd
 from dotenv import load_dotenv
 
 from .fetch_prices import get_history
@@ -29,18 +30,50 @@ def run_once():
         send_discord_with_reasons([], "US Pre-Open Watchlist (Auto-Universe)")
         print("no recommendations – dataset too thin"); return
 
+    top_symbols = topn["ticker"].tolist()
+    from src.fetch_prices import get_latest_quotes
+    q = get_latest_quotes(top_symbols, prepost=True)
+    # topn에 병합
+    topn = topn.merge(q, on="ticker", how="left")
+
     rows=[]
     ai_on = bool(cfg.get("ai_explainer",{}).get("enabled", True))
     print(f"[DEBUG] ai_on: {ai_on}")
+    
+    def _num(x):
+        return None if x is None or (isinstance(x, float) and pd.isna(x)) else float(x)
+
+    def _ts(x):
+        # pandas.Timestamp → ISO 문자열
+        try:
+            return x.isoformat() if pd.notna(x) else None
+        except Exception:
+            return None
+
     for _, r in topn.iterrows():
-        reason_obj = {"reason":"규칙 기반 선별 결과.", "confidence":0.4, "caveat":"투자 자문 아님"}
+        reason_obj = {"reason": "규칙 기반 선별 결과.", "confidence": 0.4, "caveat": "투자 자문 아님"}
         if ai_on:
             reason_obj = explain_reason(
                 r["ticker"],
-                {"day_ret": r["day_ret"], "vol_x": r["vol_x"]},
-                r["top_news"]
+                {"day_ret": float(r["day_ret"]), "vol_x": float(r["vol_x"])},
+                r.get("top_news", []),
             )
-        rows.append({**r.to_dict(), "reason_obj": reason_obj})
+
+        rows.append({
+            "ticker":     r["ticker"],
+            "day_ret":    float(r["day_ret"]),
+            "vol_x":      float(r["vol_x"]),
+            "news_n":     int(r.get("news_n", 0)),
+            "news_bonus": float(r.get("news_bonus", 0.0)),
+            "score":      float(r["score"]),
+            "top_news":   r.get("top_news", []),
+            "reason_obj": reason_obj,
+
+            # ⬇️ 현재가/전일종가/시각 추가
+            "last_price": _num(r.get("last_price")),
+            "prev_close": _num(r.get("prev_close")),
+            "last_time":  _ts(r.get("last_time")),
+        })
 
     send_discord_with_reasons(rows, "US Pre-Open Watchlist (Auto-Universe)")
     print("done")

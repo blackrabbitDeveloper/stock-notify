@@ -104,3 +104,67 @@ def _slow_per_ticker(tickers, start, end):
     if not rows:
         return pd.DataFrame(columns=["Date", "Close", "Volume", "ticker"])
     return pd.concat(rows, axis=0, ignore_index=True)
+
+
+def get_latest_quotes(tickers, prepost=True):
+    """
+    상위 N개 티커에 대해 가장 최근 체결가와 직전 종가를 반환.
+    return: DataFrame[ticker, last_price, last_time, prev_close]
+    """
+    if not tickers:
+        return pd.DataFrame(columns=["ticker","last_price","last_time","prev_close"])
+
+    # 1분봉 최근 데이터(프리/애프터마켓 포함 가능)
+    intr = yf.download(
+        tickers=tickers,
+        period="1d", interval="1m", prepost=prepost,
+        group_by="ticker", progress=False, threads=True,
+    )
+    # 직전 종가(비교용)
+    daily = yf.download(
+        tickers=tickers,
+        period="5d", interval="1d",
+        group_by="ticker", progress=False, threads=True,
+    )
+
+    rows = []
+    def _latest_from_series(s):
+        # 마지막 NaN 제거 후 가장 최근 값/시각
+        s = s.dropna()
+        if s.empty: return None, None
+        return float(s.iloc[-1]), s.index[-1].to_pydatetime()
+
+    if isinstance(intr.columns, pd.MultiIndex):
+        # 멀티티커 케이스
+        # intr: (field, ticker) 또는 (ticker, field) 모두 대비
+        lv0 = [str(x) for x in intr.columns.get_level_values(0)]
+        lv1 = [str(x) for x in intr.columns.get_level_values(1)]
+        field_on_0 = "Close" in lv0
+        for t in tickers:
+            try:
+                close_ser = intr[("Close", t)] if field_on_0 else intr[(t, "Close")]
+            except KeyError:
+                close_ser = pd.Series(dtype=float)
+            last_price, last_time = _latest_from_series(close_ser)
+
+            # prev close
+            try:
+                d = daily[("Close", t)] if ("Close" in [str(x) for x in daily.columns.get_level_values(0)]) else daily[(t, "Close")]
+            except Exception:
+                d = pd.Series(dtype=float)
+            d = d.dropna()
+            prev_close = float(d.iloc[-1]) if not d.empty else None
+
+            rows.append({"ticker": t, "last_price": last_price, "last_time": last_time, "prev_close": prev_close})
+    else:
+        # 단일 티커 케이스
+        t = tickers[0]
+        close_ser = intr["Close"] if "Close" in intr.columns else pd.Series(dtype=float)
+        last_price, last_time = _latest_from_series(close_ser)
+        d = daily["Close"] if "Close" in daily.columns else pd.Series(dtype=float)
+        d = d.dropna()
+        prev_close = float(d.iloc[-1]) if not d.empty else None
+        rows.append({"ticker": t, "last_price": last_price, "last_time": last_time, "prev_close": prev_close})
+
+    out = pd.DataFrame(rows)
+    return out

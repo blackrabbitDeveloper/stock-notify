@@ -40,6 +40,7 @@ def _render_console(rows: List[Dict], label: str):
               f"News {int(r['news_n'])} | Bonus {r['news_bonus']:.2f} | Score {r['score']:.2f}")
         if reason: print(f"  [AI] {_trim(reason,160)} (conf {conf:.2f})")
         for line in _fmt_news_block(r.get("top_news", [])).splitlines():
+            price_line = _fmt_price_line(r)
             print(f"  {line}")
         print(f"  [주의] {caveat}")
 
@@ -53,8 +54,9 @@ def _embed_from_row(r: Dict) -> Dict:
     bul = r.get("reason_obj", {}).get("bullets", [])
     bul_txt = _trim("\n".join([f"• {x}" for x in bul]), 700) if bul else "—"
 
-
+    price_line = _fmt_price_line(r)
     desc  = _trim(
+        f"{price_line}\n"
         f"Δ {r['day_ret']:.2f}% · Vol x{r['vol_x']:.2f} · News {int(r['news_n'])} · Bonus {r['news_bonus']:.2f}",
         MAX_DESC
     )
@@ -123,3 +125,16 @@ def send_discord_with_reasons(rows: List[Dict], label: str = "US Pre-Open Watchl
 
     if batch:
         _send_payload(url, content, batch)
+
+
+def _fmt_price_line(r: dict) -> str:
+    p = r.get("last_price")
+    pc = r.get("prev_close")
+    if p is None and pc is None:
+        return "가격: —"
+    if p is None and pc is not None:
+        return f"가격: — (Prev {pc:.2f})"
+    if pc is None:
+        return f"가격: {p:.2f}"
+    delta = ((p/pc)-1)*100 if pc else 0.0
+    return f"가격: {p:.2f} (Prev {pc:.2f}, Δ {delta:+.2f}%)"
