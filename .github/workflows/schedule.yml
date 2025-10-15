@@ -1,7 +1,8 @@
 name: stock-notify
 on:
   schedule:
-    - cron: '*/10 13 * * 1-5'
+    - cron: "* 13 * * 1-5"   # 평일 KST 21:50
+
   workflow_dispatch: {}
 jobs:
   run:
