@@ -1,0 +1,66 @@
+# --- Python build/runtime junk ---
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.dist-info/
+*.egg-info/
+.eggs/
+build/
+dist/
+pip-wheel-metadata/
+.venv/
+venv/
+ENV/
+
+# --- Tools & caches ---
+.cache/
+.pytest_cache/
+.mypy_cache/
+.ipynb_checkpoints/
+.coverage
+htmlcov/
+.tox/
+.pyre/
+.ruff_cache/
+
+# --- Env / secrets ---
+.env
+.env.*        # .env.local 같은 변형
+*.secret
+*.key
+
+# --- App data & outputs ---
+logs/
+*.log
+out/
+data/**/cache/
+data/**/tmp/
+*.sqlite*
+*.db
+
+# (선택) 풀 리스트 캐시를 커밋 안 할 거면 켜두기
+# data/pools/*.txt
+
+# --- OS / Editor junk ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# VS Code / JetBrains
+.vscode/
+.vscode-remote/
+.idea/
+*.iml
+
+# --- Node (만약 프런트 추가 시) ---
+node_modules/
+*.tsbuildinfo
+data/pools/*
+!data/pools/sp500.txt
+!data/pools/nasdaq100.txt
+sp500.txt
+sp500.csv
+nasdaq100.txt
+nasdaq100.csv

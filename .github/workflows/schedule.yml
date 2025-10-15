@@ -1,0 +1,28 @@
+name: us-preopen-watchlist
+on:
+  schedule:
+    - cron: "50 12 * * 1-5"   # 평일 KST 21:50
+  workflow_dispatch: {}
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -r requirements.txt
+      - name: NLTK data (VADER lexicon)
+        run: python - <<'PY'
+import nltk; nltk.download('vader_lexicon')
+PY
+      - name: Run bot
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          FINNHUB_TOKEN: ${{ secrets.FINNHUB_TOKEN }}        # 없으면 뉴스가점=0 처리
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          GEMINI_MODEL_NAME: ${{ secrets.GEMINI_MODEL_NAME }}
+          GENAI_TRANSPORT: ${{ secrets.GENAI_TRANSPORT }}
+          AI_EXPLAINER_MAX_TOKENS: ${{ secrets.AI_EXPLAINER_MAX_TOKENS }}
+          MAX_TICKERS: ${{ secrets.MAX_TICKERS }}
+
+        run: python src/main.py

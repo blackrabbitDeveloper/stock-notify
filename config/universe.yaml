@@ -1,0 +1,12 @@
+mode: auto               # auto | static
+static_list: []          # mode=static일 때만 사용
+
+auto:
+  pool: nasdaq100            # sp500 | nasdaq100 (간이) | custom
+  min_price: 5           # 저유동/초저가 필터
+  top_by_dollar_vol: 200 # 거래대금 상위 컷
+  max_final_universe: 150
+  use_news_bonus: true   # 뉴스 보너스 반영 여부
+ai_explainer:
+  enabled: true
+  model_name: gpt-4o-mini
