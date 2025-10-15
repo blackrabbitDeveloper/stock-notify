@@ -35,8 +35,6 @@ htmlcov/
 logs/
 *.log
 out/
-data/**/cache/
-data/**/tmp/
 *.sqlite*
 *.db
 
