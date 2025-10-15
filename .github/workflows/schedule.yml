@@ -23,8 +23,8 @@ jobs:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           FINNHUB_TOKEN:       ${{ secrets.FINNHUB_TOKEN }}
           GOOGLE_API_KEY:      ${{ secrets.GOOGLE_API_KEY }}
-          GEMINI_MODEL_NAME:   ${{ secrets.GEMINI_MODEL_NAME }}
-          GENAI_TRANSPORT:     ${{ secrets.GENAI_TRANSPORT }}
-          AI_EXPLAINER_MAX_TOKENS: ${{ secrets.AI_EXPLAINER_MAX_TOKENS }}
-          MAX_TICKERS:         ${{ secrets.MAX_TICKERS }}
+          GEMINI_MODEL_NAME:   ${{ vars.GEMINI_MODEL_NAME }}
+          GENAI_TRANSPORT:     ${{ vars.GENAI_TRANSPORT }}
+          AI_EXPLAINER_MAX_TOKENS: ${{ vars.AI_EXPLAINER_MAX_TOKENS }}
+          MAX_TICKERS:         ${{ vars.MAX_TICKERS }}
         run: python -m src.main
