@@ -39,8 +39,9 @@ def _render_console(rows: List[Dict], label: str):
         print(f"- {r['ticker']} | Δ {r['day_ret']:.2f}% | Vol x{r['vol_x']:.2f} | "
               f"News {int(r['news_n'])} | Bonus {r['news_bonus']:.2f} | Score {r['score']:.2f}")
         if reason: print(f"  [AI] {_trim(reason,160)} (conf {conf:.2f})")
+        price_line = _fmt_price_line(r)
+        print(f"  {price_line}")
         for line in _fmt_news_block(r.get("top_news", [])).splitlines():
-            price_line = _fmt_price_line(r)
             print(f"  {line}")
         print(f"  [주의] {caveat}")
 
@@ -50,10 +51,6 @@ def _embed_from_row(r: Dict) -> Dict:
     caveat = r.get("reason_obj", {}).get("caveat", "투자 자문 아님")
     title = _trim(f"{r['ticker']} · Score {r['score']:.2f}", MAX_TITLE)
 
-    # bullets 출력
-    bul = r.get("reason_obj", {}).get("bullets", [])
-    bul_txt = _trim("\n".join([f"• {x}" for x in bul]), 700) if bul else "—"
-
     price_line = _fmt_price_line(r)
     desc  = _trim(
         f"{price_line}\n"
@@ -62,7 +59,6 @@ def _embed_from_row(r: Dict) -> Dict:
     )
     fields = [
         {"name": "추천 사유(요약)", "value": _trim(f"{reason}\n(confidence {conf:.2f})", MAX_FIELD_VAL)},
-        {"name": "핵심 근거", "value": bul_txt},
         {"name": "뉴스 하이라이트", "value": _fmt_news_block(r.get("top_news", []), max_items=2, max_title=70)},
         {"name": "주의", "value": _trim(caveat, MAX_FIELD_VAL)},
     ]
@@ -98,6 +94,7 @@ def send_discord_with_reasons(rows: List[Dict], label: str = "US Pre-Open Watchl
     content = f"**{label}**"
 
     print(f"[DEBUG] DRY_RUN={dry_run}, SEND_TO_DISCORD={send_flag}, URL_SET={bool(url)}")
+    # 1) 우선 TOP N 제한 (길이 줄이기)
 
     if dry_run or not send_flag or not url:
         _render_console(rows, label); return
@@ -105,7 +102,6 @@ def send_discord_with_reasons(rows: List[Dict], label: str = "US Pre-Open Watchl
     if not rows:
         _send_payload(url, content + "\n추천 없음", []); return
 
-    # 1) 우선 TOP N 제한 (길이 줄이기)
     max_tickers = int(os.environ.get("MAX_TICKERS", "5"))
     rows = rows[:max_tickers]
 

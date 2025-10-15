@@ -38,7 +38,6 @@ def run_once():
 
     rows=[]
     ai_on = bool(cfg.get("ai_explainer",{}).get("enabled", True))
-    print(f"[DEBUG] ai_on: {ai_on}")
     
     def _num(x):
         return None if x is None or (isinstance(x, float) and pd.isna(x)) else float(x)

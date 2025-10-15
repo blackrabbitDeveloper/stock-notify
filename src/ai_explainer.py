@@ -1,6 +1,4 @@
 import os
-import json
-import re
 from typing import Dict, List
 
 import google.generativeai as genai
@@ -8,33 +6,13 @@ import google.generativeai as genai
 
 SYSTEM_INSTRUCTION = (
     "You are a concise equity analyst.\n"
-    "Use price/volume context and up to 3 recent news to explain WHY this ticker is on a pre-open watchlist. "
     "Respond in Korean.\n"
-    "Output STRICT JSON with keys:\n"
-    "  reason (<= 2 sentences, summary),\n"
-    "  bullets (array of up to 3 short evidence-based points),\n"
-    "  confidence (0-1),\n"
-    "  caveat (optional).\n"
+    "Use price/volume context and up to 3 recent news to explain WHY this ticker is on a pre-open watchlist.\n"
+    "Respond in Korean with a single concise summary (1-2 sentences).\n"
     "Be specific (metrics, catalysts, risks) but do not give financial advice."
 )
 
-# ── 유틸: JSON 추출 보정 ────────────────────────────────────────────────────────
-_JSON_BLOCK_RE = re.compile(r"\{[\s\S]*\}", re.MULTILINE)
-
-def _safe_parse_json(text: str) -> Dict:
-    """모델이 코드펜스/설명과 섞어서 줄 때 대비."""
-    if not text:
-        raise ValueError("empty content")
-    # 1) 그대로 시도
-    try:
-        return json.loads(text)
-    except Exception:
-        pass
-    # 2) 첫 번째 {..} 블록을 찾아 파싱
-    m = _JSON_BLOCK_RE.search(text)
-    if m:
-        return json.loads(m.group(0))
-    raise ValueError("no json block")
+# (JSON 파싱 유틸 제거: 자유형 요약으로 단순화)
 
 # ── 프롬프트 구성 ───────────────────────────────────────────────────────────────
 def _mk_user_prompt(ticker: str, metrics: Dict, news: List[Dict], max_news:int=2, sum_len:int=120) -> str:
@@ -47,7 +25,7 @@ def _mk_user_prompt(ticker: str, metrics: Dict, news: List[Dict], max_news:int=2
     for i, n in enumerate(news[:max_news], 1):
         s = ((n.get("summary") or "")[:sum_len]).replace("\n"," ")
         lines.append(f"{i}. [{n.get('source','?')}, {n.get('hours_ago','?')}h] {n.get('title')}\n   - {s}")
-    lines.append('JSON만 출력:\n{"reason":"...","bullets":["포인트1","포인트2"],"confidence":0.00,"caveat":"투자 자문 아님"}')
+    lines.append('위 정보를 근거로 한국어로 1~2문장의 핵심 요약만 출력하세요.')
     return "\n".join(lines)
 
 def _extract_text(resp) -> str:
@@ -94,9 +72,9 @@ def explain_reason(ticker: str, metrics: Dict, news: List[Dict]) -> Dict:
             return model.generate_content(
                 prompt,
                 generation_config=genai.types.GenerationConfig(
-                    temperature=0.2,
+                    temperature=0.15,
                     max_output_tokens=MAX_OUT,
-                    response_mime_type="application/json",
+                    response_mime_type="text/plain",
                 ),
                 request_options={"timeout": 300},  # 초
             )
@@ -107,19 +85,18 @@ def explain_reason(ticker: str, metrics: Dict, news: List[Dict]) -> Dict:
         if getattr(resp, "candidates", None) and resp.candidates[0].finish_reason == "MAX_TOKENS":
             print("[DEBUG] Gemini finish_reason=MAX_TOKENS → retry with smaller prompt")
             # 2차 축소 재시도: 뉴스 1건, 출력 256
-            resp = _call(max_news=1, max_tokens=min(256, MAX_OUT))
+            resp = _call(max_news=1, max_tokens=MAX_OUT)
             txt = _extract_text(resp)
 
         if not txt:
             return _fallback("empty response")
 
-        data = _safe_parse_json(txt)
-        data.setdefault("bullets", [])
-        data.setdefault("caveat", "투자 자문 아님")
-        if "reason" not in data: return _fallback("missing reason")
-        if "confidence" not in data: data["confidence"] = 0.5
+        # 자유형 요약을 그대로 사용
+        reason_text = txt.strip()
+        if not reason_text:
+            return _fallback("empty summary")
         print("[DEBUG] explain_reason OK via Gemini")
-        return data
+        return {"reason": reason_text, "confidence": 0.5, "caveat": "투자 자문 아님"}
 
     except Exception as e:
         return _fallback(repr(e))
