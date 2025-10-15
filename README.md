@@ -9,7 +9,7 @@ DISCORD_WEBHOOK_URL : 디스코드 웹훅 URL
 
 GOOGLE_API_KEY : Gemini API 키
 
-FINNHUB_TOKEN : (https://finnhub.io/)API Key
+FINNHUB_TOKEN : (https://finnhub.io/) API Key
 
 ### * Variables (없으면 기본값 사용)
 GEMINI_MODEL_NAME = gemini-2.5-flash (또는 gemini-2.5-pro)
