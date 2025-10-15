@@ -35,6 +35,7 @@ htmlcov/
 logs/
 *.log
 out/
+
 *.sqlite*
 *.db
 
@@ -55,7 +56,3 @@ desktop.ini
 # --- Node (만약 프런트 추가 시) ---
 node_modules/
 *.tsbuildinfo
-sp500.txt
-sp500.csv
-nasdaq100.txt
-nasdaq100.csv

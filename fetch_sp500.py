@@ -45,7 +45,7 @@ def fetch_sp500() -> list[str]:
 def main():
     syms = fetch_sp500()
     # 저장
-    pd.Series(syms, name="Symbol").to_csv("sp500.txt", index=False, header=False)
+    pd.Series(syms, name="Symbol").to_csv("data/pool/sp500.txt", index=False, header=False)
     pd.DataFrame({"Symbol": syms}).to_csv("sp500.csv", index=False)
     # 콘솔에도 일부 표시
     print(f"[DONE] wrote sp500.txt & sp500.csv (count={len(syms)})")

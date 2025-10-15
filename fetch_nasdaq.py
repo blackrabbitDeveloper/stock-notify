@@ -45,7 +45,7 @@ def fetch_nasdaq() -> list[str]:
 def main():
     syms = fetch_nasdaq()
     # 저장
-    pd.Series(syms, name="Symbol").to_csv("nasdaq100.txt", index=False, header=False)
+    pd.Series(syms, name="Symbol").to_csv("data/pool/nasdaq100.txt", index=False, header=False)
     pd.DataFrame({"Symbol": syms}).to_csv("nasdaq100.csv", index=False)
     # 콘솔에도 일부 표시
     print(f"[DONE] wrote nasdaq100.txt & nasdaq100.csv (count={len(syms)})")
