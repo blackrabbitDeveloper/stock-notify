@@ -57,9 +57,6 @@ desktop.ini
 # --- Node (만약 프런트 추가 시) ---
 node_modules/
 *.tsbuildinfo
-data/pools/*
-!data/pools/sp500.txt
-!data/pools/nasdaq100.txt
 sp500.txt
 sp500.csv
 nasdaq100.txt
