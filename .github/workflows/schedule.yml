@@ -3,54 +3,28 @@ on:
   schedule:
     - cron: "50 12 * * 1-5"   # 평일 KST 21:50
   workflow_dispatch: {}
-
 jobs:
   run:
     runs-on: ubuntu-latest
-    env:
-      # NLTK 데이터 저장 경로(쓰기 가능)
-      NLTK_DATA: ${{ runner.temp }}/nltk_data
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Install deps
-        run: |
-          python -m pip install -U pip setuptools wheel
-          python -m pip install -r requirements.txt
-          # 혹시 requirements에 nltk가 없다면:
-          python -m pip install nltk
+      - run: python -m pip install -U pip
+      - run: python -m pip install -r requirements.txt
 
-      - name: Prepare NLTK data dir
-        run: mkdir -p "$NLTK_DATA"
-
-      - name: Download VADER lexicon (with retry)
-        run: |
-          python - <<'PY'
-import os, time, nltk
-print("NLTK_DATA:", os.environ.get("NLTK_DATA"))
-for i in range(3):
-    try:
-        nltk.download('vader_lexicon', raise_on_error=True, quiet=True)
-        print("VADER ready.")
-        break
-    except Exception as e:
-        print(f"retry {i+1}/3:", e)
-        time.sleep(2)
-else:
-    raise SystemExit("Failed to download VADER lexicon")
-PY
+      - name: NLTK data (VADER lexicon)
+        run: python -c "import nltk; nltk.download('vader_lexicon', quiet=True)"
 
       - name: Run bot
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           FINNHUB_TOKEN:       ${{ secrets.FINNHUB_TOKEN }}
           GOOGLE_API_KEY:      ${{ secrets.GOOGLE_API_KEY }}
-          GEMINI_MODEL_NAME:   ${{ vars.GEMINI_MODEL_NAME || 'gemini-1.5-pro' }}
-          GENAI_TRANSPORT:     ${{ vars.GENAI_TRANSPORT  || 'rest' }}
-          AI_EXPLAINER_MAX_TOKENS: ${{ vars.AI_EXPLAINER_MAX_TOKENS || '768' }}
-          MAX_TICKERS:         ${{ vars.MAX_TICKERS      || '5' }}
+          GEMINI_MODEL_NAME:   ${{ secrets.GEMINI_MODEL_NAME }}
+          GENAI_TRANSPORT:     ${{ secrets.GENAI_TRANSPORT }}
+          AI_EXPLAINER_MAX_TOKENS: ${{ secrets.AI_EXPLAINER_MAX_TOKENS }}
+          MAX_TICKERS:         ${{ secrets.MAX_TICKERS }}
         run: python -m src.main
