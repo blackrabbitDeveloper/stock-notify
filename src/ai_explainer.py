@@ -98,7 +98,7 @@ def explain_reason(ticker: str, metrics: Dict, news: List[Dict]) -> Dict:
                     max_output_tokens=MAX_OUT,
                     response_mime_type="application/json",
                 ),
-                request_options={"timeout": 30},  # 초
+                request_options={"timeout": 300},  # 초
             )
 
         # 1차 시도
