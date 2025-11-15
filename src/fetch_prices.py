@@ -5,10 +5,10 @@ import yfinance as yf
 def get_history(tickers, days=40):
     """
     여러 티커를 batch로 다운로드해도, 단일 티커여도
-    항상 [Date, Close, Volume, ticker]의 'long' 포맷으로 반환.
+    항상 [Date, Close, High, Low, Volume, ticker]의 'long' 포맷으로 반환.
     """
     if not tickers:
-        return pd.DataFrame(columns=["Date", "Close", "Volume", "ticker"])
+        return pd.DataFrame(columns=["Date", "Close", "High", "Low", "Volume", "ticker"])
 
     # yfinance는 쉼표로 join하거나 리스트 그대로 줘도 됨
     end = dt.datetime.utcnow()
@@ -26,7 +26,7 @@ def get_history(tickers, days=40):
     )
 
     if df is None or df.empty:
-        return pd.DataFrame(columns=["Date", "Close", "Volume", "ticker"])
+        return pd.DataFrame(columns=["Date", "Close", "High", "Low", "Volume", "ticker"])
 
     # case 1) 다중 티커 → MultiIndex 컬럼
     if isinstance(df.columns, pd.MultiIndex):
@@ -51,17 +51,23 @@ def get_history(tickers, days=40):
         df = df.copy()
         df = df.reset_index()  # Date가 인덱스 → 컬럼
         for t in tickers:
-            # 멀티컬럼에서 해당 티커의 Close/Volume만 추출
+            # 멀티컬럼에서 해당 티커의 Close/High/Low/Volume 추출
             try:
                 if field_level == 0:
                     c = df[("Close", t)]
+                    h = df[("High", t)]
+                    l = df[("Low", t)]
                     v = df[("Volume", t)]
                 else:
                     c = df[(t, "Close")]
+                    h = df[(t, "High")]
+                    l = df[(t, "Low")]
                     v = df[(t, "Volume")]
                 out = pd.DataFrame({
                     "Date": df["Date"],
                     "Close": c,
+                    "High": h,
+                    "Low": l,
                     "Volume": v,
                     "ticker": t
                 }).dropna(subset=["Close", "Volume"])
@@ -72,14 +78,14 @@ def get_history(tickers, days=40):
                 continue
 
         if not frames:
-            return pd.DataFrame(columns=["Date", "Close", "Volume", "ticker"])
+            return pd.DataFrame(columns=["Date", "Close", "High", "Low", "Volume", "ticker"])
         return pd.concat(frames, axis=0, ignore_index=True)
 
     # case 2) 단일 티커 → 일반 컬럼
     else:
         # 단일 티커 문자열/리스트 모두 대비
         t = tickers[0] if isinstance(tickers, (list, tuple)) else tickers
-        out = df.reset_index()[["Date", "Close", "Volume"]].copy()
+        out = df.reset_index()[["Date", "Close", "High", "Low", "Volume"]].copy()
         out["ticker"] = t
         out = out.dropna(subset=["Close", "Volume"])
         out = out[out["Close"] > 0]
@@ -94,7 +100,7 @@ def _slow_per_ticker(tickers, start, end):
                             interval="1d", progress=False, auto_adjust=False)
             if d is None or d.empty:
                 continue
-            g = d.reset_index()[["Date", "Close", "Volume"]].copy()
+            g = d.reset_index()[["Date", "Close", "High", "Low", "Volume"]].copy()
             g["ticker"] = t
             g = g.dropna(subset=["Close", "Volume"])
             g = g[g["Close"] > 0]
@@ -102,7 +108,7 @@ def _slow_per_ticker(tickers, start, end):
         except Exception:
             continue
     if not rows:
-        return pd.DataFrame(columns=["Date", "Close", "Volume", "ticker"])
+        return pd.DataFrame(columns=["Date", "Close", "High", "Low", "Volume", "ticker"])
     return pd.concat(rows, axis=0, ignore_index=True)
 
 

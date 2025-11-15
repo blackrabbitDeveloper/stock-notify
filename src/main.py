@@ -27,7 +27,7 @@ def run_once():
     use_news = bool(cfg.get("auto",{}).get("use_news_bonus", True))
     topn = rank_with_news(prices, tickers, use_news=use_news, min_bars=5)
     if topn.empty:
-        send_discord_with_reasons([], "US Pre-Open Watchlist (Auto-Universe)")
+        send_discord_with_reasons([], "US Pre-Open Watchlist (Technical Analysis)")
         print("no recommendations – dataset too thin"); return
 
     top_symbols = topn["ticker"].tolist()
@@ -50,11 +50,19 @@ def run_once():
             return None
 
     for _, r in topn.iterrows():
+        # 기술적 분석 데이터 가져오기
+        tech_analysis = r.get("technical_analysis", {})
+        
         reason_obj = {"reason": "규칙 기반 선별 결과.", "confidence": 0.4, "caveat": "투자 자문 아님"}
         if ai_on:
             reason_obj = explain_reason(
                 r["ticker"],
-                {"day_ret": float(r["day_ret"]), "vol_x": float(r["vol_x"])},
+                {
+                    "day_ret": float(r["day_ret"]), 
+                    "vol_x": float(r["vol_x"]),
+                    "tech_score": float(r.get("tech_score", 0)),
+                    "technical_signals": tech_analysis
+                },
                 r.get("top_news", []),
             )
 
@@ -64,8 +72,10 @@ def run_once():
             "vol_x":      float(r["vol_x"]),
             "news_n":     int(r.get("news_n", 0)),
             "news_bonus": float(r.get("news_bonus", 0.0)),
-            "score":      float(r["score"]),
+            "tech_score": float(r.get("tech_score", 0.0)),
+            "score":      float(r.get("combined_score", 0.0)),
             "top_news":   r.get("top_news", []),
+            "technical_analysis": tech_analysis,
             "reason_obj": reason_obj,
 
             # ⬇️ 현재가/전일종가/시각 추가
@@ -74,7 +84,7 @@ def run_once():
             "last_time":  _ts(r.get("last_time")),
         })
 
-    send_discord_with_reasons(rows, "US Pre-Open Watchlist (Auto-Universe)")
+    send_discord_with_reasons(rows, "US Pre-Open Watchlist (Technical Analysis)")
     print("done")
 
 if __name__ == "__main__":

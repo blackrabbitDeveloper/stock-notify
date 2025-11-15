@@ -28,6 +28,57 @@ def _fmt_news_block(top_news: List[Dict], max_items: int = 2, max_title: int = 7
     txt = "\n".join(lines)
     return _trim(txt, MAX_FIELD_VAL)
 
+def _fmt_technical_signals(tech: Dict) -> str:
+    """기술적 분석 신호를 요약해서 반환"""
+    if not tech:
+        return "기술적 분석 없음"
+    
+    signals = []
+    
+    # 골든/데드 크로스
+    if tech.get('golden_cross'):
+        signals.append("🟢 골든크로스(5/20)")
+    elif tech.get('dead_cross'):
+        signals.append("🔴 데드크로스(5/20)")
+    
+    # 이평선 정배열
+    if tech.get('ma_alignment'):
+        signals.append("✅ 이평선 정배열")
+    
+    # RSI
+    rsi = tech.get('rsi', 50)
+    if tech.get('rsi_oversold'):
+        signals.append(f"📉 RSI 과매도({rsi:.1f})")
+    elif tech.get('rsi_overbought'):
+        signals.append(f"📈 RSI 과매수({rsi:.1f})")
+    else:
+        signals.append(f"RSI {rsi:.1f}")
+    
+    # MACD
+    if tech.get('macd_cross_up'):
+        signals.append("🟢 MACD 상향돌파")
+    elif tech.get('macd_cross_down'):
+        signals.append("🔴 MACD 하향돌파")
+    
+    # 볼린저 밴드
+    bb_pos = tech.get('bb_position', 0.5)
+    if bb_pos < 0.2:
+        signals.append(f"BB 하단({bb_pos*100:.0f}%)")
+    elif bb_pos > 0.8:
+        signals.append(f"BB 상단({bb_pos*100:.0f}%)")
+    
+    # 거래량
+    if tech.get('bullish_volume'):
+        signals.append("💪 거래량 동반 상승")
+    elif tech.get('volume_ratio', 1) > 2.0:
+        signals.append(f"📊 거래량 급증({tech['volume_ratio']:.1f}x)")
+    
+    # 추세 강도
+    if tech.get('strong_trend'):
+        signals.append(f"💎 강한 추세(ADX {tech.get('adx', 0):.1f})")
+    
+    return "\n".join(signals) if signals else "신호 없음"
+
 def _render_console(rows: List[Dict], label: str):
     print(f"\n=== {label} ===")
     if not rows:
@@ -36,33 +87,57 @@ def _render_console(rows: List[Dict], label: str):
         reason = r.get("reason_obj", {}).get("reason", "")
         conf = r.get("reason_obj", {}).get("confidence", 0.0)
         caveat = r.get("reason_obj", {}).get("caveat", "투자 자문 아님")
+        tech_score = r.get("tech_score", 0.0)
         print(f"- {r['ticker']} | Δ {r['day_ret']:.2f}% | Vol x{r['vol_x']:.2f} | "
-              f"News {int(r['news_n'])} | Bonus {r['news_bonus']:.2f} | Score {r['score']:.2f}")
+              f"Tech {tech_score:.2f} | News {int(r['news_n'])} | Total {r['score']:.2f}")
         if reason: print(f"  [AI] {_trim(reason,160)} (conf {conf:.2f})")
         price_line = _fmt_price_line(r)
         print(f"  {price_line}")
+        
+        # 기술적 신호 출력
+        tech_signals = _fmt_technical_signals(r.get("technical_analysis", {}))
+        for line in tech_signals.splitlines():
+            print(f"  {line}")
+        
         for line in _fmt_news_block(r.get("top_news", [])).splitlines():
             print(f"  {line}")
         print(f"  [주의] {caveat}")
 
 def _embed_from_row(r: Dict) -> Dict:
-    reason = _trim(r.get("reason_obj", {}).get("reason", ""), 360)  # AI 사유 160자 제한
+    reason = _trim(r.get("reason_obj", {}).get("reason", ""), 360)
     conf = r.get("reason_obj", {}).get("confidence", 0.0)
     caveat = r.get("reason_obj", {}).get("caveat", "투자 자문 아님")
-    title = _trim(f"{r['ticker']} · Score {r['score']:.2f}", MAX_TITLE)
+    
+    tech_score = r.get("tech_score", 0.0)
+    title = _trim(f"🎯 {r['ticker']} · Score {r['score']:.2f} (Tech {tech_score:.2f})", MAX_TITLE)
 
     price_line = _fmt_price_line(r)
-    desc  = _trim(
+    desc = _trim(
         f"{price_line}\n"
-        f"Δ {r['day_ret']:.2f}% · Vol x{r['vol_x']:.2f} · News {int(r['news_n'])} · Bonus {r['news_bonus']:.2f}",
+        f"📊 수익률 {r['day_ret']:+.2f}% · 거래량 {r['vol_x']:.2f}x · 뉴스 {int(r['news_n'])}개 (+{r['news_bonus']:.2f})",
         MAX_DESC
     )
+    
     fields = [
-        {"name": "추천 사유(요약)", "value": _trim(f"{reason}\n(confidence {conf:.2f})", MAX_FIELD_VAL)},
-        {"name": "뉴스 하이라이트", "value": _fmt_news_block(r.get("top_news", []), max_items=2, max_title=70)},
-        {"name": "주의", "value": _trim(caveat, MAX_FIELD_VAL)},
+        {
+            "name": "📈 기술적 분석 신호", 
+            "value": _trim(_fmt_technical_signals(r.get("technical_analysis", {})), MAX_FIELD_VAL)
+        },
+        {
+            "name": "💡 AI 추천 사유", 
+            "value": _trim(f"{reason}\n(confidence {conf:.2f})", MAX_FIELD_VAL)
+        },
+        {
+            "name": "📰 뉴스 하이라이트", 
+            "value": _fmt_news_block(r.get("top_news", []), max_items=2, max_title=60)
+        },
+        {
+            "name": "⚠️ 주의사항", 
+            "value": _trim(caveat, MAX_FIELD_VAL)
+        },
     ]
-    return {"title": title, "description": desc, "fields": fields}
+    
+    return {"title": title, "description": desc, "fields": fields, "color": 0x00ff00}
 
 def _calc_total_len(content: str, embeds: List[Dict]) -> int:
     total = len(content or "")
@@ -91,10 +166,9 @@ def send_discord_with_reasons(rows: List[Dict], label: str = "US Pre-Open Watchl
     dry_run = os.environ.get("DRY_RUN","").lower() in {"1","true","yes","on"}
     send_flag = os.environ.get("SEND_TO_DISCORD","true").lower() not in {"0","false","no","off"}
     url = (os.environ.get("DISCORD_WEBHOOK_URL","") or "").strip().strip('"').strip("'")
-    content = f"**{label}**"
+    content = f"**{label}**\n📊 기술적 분석 기반 단기 매매 추천"
 
     print(f"[DEBUG] DRY_RUN={dry_run}, SEND_TO_DISCORD={send_flag}, URL_SET={bool(url)}")
-    # 1) 우선 TOP N 제한 (길이 줄이기)
 
     if dry_run or not send_flag or not url:
         _render_console(rows, label); return
@@ -127,10 +201,11 @@ def _fmt_price_line(r: dict) -> str:
     p = r.get("last_price")
     pc = r.get("prev_close")
     if p is None and pc is None:
-        return "가격: —"
+        return "💵 가격: —"
     if p is None and pc is not None:
-        return f"가격: — (Prev {pc:.2f})"
+        return f"💵 가격: — (전일 {pc:.2f})"
     if pc is None:
-        return f"가격: {p:.2f}"
+        return f"💵 가격: {p:.2f}"
     delta = ((p/pc)-1)*100 if pc else 0.0
-    return f"가격: {p:.2f} (Prev {pc:.2f}, Δ {delta:+.2f}%)"
+    emoji = "🟢" if delta >= 0 else "🔴"
+    return f"💵 가격: {p:.2f} (전일 {pc:.2f}, {emoji} {delta:+.2f}%)"
