@@ -97,6 +97,8 @@ def analyze_stock_technical(df: pd.DataFrame) -> Optional[Dict]:
     Returns:
         분석 결과 딕셔너리 또는 None
     """
+    print(f"[DEBUG] analyze_stock_technical: df shape={df.shape}, columns={list(df.columns)}")
+    print(f"[DEBUG] tail:\n{df.tail(60)}")
     if df is None or len(df) < 30:
         return None
     

@@ -23,9 +23,10 @@ def resolve_universe(cfg):
 def run_once():
     cfg = load_cfg()
     tickers = resolve_universe(cfg)
-    prices = get_history(tickers, days=40)
+    prices = get_history(tickers, days=60)
     use_news = bool(cfg.get("auto",{}).get("use_news_bonus", True))
-    topn = rank_with_news(prices, tickers, use_news=use_news, min_bars=5)
+    tech_filter_count = int(cfg.get("auto",{}).get("tech_filter_count", 30))
+    topn = rank_with_news(prices, tickers, use_news=use_news, min_bars=5, tech_filter_count=tech_filter_count)
     if topn.empty:
         send_discord_with_reasons([], "US Pre-Open Watchlist (Technical Analysis)")
         print("no recommendations – dataset too thin"); return

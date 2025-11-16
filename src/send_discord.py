@@ -28,56 +28,94 @@ def _fmt_news_block(top_news: List[Dict], max_items: int = 2, max_title: int = 7
     txt = "\n".join(lines)
     return _trim(txt, MAX_FIELD_VAL)
 
-def _fmt_technical_signals(tech: Dict) -> str:
-    """기술적 분석 신호를 요약해서 반환"""
+def _fmt_technical_signals_with_score(tech: Dict, tech_score: float) -> str:
+    """
+    기술적 분석 신호 + 점수 계산 내역
+    각 신호가 얼마나 기여했는지 명확하게 표시
+    """
     if not tech:
         return "기술적 분석 없음"
     
-    signals = []
+    lines = []
+    breakdown = []  # 점수 분해
     
-    # 골든/데드 크로스
+    # 1. 골든/데드 크로스
     if tech.get('golden_cross'):
-        signals.append("🟢 골든크로스(5/20)")
+        lines.append("🟢 골든크로스 (5일선↑20일선)")
+        breakdown.append("  +2.5  골든크로스")
     elif tech.get('dead_cross'):
-        signals.append("🔴 데드크로스(5/20)")
+        lines.append("🔴 데드크로스 (5일선↓20일선)")
+        breakdown.append("  -1.5  데드크로스")
     
-    # 이평선 정배열
+    # 2. 이평선 정배열
     if tech.get('ma_alignment'):
-        signals.append("✅ 이평선 정배열")
+        lines.append("✅ 이평선 정배열 (5>10>20)")
+        breakdown.append("  +1.5  이평선 정배열")
     
-    # RSI
-    rsi = tech.get('rsi', 50)
-    if tech.get('rsi_oversold'):
-        signals.append(f"📉 RSI 과매도({rsi:.1f})")
-    elif tech.get('rsi_overbought'):
-        signals.append(f"📈 RSI 과매수({rsi:.1f})")
-    else:
-        signals.append(f"RSI {rsi:.1f}")
-    
-    # MACD
+    # 3. MACD
     if tech.get('macd_cross_up'):
-        signals.append("🟢 MACD 상향돌파")
+        lines.append("🟢 MACD 상향돌파")
+        breakdown.append("  +1.8  MACD 상향돌파")
     elif tech.get('macd_cross_down'):
-        signals.append("🔴 MACD 하향돌파")
+        lines.append("🔴 MACD 하향돌파")
+        breakdown.append("  -1.0  MACD 하향돌파")
     
-    # 볼린저 밴드
-    bb_pos = tech.get('bb_position', 0.5)
-    if bb_pos < 0.2:
-        signals.append(f"BB 하단({bb_pos*100:.0f}%)")
-    elif bb_pos > 0.8:
-        signals.append(f"BB 상단({bb_pos*100:.0f}%)")
+    if tech.get('macd_histogram', 0) > 0:
+        lines.append(f"📈 MACD 히스토그램 양수")
+        breakdown.append("  +0.5  MACD 히스토그램 양수")
     
-    # 거래량
+    # 4. 거래량
+    vol_ratio = tech.get('volume_ratio', 1.0)
     if tech.get('bullish_volume'):
-        signals.append("💪 거래량 동반 상승")
-    elif tech.get('volume_ratio', 1) > 2.0:
-        signals.append(f"📊 거래량 급증({tech['volume_ratio']:.1f}x)")
+        lines.append(f"💪 가격↑ + 거래량↑ ({vol_ratio:.1f}배)")
+        breakdown.append("  +2.0  거래량 동반 상승")
+    elif vol_ratio > 2.0:
+        lines.append(f"📊 거래량 급증 ({vol_ratio:.1f}배)")
+        breakdown.append("  +1.0  거래량 급증")
     
-    # 추세 강도
+    # 5. RSI
+    rsi = tech.get('rsi', 50)
+    if 30 < rsi < 50:
+        lines.append(f"📊 RSI {rsi:.1f} (과매도 탈출)")
+        breakdown.append("  +1.2  RSI 과매도 탈출")
+    elif tech.get('rsi_overbought'):
+        lines.append(f"⚠️ RSI {rsi:.1f} (과매수)")
+        breakdown.append("  -0.8  RSI 과매수")
+    else:
+        lines.append(f"📊 RSI {rsi:.1f}")
+    
+    # 6. 볼린저 밴드
+    bb_pos = tech.get('bb_position', 0.5)
+    if 0.1 < bb_pos < 0.3:
+        lines.append(f"📉 볼린저밴드 하단 반등 ({bb_pos*100:.0f}%)")
+        breakdown.append("  +1.0  BB 하단 반등")
+    elif bb_pos > 0.9:
+        lines.append(f"📈 볼린저밴드 상단 ({bb_pos*100:.0f}%)")
+        breakdown.append("  -0.5  BB 상단 과열")
+    
+    # 7. 추세 강도
     if tech.get('strong_trend'):
-        signals.append(f"💎 강한 추세(ADX {tech.get('adx', 0):.1f})")
+        adx = tech.get('adx', 0)
+        lines.append(f"💎 강한 추세 (ADX {adx:.1f})")
+        breakdown.append("  +0.8  강한 추세")
     
-    return "\n".join(signals) if signals else "신호 없음"
+    # 8. 이평선 괴리율
+    ma5_dev = tech.get('ma5_deviation', 0)
+    if -3 < ma5_dev < 5:
+        breakdown.append("  +0.5  적정 이평선 괴리")
+    elif ma5_dev > 10:
+        breakdown.append("  -0.5  과도한 상승")
+    
+    # 구분선 및 점수 분해
+    if lines:
+        lines.append("")
+        lines.append("─" * 32)
+        lines.append("⭐ 점수 계산 내역:")
+        lines.extend(breakdown)
+        lines.append("─" * 32)
+        lines.append(f"📊 총점: {tech_score:.1f} / 10.0")
+    
+    return "\n".join(lines) if lines else "신호 없음"
 
 def _render_console(rows: List[Dict], label: str):
     print(f"\n=== {label} ===")
@@ -94,11 +132,15 @@ def _render_console(rows: List[Dict], label: str):
         price_line = _fmt_price_line(r)
         print(f"  {price_line}")
         
-        # 기술적 신호 출력
-        tech_signals = _fmt_technical_signals(r.get("technical_analysis", {}))
+        # 기술적 신호 + 점수 내역 출력
+        tech_signals = _fmt_technical_signals_with_score(
+            r.get("technical_analysis", {}), 
+            tech_score
+        )
         for line in tech_signals.splitlines():
             print(f"  {line}")
         
+        print()  # 종목 간 구분
         for line in _fmt_news_block(r.get("top_news", [])).splitlines():
             print(f"  {line}")
         print(f"  [주의] {caveat}")
@@ -118,10 +160,16 @@ def _embed_from_row(r: Dict) -> Dict:
         MAX_DESC
     )
     
+    # 기술적 신호 + 점수 내역
+    tech_with_score = _fmt_technical_signals_with_score(
+        r.get("technical_analysis", {}),
+        tech_score
+    )
+    
     fields = [
         {
-            "name": "📈 기술적 분석 신호", 
-            "value": _trim(_fmt_technical_signals(r.get("technical_analysis", {})), MAX_FIELD_VAL)
+            "name": "📈 기술적 분석 (신호 + 점수)", 
+            "value": _trim(tech_with_score, MAX_FIELD_VAL)
         },
         {
             "name": "💡 AI 추천 사유", 
@@ -166,7 +214,7 @@ def send_discord_with_reasons(rows: List[Dict], label: str = "US Pre-Open Watchl
     dry_run = os.environ.get("DRY_RUN","").lower() in {"1","true","yes","on"}
     send_flag = os.environ.get("SEND_TO_DISCORD","true").lower() not in {"0","false","no","off"}
     url = (os.environ.get("DISCORD_WEBHOOK_URL","") or "").strip().strip('"').strip("'")
-    content = f"**{label}**\n📊 기술적 분석 기반 단기 매매 추천"
+    content = f"**{label}**\n📊 기술적 분석 기반 단기 매매 추천 (2단계 필터링)"
 
     print(f"[DEBUG] DRY_RUN={dry_run}, SEND_TO_DISCORD={send_flag}, URL_SET={bool(url)}")
 

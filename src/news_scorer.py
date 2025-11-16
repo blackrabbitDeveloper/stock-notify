@@ -6,13 +6,13 @@ from urllib.parse import urlparse
 
 from .sentiment import sentiment_score
 
-# 주요 소스 가중치 (선택)
+# 주요 소스 가중치 (축소)
 MAJOR_SOURCES = {
-    "reuters.com": 1.2,
-    "bloomberg.com": 1.2,
-    "wsj.com": 1.15,
-    "ft.com": 1.15,
-    "seekingalpha.com": 1.05,
+    "reuters.com": 1.1,      # 1.2 → 1.1
+    "bloomberg.com": 1.1,    # 1.2 → 1.1
+    "wsj.com": 1.08,         # 1.15 → 1.08
+    "ft.com": 1.08,          # 1.15 → 1.08
+    "seekingalpha.com": 1.03, # 1.05 → 1.03
 }
 
 # 카테고리 룰 (간단 키워드 기반)
@@ -26,15 +26,17 @@ CAT_RULES = {
     "analyst_down": r"(downgrade|cuts price target|initiates.*sell|underweight)",
     "legal": r"(lawsuit|probe|investigation|settlement|antitrust|regulator|sec)",
 }
+
+# 카테고리 가중치 (축소)
 CAT_WEIGHT = {
-    "earnings_up": 1.6,
-    "earnings_down": 1.6,
-    "mna": 1.8,
-    "contract": 1.4,
-    "fda": 1.7,
-    "analyst_up": 1.2,
-    "analyst_down": 1.2,
-    "legal": 1.1,
+    "earnings_up": 1.4,      # 1.6 → 1.4
+    "earnings_down": 1.4,    # 1.6 → 1.4
+    "mna": 1.5,              # 1.8 → 1.5
+    "contract": 1.2,         # 1.4 → 1.2
+    "fda": 1.4,              # 1.7 → 1.4
+    "analyst_up": 1.1,       # 1.2 → 1.1
+    "analyst_down": 1.1,     # 1.2 → 1.1
+    "legal": 1.05,           # 1.1 → 1.05
 }
 
 def _classify_category(headline: str, summary: str = "") -> List[str]:
@@ -46,8 +48,10 @@ def _classify_category(headline: str, summary: str = "") -> List[str]:
     return hits or ["uncat"]
 
 def _recency_decay(published_dt: datetime, now_dt: datetime) -> float:
+    """시간 감쇠 함수 (더 빠르게 감소)"""
     hours = max(0.0, (now_dt - published_dt).total_seconds() / 3600.0)
-    return math.exp(-hours / 24.0)  # 24h 반감
+    # 12시간 반감으로 변경 (기존 24시간)
+    return math.exp(-hours / 12.0)
 
 def _source_weight(url: str) -> float:
     try:
@@ -62,7 +66,8 @@ def _source_weight(url: str) -> float:
 def score_news_items(items: List[Dict]) -> float:
     """
     items: fetch_news에서 받은 기사 리스트
-    전체 보너스(0~6) 반환. 부정 감성은 0으로 클립(가점만).
+    전체 보너스(0~4) 반환 (기존 0~6에서 축소)
+    부정 감성은 0으로 클립(가점만).
     """
     if not items:
         return 0.0
@@ -77,14 +82,15 @@ def score_news_items(items: List[Dict]) -> float:
 
         senti = sentiment_score(f"{title} {summ}")  # -1..+1
         if senti <= 0:
-            continue  # 가점만 반영 (감점 정책을 쓰고 싶다면 여기서 반대로 처리)
+            continue  # 가점만 반영
 
         cats = _classify_category(title, summ)
         w_cat = max(CAT_WEIGHT.get(c, 1.0) for c in cats)
         w_time = _recency_decay(dt, now)
         w_src = _source_weight(url)
 
-        total += senti * w_cat * w_time * w_src
+        # 뉴스 점수 누적 (가중치 전체적으로 낮춤)
+        total += senti * w_cat * w_time * w_src * 0.7  # 추가 감소 계수
 
-    # 상한 클립
-    return min(6.0, total)
+    # 상한 클립 (6 → 4로 축소)
+    return min(4.0, total)

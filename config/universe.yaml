@@ -2,11 +2,13 @@ mode: auto               # auto | static
 static_list: []          # mode=static일 때만 사용
 
 auto:
-  pool: nasdaq100            # sp500 | nasdaq100 (간이) | custom
-  min_price: 5           # 저유동/초저가 필터
-  top_by_dollar_vol: 200 # 거래대금 상위 컷
-  max_final_universe: 150
-  use_news_bonus: true   # 뉴스 보너스 반영 여부
+  pool: nasdaq100            # sp500 | nasdaq100
+  min_price: 3               # 최소 가격 ($3 이상)
+  max_price: 500             # 최대 가격 ($500 이하)
+  max_final_universe: 150    # 최종 유니버스 크기
+  tech_filter_count: 30      # 🆕 뉴스 분석할 상위 종목 개수 (기술적 점수 기준)
+  use_news_bonus: true       # 뉴스 보너스 반영 (15% 가중치)
+
 ai_explainer:
   enabled: true
-  model_name: gpt-4o-mini
+  model_name: gemini-2.5-flash
