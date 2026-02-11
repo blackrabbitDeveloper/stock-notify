@@ -3,11 +3,13 @@ static_list: []          # mode=static일 때만 사용
 
 auto:
   pool: nasdaq100            # sp500 | nasdaq100
-  min_price: 3               # 최소 가격 ($3 이상)
-  max_price: 500             # 최대 가격 ($500 이하)
+  min_price: 5               # 최소 가격 ($5 이상, 페니스톡 제외)
+  max_price: 500             # 최대 가격
   max_final_universe: 150    # 최종 유니버스 크기
-  tech_filter_count: 30      # 🆕 뉴스 분석할 상위 종목 개수 (기술적 점수 기준)
-  use_news_bonus: true       # 뉴스 보너스 반영 (15% 가중치)
+  tech_filter_count: 30      # 뉴스 분석할 상위 종목 개수
+  use_news_bonus: true       # 뉴스 보너스 반영 (15%)
+  min_tech_score: 4.0        # v2 최소 기술 점수 (진입 타이밍 기준)
+  data_days: 90              # 가격 데이터 기간 (일) — 60→90 확대
 
 ai_explainer:
   enabled: true
