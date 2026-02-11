@@ -20,6 +20,7 @@ class ConfigValidator:
         "GENAI_TRANSPORT": "rest",
         "MAX_TICKERS": "5",
         "AI_EXPLAINER_MAX_TOKENS": "1024",
+        "GEMINI_RATE_LIMIT_DELAY": "13",  # 초 (무료: 13, 유료: 1)
         "DRY_RUN": "false",
         "SEND_TO_DISCORD": "true",
         "USE_FINBERT": "false",

@@ -1,5 +1,6 @@
 import yaml
 import os
+import time
 import pandas as pd
 from typing import Dict, List
 
@@ -10,6 +11,10 @@ from .universe_builder import build_auto_universe
 from .ranker import rank_with_news
 from .ai_explainer import explain_reason
 from .send_discord import send_discord_with_reasons
+
+# Gemini API rate limit 설정
+# 무료: 5 req/min, 유료: 1000 req/min
+GEMINI_RATE_LIMIT_DELAY = float(os.getenv("GEMINI_RATE_LIMIT_DELAY", "13"))  # 초 (무료: 60/5=12 + 여유 1초)
 
 
 def load_cfg() -> Dict:
@@ -132,19 +137,31 @@ def run_once():
             }
 
             if ai_on:
-                try:
-                    reason_obj = explain_reason(
-                        r["ticker"],
-                        {
-                            "day_ret": float(r["day_ret"]),
-                            "vol_x": float(r["vol_x"]),
-                            "tech_score": float(r.get("tech_score", 0)),
-                            "technical_signals": tech_analysis
-                        },
-                        r.get("top_news", []),
-                    )
-                except Exception as e:
-                    logger.warning(f"AI 설명 생성 실패 ({r['ticker']}): {e}")
+                for attempt in range(3):  # 최대 3회 재시도
+                    try:
+                        reason_obj = explain_reason(
+                            r["ticker"],
+                            {
+                                "day_ret": float(r["day_ret"]),
+                                "vol_x": float(r["vol_x"]),
+                                "tech_score": float(r.get("tech_score", 0)),
+                                "technical_signals": tech_analysis
+                            },
+                            r.get("top_news", []),
+                        )
+                        break  # 성공 시 루프 탈출
+                    except Exception as e:
+                        err_str = str(e)
+                        if "429" in err_str or "quota" in err_str.lower():
+                            wait = GEMINI_RATE_LIMIT_DELAY * (attempt + 1)
+                            logger.warning(f"Gemini 할당량 초과 ({r['ticker']}), {wait:.0f}초 대기 후 재시도 ({attempt+1}/3)")
+                            time.sleep(wait)
+                        else:
+                            logger.warning(f"AI 설명 생성 실패 ({r['ticker']}): {e}")
+                            break  # 429 외 오류는 재시도 안 함
+
+                # API 호출 간 딜레이 (rate limit 방지)
+                time.sleep(GEMINI_RATE_LIMIT_DELAY)
 
             rows.append({
                 "ticker": r["ticker"],
