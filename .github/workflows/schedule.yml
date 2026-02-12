@@ -1,8 +1,8 @@
 name: stock-notify
 on:
   schedule:
-    # 미국 동부시간 기준: 장 마감 후 16:30 EST = UTC 21:30
-    # KST 06:30 (다음날 아침 확인용)
+    # 미국 동부시간 기준: 장 마감 후 (16:30 ET = UTC 21:30)
+    # KST 익일 06:30 확인 가능
     - cron: "30 21 * * 1-5"
 
   workflow_dispatch: {}
@@ -10,8 +10,16 @@ on:
 jobs:
   run:
     runs-on: ubuntu-latest
+    # positions.json 커밋 권한
+    permissions:
+      contents: write
+
     steps:
       - uses: actions/checkout@v4
+        with:
+          # 커밋을 위해 fetch-depth 0 (전체 히스토리)
+          fetch-depth: 0
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -32,11 +40,26 @@ jobs:
 
       - name: Run bot
         env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          FINNHUB_TOKEN:       ${{ secrets.FINNHUB_TOKEN }}
-          GOOGLE_API_KEY:      ${{ secrets.GOOGLE_API_KEY }}
-          GEMINI_MODEL_NAME:   ${{ vars.GEMINI_MODEL_NAME }}
-          GENAI_TRANSPORT:     ${{ vars.GENAI_TRANSPORT }}
+          DISCORD_WEBHOOK_URL:     ${{ secrets.DISCORD_WEBHOOK_URL }}
+          FINNHUB_TOKEN:           ${{ secrets.FINNHUB_TOKEN }}
+          GOOGLE_API_KEY:          ${{ secrets.GOOGLE_API_KEY }}
+          GEMINI_MODEL_NAME:       ${{ vars.GEMINI_MODEL_NAME }}
+          GENAI_TRANSPORT:         ${{ vars.GENAI_TRANSPORT }}
           AI_EXPLAINER_MAX_TOKENS: ${{ vars.AI_EXPLAINER_MAX_TOKENS }}
-          MAX_TICKERS:         ${{ vars.MAX_TICKERS }}
+          MAX_TICKERS:             ${{ vars.MAX_TICKERS }}
         run: python -m src.main
+
+      # positions.json + history.json 변경사항 자동 커밋
+      - name: Commit positions data
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add data/positions.json data/history.json
+
+          if git diff --staged --quiet; then
+            echo "No changes to data files, skipping commit"
+          else
+            git commit -m "chore: update positions & history $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git push
+          fi
