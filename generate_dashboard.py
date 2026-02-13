@@ -26,6 +26,12 @@ import os
 from datetime import datetime, timezone
 from pathlib import Path
 
+try:
+    import yfinance as yf
+    HAS_YFINANCE = True
+except ImportError:
+    HAS_YFINANCE = False
+
 # ── 경로 ──
 DATA_DIR = Path("data")
 CONFIG_DIR = Path("config")
@@ -47,6 +53,53 @@ def load_json(path, default=None):
         except Exception:
             pass
     return default if default is not None else {}
+
+
+def fetch_market_indices() -> dict:
+    """S&P500, 나스닥100, 원-달러 환율, 금 시세 데이터 수집 (최근 6개월)."""
+    if not HAS_YFINANCE:
+        print("  ⚠️ yfinance 미설치 — 시장 지표 스킵")
+        return {}
+
+    symbols = {
+        "sp500":    {"ticker": "^GSPC",   "name": "S&P 500"},
+        "nasdaq":   {"ticker": "^NDX",    "name": "NASDAQ 100"},
+        "usd_krw":  {"ticker": "KRW=X",   "name": "USD/KRW"},
+        "gold":     {"ticker": "GC=F",    "name": "Gold"},
+    }
+
+    result = {}
+    for key, info in symbols.items():
+        try:
+            tk = yf.Ticker(info["ticker"])
+            hist = tk.history(period="6mo")
+            if hist.empty:
+                continue
+
+            closes = hist["Close"].dropna()
+            dates = [d.strftime("%Y-%m-%d") for d in closes.index]
+            values = [round(float(v), 2) for v in closes.values]
+
+            current = values[-1] if values else 0
+            prev = values[-2] if len(values) >= 2 else current
+            day_change = round((current - prev) / prev * 100, 2) if prev else 0
+
+            first = values[0] if values else current
+            period_change = round((current - first) / first * 100, 2) if first else 0
+
+            result[key] = {
+                "name": info["name"],
+                "current": current,
+                "day_change": day_change,
+                "period_change": period_change,
+                "dates": dates,
+                "values": values,
+            }
+            print(f"  ✅ {info['name']}: {current:,.2f} ({day_change:+.2f}%)")
+        except Exception as e:
+            print(f"  ⚠️ {info['name']} 실패: {e}")
+
+    return result
 
 
 def collect_dashboard_data() -> dict:
@@ -112,6 +165,9 @@ def collect_dashboard_data() -> dict:
         if reason in exit_types:
             exit_types[reason] += 1
 
+    # 7. 시장 지표 수집
+    market_indices = fetch_market_indices()
+
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "positions": positions,
@@ -120,6 +176,7 @@ def collect_dashboard_data() -> dict:
         "daily_cumulative_pnl": daily_pnl,
         "monthly_performance": monthly_perf,
         "exit_types": exit_types,
+        "market_indices": market_indices,
         "strategy": {
             "current_params": strategy.get("current_params", {}),
             "current_regime": strategy.get("current_regime", "unknown"),
@@ -431,14 +488,28 @@ canvas {{ max-height: 320px; }}
 
 <div class="container">
   <div class="tabs">
-    <button class="tab active" onclick="showTab('positions')">💼 포지션</button>
+    <button class="tab active" onclick="showTab('market')">🌍 시장 현황</button>
+    <button class="tab" onclick="showTab('positions')">💼 포지션</button>
     <button class="tab" onclick="showTab('performance')">📊 성과</button>
     <button class="tab" onclick="showTab('backtest')">🔬 백테스트</button>
     <button class="tab" onclick="showTab('tuning')">🧠 자기학습</button>
   </div>
 
+  <!-- ════ TAB 0: 시장 현황 ════ -->
+  <div id="tab-market" class="tab-content active">
+    <div class="grid grid-4" id="marketCards"></div>
+    <div class="grid grid-2" style="margin-top:16px;">
+      <div class="chart-box"><h3>📈 S&P 500 (6개월)</h3><canvas id="sp500Chart"></canvas></div>
+      <div class="chart-box"><h3>📈 NASDAQ 100 (6개월)</h3><canvas id="nasdaqChart"></canvas></div>
+    </div>
+    <div class="grid grid-2" style="margin-top:16px;">
+      <div class="chart-box"><h3>💱 USD/KRW 환율 (6개월)</h3><canvas id="usdkrwChart"></canvas></div>
+      <div class="chart-box"><h3>🥇 Gold 시세 (6개월)</h3><canvas id="goldChart"></canvas></div>
+    </div>
+  </div>
+
   <!-- ════ TAB 1: 포지션 ════ -->
-  <div id="tab-positions" class="tab-content active">
+  <div id="tab-positions" class="tab-content">
     <div class="grid grid-4" id="statCards"></div>
     <div class="section-title">📌 오픈 포지션</div>
     <div class="table-wrap" id="openPositionsTable"></div>
@@ -508,12 +579,96 @@ function init() {{
   badge.className = 'regime-badge ' + regimeClass(regime);
   badge.textContent = regimeIcon(regime) + ' ' + regime.toUpperCase() + ' (' + Math.round(conf * 100) + '%)';
 
+  renderMarket();
   renderStatCards();
   renderOpenPositions();
   renderHistory();
   renderPerformance();
   renderBacktest();
   renderTuning();
+}}
+
+// ════ TAB 0: 시장 현황 ════
+function renderMarket() {{
+  const mi = D.market_indices || {{}};
+  if (!Object.keys(mi).length) {{
+    document.getElementById('marketCards').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="icon">🌍</div>시장 데이터가 없습니다<br><small style="color:var(--text2)">다음 봇 실행 시 자동 수집됩니다</small></div>';
+    return;
+  }}
+
+  // 카드
+  const icons = {{ sp500: '🇺🇸', nasdaq: '💻', usd_krw: '💱', gold: '🥇' }};
+  const units = {{ sp500: '', nasdaq: '', usd_krw: '₩', gold: '$' }};
+  const fmtPrice = (k, v) => {{
+    if (k === 'usd_krw') return v.toLocaleString('ko-KR', {{maximumFractionDigits:2}});
+    return v.toLocaleString('en-US', {{maximumFractionDigits:2}});
+  }};
+
+  let cards = '';
+  for (const [key, d] of Object.entries(mi)) {{
+    const icon = icons[key] || '📊';
+    const unit = units[key] || '';
+    const dc = d.day_change;
+    const pc = d.period_change;
+    cards += `<div class="card">
+      <div class="card-header">${{icon}} ${{d.name}}</div>
+      <div class="card-value" style="font-size:22px;">${{unit}}${{fmtPrice(key, d.current)}}</div>
+      <div class="card-sub">
+        <span class="${{pnlClass(dc)}}">일간 ${{dc > 0 ? '+' : ''}}${{dc.toFixed(2)}}%</span>
+        &nbsp;·&nbsp;
+        <span class="${{pnlClass(pc)}}">6개월 ${{pc > 0 ? '+' : ''}}${{pc.toFixed(2)}}%</span>
+      </div>
+    </div>`;
+  }}
+  document.getElementById('marketCards').innerHTML = cards;
+
+  // 차트
+  const chartMap = {{ sp500: 'sp500Chart', nasdaq: 'nasdaqChart', usd_krw: 'usdkrwChart', gold: 'goldChart' }};
+  const colors = {{ sp500: '#38bdf8', nasdaq: '#a78bfa', usd_krw: '#fbbf24', gold: '#fb923c' }};
+  const bgColors = {{ sp500: 'rgba(56,189,248,0.08)', nasdaq: 'rgba(167,139,250,0.08)', usd_krw: 'rgba(251,191,36,0.08)', gold: 'rgba(251,146,60,0.08)' }};
+
+  for (const [key, d] of Object.entries(mi)) {{
+    const canvasId = chartMap[key];
+    if (!canvasId || !d.dates?.length) continue;
+
+    const el = document.getElementById(canvasId);
+    if (!el) continue;
+
+    // 라벨을 좀 줄임 (월-일만)
+    const labels = d.dates.map(dt => dt.slice(5));
+
+    new Chart(el, {{
+      type: 'line',
+      data: {{
+        labels: labels,
+        datasets: [{{
+          label: d.name,
+          data: d.values,
+          borderColor: colors[key],
+          backgroundColor: bgColors[key],
+          fill: true,
+          tension: 0.3,
+          pointRadius: 0,
+          pointHitRadius: 8,
+          borderWidth: 2,
+        }}]
+      }},
+      options: {{
+        ...chartOpts(''),
+        plugins: {{
+          legend: {{ display: false }},
+          tooltip: {{
+            mode: 'index',
+            intersect: false,
+            callbacks: {{
+              label: (ctx) => `${{d.name}}: ${{key === 'usd_krw' ? '₩' : '$'}}${{ctx.parsed.y.toLocaleString()}}`
+            }}
+          }},
+        }},
+        interaction: {{ mode: 'nearest', axis: 'x', intersect: false }},
+      }},
+    }});
+  }}
 }}
 
 // ════ TAB 1: 포지션 ════
@@ -823,6 +978,7 @@ def main():
     print(f"✅ 대시보드 생성 완료: {output} ({size_kb:.1f} KB)")
     print(f"   포지션: {len(data['positions'])}개")
     print(f"   이력: {len(data['history'])}건")
+    print(f"   시장지표: {len(data.get('market_indices', {}))}개")
     print(f"   백테스트: {'있음' if data['backtest']['summary'] else '없음'}")
     print(f"   자기학습: {'있음' if data['strategy']['current_params'] else '없음'}")
 
