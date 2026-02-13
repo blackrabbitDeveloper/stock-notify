@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stock Bot Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #0a0e17;
+  --surface: #111827;
+  --surface2: #1a2235;
+  --border: #2a3448;
+  --text: #e2e8f0;
+  --text2: #94a3b8;
+  --accent: #38bdf8;
+  --green: #34d399;
+  --red: #f87171;
+  --yellow: #fbbf24;
+  --purple: #a78bfa;
+  --orange: #fb923c;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-body: 'Noto Sans KR', sans-serif;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+.topbar {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(12px);
+}
+.topbar h1 {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 700;
+  background: linear-gradient(90deg, var(--accent), var(--purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.topbar .meta {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text2);
+}
+.regime-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+}
+.regime-bullish { background: rgba(52,211,153,0.15); color: var(--green); border: 1px solid rgba(52,211,153,0.3); }
+.regime-bearish { background: rgba(248,113,113,0.15); color: var(--red); border: 1px solid rgba(248,113,113,0.3); }
+.regime-sideways { background: rgba(251,191,36,0.15); color: var(--yellow); border: 1px solid rgba(251,191,36,0.3); }
+.regime-unknown,.regime-conservative { background: rgba(148,163,184,0.15); color: var(--text2); border: 1px solid rgba(148,163,184,0.3); }
+
+.container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 20px;
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  overflow-x: auto;
+}
+.tab {
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text2);
+  transition: all 0.2s;
+  white-space: nowrap;
+  border: none;
+  background: none;
+}
+.tab:hover { color: var(--text); background: var(--surface2); }
+.tab.active { background: var(--accent); color: #0a0e17; font-weight: 600; }
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ── 카드 ── */
+.grid { display: grid; gap: 16px; }
+.grid-4 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.grid-3 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.grid-2 { grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+}
+.card-header {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text2);
+  margin-bottom: 8px;
+}
+.card-value {
+  font-family: var(--font-mono);
+  font-size: 28px;
+  font-weight: 700;
+}
+.card-sub {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text2);
+  margin-top: 4px;
+}
+.positive { color: var(--green); }
+.negative { color: var(--red); }
+.neutral { color: var(--yellow); }
+
+/* ── 테이블 ── */
+.table-wrap {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+th {
+  background: var(--surface2);
+  padding: 10px 14px;
+  text-align: left;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text2);
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border);
+}
+td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+tr:hover td { background: rgba(56,189,248,0.04); }
+.status-open { color: var(--accent); }
+.status-take_profit { color: var(--green); }
+.status-stop_loss { color: var(--red); }
+.status-expired { color: var(--yellow); }
+
+.chart-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.chart-box h3 {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text2);
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+canvas { max-height: 320px; }
+
+.weight-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.weight-bar .label { width: 160px; color: var(--text2); text-align: right; }
+.weight-bar .bar {
+  flex: 1;
+  height: 22px;
+  background: var(--surface2);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+.weight-bar .fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+.weight-bar .val {
+  width: 50px;
+  text-align: right;
+  font-weight: 600;
+}
+
+.param-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+.param-item {
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 14px;
+  text-align: center;
+}
+.param-item .label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text2);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.param-item .value {
+  font-family: var(--font-mono);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-top: 4px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text2);
+  font-family: var(--font-mono);
+}
+.empty-state .icon { font-size: 48px; margin-bottom: 16px; }
+
+.section-title {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 24px 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ── 스크롤바 ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text2); }
+
+@media (max-width: 768px) {
+  .grid-4 { grid-template-columns: repeat(2, 1fr); }
+  .grid-2 { grid-template-columns: 1fr; }
+  .topbar { flex-wrap: wrap; gap: 8px; }
+  .tabs { flex-wrap: nowrap; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <h1>📈 Stock Bot Dashboard</h1>
+    <div class="meta" id="lastUpdate"></div>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <span class="regime-badge" id="regimeBadge"></span>
+  </div>
+</div>
+
+<div class="container">
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('positions')">💼 포지션</button>
+    <button class="tab" onclick="showTab('performance')">📊 성과</button>
+    <button class="tab" onclick="showTab('backtest')">🔬 백테스트</button>
+    <button class="tab" onclick="showTab('tuning')">🧠 자기학습</button>
+  </div>
+
+  <!-- ════ TAB 1: 포지션 ════ -->
+  <div id="tab-positions" class="tab-content active">
+    <div class="grid grid-4" id="statCards"></div>
+    <div class="section-title">📌 오픈 포지션</div>
+    <div class="table-wrap" id="openPositionsTable"></div>
+    <div class="section-title">📜 최근 청산 이력</div>
+    <div class="table-wrap" id="historyTable"></div>
+  </div>
+
+  <!-- ════ TAB 2: 성과 ════ -->
+  <div id="tab-performance" class="tab-content">
+    <div class="grid grid-2">
+      <div class="chart-box"><h3>📈 누적 수익률</h3><canvas id="cumulativeChart"></canvas></div>
+      <div class="chart-box"><h3>📊 월별 성과</h3><canvas id="monthlyChart"></canvas></div>
+    </div>
+    <div class="grid grid-2" style="margin-top:16px;">
+      <div class="chart-box"><h3>🎯 청산 유형 비율</h3><canvas id="exitTypeChart"></canvas></div>
+      <div class="chart-box"><h3>📋 월별 상세</h3><div id="monthlyDetailTable"></div></div>
+    </div>
+  </div>
+
+  <!-- ════ TAB 3: 백테스트 ════ -->
+  <div id="tab-backtest" class="tab-content">
+    <div class="grid grid-4" id="btStatCards"></div>
+    <div class="grid grid-2" style="margin-top:16px;">
+      <div class="chart-box"><h3>📡 신호별 성과</h3><canvas id="signalChart"></canvas></div>
+      <div class="chart-box"><h3>🎯 점수 구간별 성과</h3><canvas id="scoreBucketChart"></canvas></div>
+    </div>
+    <div class="chart-box" style="margin-top:16px;"><h3>📅 백테스트 월별 수익</h3><canvas id="btMonthlyChart"></canvas></div>
+  </div>
+
+  <!-- ════ TAB 4: 자기학습 ════ -->
+  <div id="tab-tuning" class="tab-content">
+    <div class="section-title">⚙️ 현재 전략 파라미터</div>
+    <div class="param-grid" id="paramGrid"></div>
+    <div class="section-title" style="margin-top:24px;">📡 신호 가중치</div>
+    <div id="weightBars"></div>
+    <div class="section-title" style="margin-top:24px;">📜 튜닝 이력</div>
+    <div class="table-wrap" id="tuningHistoryTable"></div>
+  </div>
+</div>
+
+<script>
+const D = {"generated_at": "2026-02-13T07:39:13.853386+00:00", "positions": [{"ticker": "MNST", "status": "open", "entry_price": 80.56, "entry_date": "2026-02-12", "atr": 1.4814, "stop_loss": 77.5971, "take_profit": 86.4857, "tech_score": 7.6, "combined_score": 7.02, "exit_price": null, "exit_date": null, "pnl_pct": null, "close_reason": null, "price_history": [{"date": "2026-02-12", "close": 81.17}]}, {"ticker": "WBD", "status": "open", "entry_price": 28.01, "entry_date": "2026-02-12", "atr": 0.4779, "stop_loss": 27.0543, "take_profit": 29.9214, "tech_score": 6.6, "combined_score": 6.62, "exit_price": null, "exit_date": null, "pnl_pct": null, "close_reason": null, "price_history": [{"date": "2026-02-12", "close": 28.11}]}, {"ticker": "ABNB", "status": "open", "entry_price": 119.5, "entry_date": "2026-02-12", "atr": 3.8289, "stop_loss": 111.8421, "take_profit": 134.8157, "tech_score": 5.8, "combined_score": 5.5, "exit_price": null, "exit_date": null, "pnl_pct": null, "close_reason": null, "price_history": [{"date": "2026-02-12", "close": 115.96}]}, {"ticker": "TSLA", "status": "open", "entry_price": 427.5676, "entry_date": "2026-02-12", "atr": 15.6386, "stop_loss": 396.2905, "take_profit": 490.1219, "tech_score": 4.6, "combined_score": 4.41, "exit_price": null, "exit_date": null, "pnl_pct": null, "close_reason": null, "price_history": [{"date": "2026-02-12", "close": 417.07}]}, {"ticker": "ORLY", "status": "open", "entry_price": 93.8175, "entry_date": "2026-02-12", "atr": 2.3943, "stop_loss": 89.0289, "take_profit": 103.3946, "tech_score": 4.8, "combined_score": 4.08, "exit_price": null, "exit_date": null, "pnl_pct": null, "close_reason": null, "price_history": [{"date": "2026-02-12", "close": 95.21}]}, {"ticker": "ISRG", "status": "open", "entry_price": 496.88, "entry_date": "2026-02-12", "atr": 13.3021, "stop_loss": 470.2757, "take_profit": 550.0885, "tech_score": 4.6, "combined_score": 3.91, "exit_price": null, "exit_date": null, "pnl_pct": null, "close_reason": null, "price_history": [{"date": "2026-02-12", "close": 478.6}]}, {"ticker": "TMUS", "status": "open", "entry_price": 209.6228, "entry_date": "2026-02-12", "atr": 5.93, "stop_loss": 197.7628, "take_profit": 233.3428, "tech_score": 4.27, "combined_score": 3.63, "exit_price": null, "exit_date": null, "pnl_pct": null, "close_reason": null, "price_history": [{"date": "2026-02-12", "close": 214.68}]}], "stats": {"total_trades": 0, "wins": 0, "losses": 0, "expired": 0, "total_pnl_pct": 0.0, "win_rate": 0.0, "avg_pnl_pct": 0.0, "best_trade": null, "worst_trade": null, "last_updated": null}, "history": [], "daily_cumulative_pnl": {}, "monthly_performance": {}, "exit_types": {"take_profit": 0, "stop_loss": 0, "expired": 0}, "strategy": {"current_params": {}, "current_regime": "unknown", "regime_confidence": 0, "last_tuned_at": ""}, "signal_weights": {}, "tuning_history": [], "backtest": {"summary": {}, "signal_performance": [], "monthly_returns": [], "score_buckets": []}};
+
+// ── 유틸 ──
+const fmt = (v, d=2) => v != null ? Number(v).toFixed(d) : '—';
+const pnlClass = v => v > 0 ? 'positive' : v < 0 ? 'negative' : 'neutral';
+const pnlSign = v => v > 0 ? '+' + fmt(v) : fmt(v);
+const regimeIcon = r => ({bullish:'🐂',bearish:'🐻',sideways:'📊',conservative:'🛡️'})[r] || '❓';
+const regimeClass = r => 'regime-' + (r || 'unknown');
+
+// ── 탭 전환 ──
+function showTab(id) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ── 초기화 ──
+function init() {
+  // 상단바
+  const gen = D.generated_at ? new Date(D.generated_at) : new Date();
+  document.getElementById('lastUpdate').textContent = '갱신: ' + gen.toLocaleString('ko-KR');
+  const regime = D.strategy?.current_regime || 'unknown';
+  const conf = D.strategy?.regime_confidence || 0;
+  const badge = document.getElementById('regimeBadge');
+  badge.className = 'regime-badge ' + regimeClass(regime);
+  badge.textContent = regimeIcon(regime) + ' ' + regime.toUpperCase() + ' (' + Math.round(conf * 100) + '%)';
+
+  renderStatCards();
+  renderOpenPositions();
+  renderHistory();
+  renderPerformance();
+  renderBacktest();
+  renderTuning();
+}
+
+// ════ TAB 1: 포지션 ════
+function renderStatCards() {
+  const s = D.stats || {};
+  const openCount = (D.positions || []).filter(p => p.status === 'open').length;
+  const html = [
+    statCard('오픈 포지션', openCount, '', 'accent'),
+    statCard('총 거래', s.total_trades || 0, `승 ${s.wins||0} / 패 ${s.losses||0}`, ''),
+    statCard('승률', fmt(s.win_rate||0,1)+'%', `만료 ${s.expired||0}건`, pnlClass(s.win_rate-50)),
+    statCard('누적 수익', pnlSign(s.total_pnl_pct||0)+'%', `평균 ${pnlSign(s.avg_pnl_pct||0)}%`, pnlClass(s.total_pnl_pct)),
+  ].join('');
+  document.getElementById('statCards').innerHTML = html;
+}
+
+function statCard(title, value, sub, cls) {
+  return `<div class="card"><div class="card-header">${title}</div><div class="card-value ${cls}">${value}</div><div class="card-sub">${sub}</div></div>`;
+}
+
+function renderOpenPositions() {
+  const open = (D.positions || []).filter(p => p.status === 'open');
+  if (!open.length) {
+    document.getElementById('openPositionsTable').innerHTML = '<div class="empty-state"><div class="icon">📭</div>오픈 포지션이 없습니다</div>';
+    return;
+  }
+  let html = '<table><thead><tr><th>종목</th><th>진입가</th><th>현재가</th><th>P&L</th><th>손절</th><th>익절</th><th>점수</th><th>진입일</th></tr></thead><tbody>';
+  for (const p of open) {
+    const last = p.price_history?.length ? p.price_history[p.price_history.length-1].close : p.entry_price;
+    const pnl = ((last - p.entry_price) / p.entry_price * 100);
+    html += `<tr>
+      <td><strong>${p.ticker}</strong></td>
+      <td>${fmt(p.entry_price)}</td>
+      <td>${fmt(last)}</td>
+      <td class="${pnlClass(pnl)}"><strong>${pnlSign(pnl)}%</strong></td>
+      <td class="negative">${fmt(p.stop_loss)}</td>
+      <td class="positive">${fmt(p.take_profit)}</td>
+      <td>${fmt(p.tech_score,1)}</td>
+      <td>${p.entry_date}</td>
+    </tr>`;
+  }
+  html += '</tbody></table>';
+  document.getElementById('openPositionsTable').innerHTML = html;
+}
+
+function renderHistory() {
+  const hist = (D.history || []).slice().reverse().slice(0, 30);
+  if (!hist.length) {
+    document.getElementById('historyTable').innerHTML = '<div class="empty-state"><div class="icon">📜</div>청산 이력이 없습니다</div>';
+    return;
+  }
+  let html = '<table><thead><tr><th>종목</th><th>진입</th><th>청산</th><th>P&L</th><th>유형</th><th>보유일</th><th>진입일</th></tr></thead><tbody>';
+  for (const h of hist) {
+    const reason = h.close_reason || '';
+    html += `<tr>
+      <td><strong>${h.ticker}</strong></td>
+      <td>${fmt(h.entry_price)}</td>
+      <td>${fmt(h.exit_price)}</td>
+      <td class="${pnlClass(h.pnl_pct)}"><strong>${pnlSign(h.pnl_pct)}%</strong></td>
+      <td class="status-${reason}">${{take_profit:'✅ 익절',stop_loss:'🛑 손절',expired:'⏰ 만료'}[reason]||reason}</td>
+      <td>${h.hold_days||'—'}</td>
+      <td>${h.entry_date}</td>
+    </tr>`;
+  }
+  html += '</tbody></table>';
+  document.getElementById('historyTable').innerHTML = html;
+}
+
+// ════ TAB 2: 성과 ════
+function renderPerformance() {
+  // 누적 수익 차트
+  const cumData = D.daily_cumulative_pnl || {};
+  const dates = Object.keys(cumData).sort();
+  if (dates.length > 0) {
+    new Chart(document.getElementById('cumulativeChart'), {
+      type: 'line',
+      data: {
+        labels: dates,
+        datasets: [{
+          label: '누적 수익률 (%)',
+          data: dates.map(d => cumData[d]),
+          borderColor: '#38bdf8',
+          backgroundColor: 'rgba(56,189,248,0.1)',
+          fill: true,
+          tension: 0.3,
+          pointRadius: dates.length > 30 ? 0 : 3,
+        }]
+      },
+      options: chartOpts(''),
+    });
+  }
+
+  // 월별 성과 차트
+  const mp = D.monthly_performance || {};
+  const months = Object.keys(mp).sort();
+  if (months.length > 0) {
+    new Chart(document.getElementById('monthlyChart'), {
+      type: 'bar',
+      data: {
+        labels: months,
+        datasets: [{
+          label: '월 수익률 (%)',
+          data: months.map(m => mp[m].total_pnl),
+          backgroundColor: months.map(m => mp[m].total_pnl >= 0 ? 'rgba(52,211,153,0.7)' : 'rgba(248,113,113,0.7)'),
+          borderRadius: 4,
+        }]
+      },
+      options: chartOpts(''),
+    });
+
+    // 월별 상세 테이블
+    let mhtml = '<table><thead><tr><th>월</th><th>거래</th><th>승률</th><th>수익</th></tr></thead><tbody>';
+    for (const m of months) {
+      const d = mp[m];
+      mhtml += `<tr><td>${m}</td><td>${d.trades}</td><td>${d.win_rate}%</td><td class="${pnlClass(d.total_pnl)}">${pnlSign(d.total_pnl)}%</td></tr>`;
+    }
+    mhtml += '</tbody></table>';
+    document.getElementById('monthlyDetailTable').innerHTML = mhtml;
+  }
+
+  // 청산 유형 도넛
+  const et = D.exit_types || {};
+  const total = (et.take_profit||0) + (et.stop_loss||0) + (et.expired||0);
+  if (total > 0) {
+    new Chart(document.getElementById('exitTypeChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ['익절', '손절', '만료'],
+        datasets: [{
+          data: [et.take_profit||0, et.stop_loss||0, et.expired||0],
+          backgroundColor: ['#34d399', '#f87171', '#fbbf24'],
+          borderWidth: 0,
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'bottom', labels: { color: '#94a3b8', font: { family: "'JetBrains Mono'" } } },
+        },
+      },
+    });
+  }
+}
+
+// ════ TAB 3: 백테스트 ════
+function renderBacktest() {
+  const bt = D.backtest?.summary || {};
+  if (!bt.total_trades) {
+    document.getElementById('btStatCards').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="icon">🔬</div>백테스트 데이터가 없습니다</div>';
+    return;
+  }
+
+  document.getElementById('btStatCards').innerHTML = [
+    statCard('총 거래', bt.total_trades, `승률 ${fmt(bt.win_rate,1)}%`, ''),
+    statCard('Profit Factor', fmt(bt.profit_factor), `기대값 ${pnlSign(bt.expected_value_pct)}%`, pnlClass(bt.profit_factor-1)),
+    statCard('샤프 비율', fmt(bt.sharpe_ratio), `MDD ${fmt(bt.portfolio_max_drawdown_pct,1)}%`, pnlClass(bt.sharpe_ratio)),
+    statCard('누적 수익', pnlSign(bt.total_pnl_pct)+'%', `평균 ${pnlSign(bt.avg_pnl_pct)}%`, pnlClass(bt.total_pnl_pct)),
+  ].join('');
+
+  // 신호별 성과
+  const sp = D.backtest?.signal_performance || [];
+  if (sp.length) {
+    const sorted = sp.slice().sort((a,b) => (b.avg_pnl||0) - (a.avg_pnl||0));
+    new Chart(document.getElementById('signalChart'), {
+      type: 'bar',
+      data: {
+        labels: sorted.map(s => s.signal),
+        datasets: [
+          {
+            label: '평균 수익 (%)',
+            data: sorted.map(s => s.avg_pnl),
+            backgroundColor: sorted.map(s => s.avg_pnl >= 0 ? 'rgba(52,211,153,0.7)' : 'rgba(248,113,113,0.7)'),
+            borderRadius: 4,
+          },
+        ]
+      },
+      options: { ...chartOpts(''), indexAxis: 'y' },
+    });
+  }
+
+  // 점수 구간별
+  const sb = D.backtest?.score_buckets || [];
+  if (sb.length) {
+    new Chart(document.getElementById('scoreBucketChart'), {
+      type: 'bar',
+      data: {
+        labels: sb.map(s => s.range),
+        datasets: [
+          { label: '승률 (%)', data: sb.map(s => s.win_rate), backgroundColor: 'rgba(56,189,248,0.6)', borderRadius: 4 },
+          { label: '평균수익 (%)', data: sb.map(s => s.avg_pnl), backgroundColor: 'rgba(167,139,250,0.6)', borderRadius: 4 },
+        ]
+      },
+      options: chartOpts(''),
+    });
+  }
+
+  // 백테스트 월별
+  const bm = D.backtest?.monthly_returns || [];
+  if (bm.length) {
+    new Chart(document.getElementById('btMonthlyChart'), {
+      type: 'bar',
+      data: {
+        labels: bm.map(m => m.month),
+        datasets: [{
+          label: '월 수익 (%)',
+          data: bm.map(m => m.total_pnl_pct),
+          backgroundColor: bm.map(m => m.total_pnl_pct >= 0 ? 'rgba(52,211,153,0.7)' : 'rgba(248,113,113,0.7)'),
+          borderRadius: 4,
+        }]
+      },
+      options: chartOpts(''),
+    });
+  }
+}
+
+// ════ TAB 4: 자기학습 ════
+function renderTuning() {
+  const params = D.strategy?.current_params || {};
+  const paramLabels = {
+    top_n: '일별 선택 종목',
+    min_tech_score: '최소 기술 점수',
+    atr_stop_mult: '손절 ATR 배수',
+    atr_tp_mult: '익절 ATR 배수',
+    max_hold_days: '최대 보유일',
+  };
+  let phtml = '';
+  for (const [k, v] of Object.entries(params)) {
+    phtml += `<div class="param-item"><div class="label">${paramLabels[k]||k}</div><div class="value">${v}</div></div>`;
+  }
+  document.getElementById('paramGrid').innerHTML = phtml || '<div class="empty-state">파라미터 없음</div>';
+
+  // 신호 가중치 바
+  const w = D.signal_weights || {};
+  const wKeys = Object.keys(w).sort((a,b) => w[b] - w[a]);
+  let whtml = '';
+  for (const k of wKeys) {
+    const v = w[k];
+    const pct = Math.min(100, (v / 2.5) * 100);
+    const color = v > 1.2 ? 'var(--green)' : v < 0.8 ? 'var(--red)' : 'var(--accent)';
+    whtml += `<div class="weight-bar">
+      <span class="label">${k}</span>
+      <div class="bar"><div class="fill" style="width:${pct}%;background:${color}"></div></div>
+      <span class="val" style="color:${color}">${v.toFixed(2)}</span>
+    </div>`;
+  }
+  document.getElementById('weightBars').innerHTML = whtml || '<div class="empty-state">가중치 데이터 없음</div>';
+
+  // 튜닝 이력 테이블
+  const th = (D.tuning_history || []).slice().reverse();
+  if (th.length) {
+    let thtml = '<table><thead><tr><th>날짜</th><th>레짐</th><th>거래</th><th>승률</th><th>PF</th><th>변경</th></tr></thead><tbody>';
+    for (const t of th) {
+      const s = t.summary || {};
+      const pc = Object.keys(t.param_changes||{}).length;
+      const wc = Object.keys(t.weight_changes||{}).length;
+      thtml += `<tr>
+        <td>${(t.timestamp||'').slice(0,10)}</td>
+        <td><span class="regime-badge ${regimeClass(t.regime)}" style="font-size:11px;padding:2px 8px;">${regimeIcon(t.regime)} ${t.regime}</span></td>
+        <td>${s.total_trades||'—'}</td>
+        <td>${fmt(s.win_rate,1)}%</td>
+        <td>${fmt(s.profit_factor)}</td>
+        <td>파라미터 ${pc}건, 가중치 ${wc}건</td>
+      </tr>`;
+    }
+    thtml += '</tbody></table>';
+    document.getElementById('tuningHistoryTable').innerHTML = thtml;
+  } else {
+    document.getElementById('tuningHistoryTable').innerHTML = '<div class="empty-state"><div class="icon">🧠</div>튜닝 이력이 없습니다</div>';
+  }
+}
+
+// ── Chart.js 공통 옵션 ──
+function chartOpts(yLabel) {
+  return {
+    responsive: true,
+    maintainAspectRatio: true,
+    scales: {
+      x: { ticks: { color: '#64748b', font: { family: "'JetBrains Mono'", size: 10 } }, grid: { color: 'rgba(42,52,72,0.5)' } },
+      y: { ticks: { color: '#64748b', font: { family: "'JetBrains Mono'", size: 10 } }, grid: { color: 'rgba(42,52,72,0.5)' },
+           title: yLabel ? { display:true, text:yLabel, color:'#94a3b8' } : {} },
+    },
+    plugins: {
+      legend: { labels: { color: '#94a3b8', font: { family: "'JetBrains Mono'" } } },
+    },
+  };
+}
+
+init();
+</script>
+</body>
+</html>
