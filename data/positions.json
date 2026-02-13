@@ -14,7 +14,12 @@
       "exit_date": null,
       "pnl_pct": null,
       "close_reason": null,
-      "price_history": []
+      "price_history": [
+        {
+          "date": "2026-02-12",
+          "close": 81.17
+        }
+      ]
     },
     {
       "ticker": "WBD",
@@ -30,7 +35,12 @@
       "exit_date": null,
       "pnl_pct": null,
       "close_reason": null,
-      "price_history": []
+      "price_history": [
+        {
+          "date": "2026-02-12",
+          "close": 28.11
+        }
+      ]
     },
     {
       "ticker": "ABNB",
@@ -46,7 +56,12 @@
       "exit_date": null,
       "pnl_pct": null,
       "close_reason": null,
-      "price_history": []
+      "price_history": [
+        {
+          "date": "2026-02-12",
+          "close": 115.96
+        }
+      ]
     },
     {
       "ticker": "TSLA",
@@ -62,7 +77,12 @@
       "exit_date": null,
       "pnl_pct": null,
       "close_reason": null,
-      "price_history": []
+      "price_history": [
+        {
+          "date": "2026-02-12",
+          "close": 417.07
+        }
+      ]
     },
     {
       "ticker": "ORLY",
@@ -78,7 +98,12 @@
       "exit_date": null,
       "pnl_pct": null,
       "close_reason": null,
-      "price_history": []
+      "price_history": [
+        {
+          "date": "2026-02-12",
+          "close": 95.21
+        }
+      ]
     },
     {
       "ticker": "ISRG",
@@ -94,7 +119,12 @@
       "exit_date": null,
       "pnl_pct": null,
       "close_reason": null,
-      "price_history": []
+      "price_history": [
+        {
+          "date": "2026-02-12",
+          "close": 478.6
+        }
+      ]
     },
     {
       "ticker": "TMUS",
@@ -110,7 +140,12 @@
       "exit_date": null,
       "pnl_pct": null,
       "close_reason": null,
-      "price_history": []
+      "price_history": [
+        {
+          "date": "2026-02-12",
+          "close": 214.68
+        }
+      ]
     }
   ],
   "stats": {
