@@ -581,18 +581,37 @@ def calculate_confirmation_score(analysis: Dict) -> int:
 # 종합 기술 점수 v2
 # ──────────────────────────────────────────────
 
+def _load_signal_weights() -> Dict:
+    """config/signal_weights.json에서 가중치 로드. 없으면 기본값 1.0."""
+    import json
+    from pathlib import Path
+    path = Path("config/signal_weights.json")
+    if path.exists():
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {}
+
+
 def calculate_technical_score(analysis: Dict) -> float:
     """
-    기술적 분석 점수 v2 (0~10)
+    기술적 분석 점수 v3 (0~10)
 
     개선 핵심:
     ① 진입 타이밍 패턴 (눌림목·돌파·다이버전스) 가중치 ↑
     ② 후행 지표 (골든크로스·정배열) 가중치 ↓
     ③ 과열 종목 강력 페널티
     ④ R:R 비율 반영
+    ⑤ signal_weights.json 기반 동적 가중치 적용 (자동 튜닝)
     """
     if not analysis:
         return 0.0
+
+    sw = _load_signal_weights()  # 동적 가중치
+    def w(key: str) -> float:
+        return sw.get(key, 1.0)
 
     score = 0.0
 
@@ -600,37 +619,37 @@ def calculate_technical_score(analysis: Dict) -> float:
 
     # A1. 눌림목 매수 (pullback to support)
     pullback = analysis.get('pullback', {})
-    score += pullback.get('pullback_score', 0.0)  # 최대 +2.5
+    score += pullback.get('pullback_score', 0.0) * w('pullback_score')
 
     # A2. 거래량 돌파
     breakout = analysis.get('breakout', {})
-    score += breakout.get('breakout_score', 0.0)  # 최대 +3.0
+    score += breakout.get('breakout_score', 0.0) * w('breakout_score')
 
     # A3. RSI 강세 다이버전스
     divergence = analysis.get('divergence', {})
-    score += divergence.get('divergence_score', 0.0)  # +2.0 또는 -1.5
+    score += divergence.get('divergence_score', 0.0) * w('divergence_score')
 
     # A4. 스토캐스틱 과매도 반등
     if analysis.get('stoch_oversold', False) and analysis.get('stoch_cross_up', False):
-        score += 1.5
+        score += 1.5 * w('stoch_cross_up')
     elif analysis.get('stoch_cross_up', False):
-        score += 0.5
+        score += 0.5 * w('stoch_cross_up')
 
     # ──── B. 추세 확인 신호 (최대 +3.0, 보조) ────
 
     # B1. 골든크로스 / 데드크로스
     if analysis.get('golden_cross', False):
-        score += 1.0  # 이전 2.5 → 1.0 (후행 지표 비중 축소)
+        score += 1.0 * w('golden_cross')
     elif analysis.get('dead_cross', False):
         score -= 2.0
 
     # B2. 이평선 정배열 (추세 확인용)
     if analysis.get('ma_alignment', False):
-        score += 0.8  # 이전 1.5 → 0.8
+        score += 0.8 * w('ma_alignment')
 
     # B3. MACD
     if analysis.get('macd_cross_up', False):
-        score += 1.0  # 이전 1.8 → 1.0
+        score += 1.0 * w('macd_cross_up')
     elif analysis.get('macd_cross_down', False):
         score -= 1.5
 
@@ -640,13 +659,13 @@ def calculate_technical_score(analysis: Dict) -> float:
     # ──── C. 거래량 확인 (최대 +2.0) ────
 
     if analysis.get('bullish_volume', False):
-        score += 1.5  # 이전 2.0 → 1.5
+        score += 1.5 * w('bullish_volume')
     elif analysis.get('volume_ratio', 1) > 2.0:
         score += 0.5
 
     # OBV 상승 (거래량 흐름 긍정)
     if analysis.get('obv_rising', False):
-        score += 0.5
+        score += 0.5 * w('obv_rising')
 
     # ──── D. 과열 페널티 (최대 -5.0) ────
     # 돌파 감지 시 RSI/BB 과열 페널티 완화 (돌파 시 RSI가 높은 건 자연스러움)
@@ -658,7 +677,7 @@ def calculate_technical_score(analysis: Dict) -> float:
     elif rsi > 70:
         score -= 0.5 if is_breakout else 1.5
     elif 30 < rsi < 50:  # 과매도 탈출 구간 (반등 유리)
-        score += 0.8
+        score += 0.8 * w('rsi_oversold_bounce')
     elif 50 <= rsi < 60:  # 중립 회복 구간
         score += 0.3
 
@@ -690,18 +709,18 @@ def calculate_technical_score(analysis: Dict) -> float:
     # ──── E. 추세 강도 & 볼린저 스퀴즈 ────
 
     if analysis.get('strong_trend', False):
-        score += 0.5
+        score += 0.5 * w('strong_trend')
 
     # 볼린저 스퀴즈 후 돌파 (폭발 직전)
     if analysis.get('bb_squeeze', False) and analysis.get('breakout', {}).get('breakout_detected', False):
-        score += 1.5
+        score += 1.5 * w('bb_squeeze_breakout')
 
     # ──── F. R:R 비율 보너스 ────
     rr = analysis.get('risk_reward', {}).get('risk_reward_ratio', 0)
     if rr >= 3.0:
-        score += 1.0
+        score += 1.0 * w('rr_bonus')
     elif rr >= 2.0:
-        score += 0.5
+        score += 0.5 * w('rr_bonus')
     elif 0 < rr < 1.0:
         score -= 0.5
 

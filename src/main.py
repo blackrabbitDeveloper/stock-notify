@@ -14,7 +14,28 @@ load_dotenv()
 
 def load_cfg():
     with open("config/universe.yaml", "r", encoding="utf-8") as f:
-        return yaml.safe_load(f)
+        cfg = yaml.safe_load(f)
+
+    # 자기 학습된 파라미터 오버라이드 (strategy_state.json)
+    import json
+    from pathlib import Path
+    state_path = Path("config/strategy_state.json")
+    if state_path.exists():
+        try:
+            with open(state_path, "r", encoding="utf-8") as f:
+                state = json.load(f)
+            tuned = state.get("current_params", {})
+            auto = cfg.get("auto", {})
+            for key in ["min_tech_score", "atr_stop_mult", "atr_tp_mult", "max_hold_days", "top_n"]:
+                if key in tuned:
+                    auto[key] = tuned[key]
+            cfg["auto"] = auto
+            regime = state.get("current_regime", "unknown")
+            print(f"  🧠 자기 학습 파라미터 적용 (레짐: {regime})")
+        except Exception as e:
+            print(f"  ⚠️ strategy_state.json 로드 실패: {e}")
+
+    return cfg
 
 def resolve_universe(cfg):
     if (cfg.get("mode", "static")).lower() == "auto":
@@ -24,6 +45,13 @@ def resolve_universe(cfg):
 
 def run_once():
     cfg = load_cfg()
+    auto = cfg.get("auto", {})
+
+    # 자동 튜닝된 파라미터 적용 (기본값 폴백)
+    atr_stop_mult  = float(auto.get("atr_stop_mult", 2.0))
+    atr_tp_mult    = float(auto.get("atr_tp_mult", 4.0))
+    max_hold_days  = int(auto.get("max_hold_days", 7))
+    top_n_override = int(auto.get("top_n", 5))
 
     # ─────────────────────────────────────────────────────────
     # STEP 1: 기존 포지션 업데이트 (장 마감 후 전일 종가 기준)
