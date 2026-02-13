@@ -59,7 +59,10 @@ def fetch_market_indices() -> dict:
     """S&P500, 나스닥100, 원-달러 환율, 금 시세 데이터 수집 (최근 6개월)."""
     if not HAS_YFINANCE:
         print("  ⚠️ yfinance 미설치 — 시장 지표 스킵")
+        print("    → pip install yfinance 로 설치하세요")
         return {}
+
+    print(f"  yfinance 버전: {yf.__version__}")
 
     symbols = {
         "sp500":    {"ticker": "^GSPC",   "name": "S&P 500"},
@@ -69,24 +72,77 @@ def fetch_market_indices() -> dict:
     }
 
     result = {}
-    for key, info in symbols.items():
-        try:
-            tk = yf.Ticker(info["ticker"])
-            hist = tk.history(period="6mo")
-            if hist.empty:
-                continue
 
-            closes = hist["Close"].dropna()
+    # 방법 1: yf.download()로 한번에 다운로드 (더 안정적)
+    tickers_str = " ".join(info["ticker"] for info in symbols.values())
+    try:
+        print(f"  📡 yf.download() 시도: {tickers_str}")
+        df_all = yf.download(tickers_str, period="6mo", progress=False, auto_adjust=True)
+        print(f"  📡 다운로드 결과: shape={df_all.shape if not df_all.empty else 'EMPTY'}")
+
+        if not df_all.empty:
+            for key, info in symbols.items():
+                try:
+                    ticker = info["ticker"]
+                    # yf.download() 다중 티커일 때 컬럼이 MultiIndex
+                    if isinstance(df_all.columns, __import__('pandas').MultiIndex):
+                        if ("Close", ticker) in df_all.columns:
+                            closes = df_all[("Close", ticker)].dropna()
+                        else:
+                            print(f"  ⚠️ {info['name']}: 컬럼 없음 — Ticker 방식 시도")
+                            closes = _fetch_single_ticker(info)
+                            if closes is None:
+                                continue
+                    else:
+                        # 단일 티커인 경우
+                        closes = df_all["Close"].dropna()
+
+                    dates = [d.strftime("%Y-%m-%d") for d in closes.index]
+                    values = [round(float(v), 2) for v in closes.values]
+
+                    if not values:
+                        print(f"  ⚠️ {info['name']}: 빈 데이터")
+                        continue
+
+                    current = values[-1]
+                    prev = values[-2] if len(values) >= 2 else current
+                    day_change = round((current - prev) / prev * 100, 2) if prev else 0
+
+                    first = values[0]
+                    period_change = round((current - first) / first * 100, 2) if first else 0
+
+                    result[key] = {
+                        "name": info["name"],
+                        "current": current,
+                        "day_change": day_change,
+                        "period_change": period_change,
+                        "dates": dates,
+                        "values": values,
+                    }
+                    print(f"  ✅ {info['name']}: {current:,.2f} ({day_change:+.2f}%) [{len(values)}일]")
+                except Exception as e:
+                    print(f"  ⚠️ {info['name']} 파싱 실패: {e}")
+    except Exception as e:
+        print(f"  ⚠️ yf.download() 실패: {e}")
+        print("  📡 개별 Ticker 방식으로 폴백...")
+
+    # 방법 2: 실패한 항목에 대해 개별 Ticker 방식으로 재시도
+    for key, info in symbols.items():
+        if key in result:
+            continue
+        try:
+            closes = _fetch_single_ticker(info)
+            if closes is None:
+                continue
             dates = [d.strftime("%Y-%m-%d") for d in closes.index]
             values = [round(float(v), 2) for v in closes.values]
-
-            current = values[-1] if values else 0
+            if not values:
+                continue
+            current = values[-1]
             prev = values[-2] if len(values) >= 2 else current
             day_change = round((current - prev) / prev * 100, 2) if prev else 0
-
-            first = values[0] if values else current
+            first = values[0]
             period_change = round((current - first) / first * 100, 2) if first else 0
-
             result[key] = {
                 "name": info["name"],
                 "current": current,
@@ -95,11 +151,28 @@ def fetch_market_indices() -> dict:
                 "dates": dates,
                 "values": values,
             }
-            print(f"  ✅ {info['name']}: {current:,.2f} ({day_change:+.2f}%)")
+            print(f"  ✅ {info['name']} (Ticker방식): {current:,.2f} ({day_change:+.2f}%)")
         except Exception as e:
-            print(f"  ⚠️ {info['name']} 실패: {e}")
+            print(f"  ⚠️ {info['name']} Ticker방식도 실패: {e}")
 
+    print(f"  📊 시장 지표 수집 완료: {len(result)}/4개")
     return result
+
+
+def _fetch_single_ticker(info: dict):
+    """개별 Ticker 방식으로 데이터 수집 (폴백용)."""
+    import traceback
+    try:
+        tk = yf.Ticker(info["ticker"])
+        hist = tk.history(period="6mo")
+        if hist.empty:
+            print(f"  ⚠️ {info['name']}: Ticker.history() 빈 결과")
+            return None
+        return hist["Close"].dropna()
+    except Exception as e:
+        print(f"  ⚠️ {info['name']} Ticker 실패: {e}")
+        traceback.print_exc()
+        return None
 
 
 def collect_dashboard_data() -> dict:
