@@ -49,17 +49,21 @@ jobs:
           MAX_TICKERS:             ${{ vars.MAX_TICKERS }}
         run: python -m src.main
 
-      # positions.json + history.json 변경사항 자동 커밋
-      - name: Commit positions data
+      # 대시보드 HTML 생성
+      - name: Generate dashboard
+        run: python generate_dashboard.py
+
+      # positions.json + history.json + 대시보드 변경사항 자동 커밋
+      - name: Commit positions & dashboard
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git add data/positions.json data/history.json
+          git add data/positions.json data/history.json docs/
 
           if git diff --staged --quiet; then
             echo "No changes to data files, skipping commit"
           else
-            git commit -m "chore: update positions & history $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git commit -m "chore: update positions & dashboard $(date -u +'%Y-%m-%d %H:%M UTC')"
             git push
           fi
