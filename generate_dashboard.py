@@ -373,6 +373,15 @@ body {{
 .tab.active {{ background: var(--accent); color: #0a0e17; font-weight: 600; }}
 
 .tab-content {{ display: none; }}
+
+.period-btns {{ display: flex; gap: 4px; }}
+.period-btn {{
+  padding: 5px 14px; border-radius: 6px; cursor: pointer;
+  font-size: 12px; color: var(--text2); border: 1px solid var(--surface2);
+  background: var(--surface); transition: all 0.2s; font-family: var(--font-mono);
+}}
+.period-btn:hover {{ color: var(--text); border-color: var(--accent); }}
+.period-btn.active {{ background: var(--accent); color: #0a0e17; border-color: var(--accent); font-weight: 600; }}
 .tab-content.active {{ display: block; }}
 
 /* ── 카드 ── */
@@ -570,14 +579,26 @@ canvas {{ max-height: 320px; }}
 
   <!-- ════ TAB 0: 시장 현황 ════ -->
   <div id="tab-market" class="tab-content active">
-    <div class="grid grid-4" id="marketCards"></div>
-    <div class="grid grid-2" style="margin-top:16px;">
-      <div class="chart-box"><h3>📈 S&P 500 (6개월)</h3><canvas id="sp500Chart"></canvas></div>
-      <div class="chart-box"><h3>📈 NASDAQ 100 (6개월)</h3><canvas id="nasdaqChart"></canvas></div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
+      <span style="color:var(--text2);font-size:14px;">📅 기간:</span>
+      <div class="period-btns" id="periodBtns">
+        <button class="period-btn" data-range="1mo" onclick="switchPeriod('1mo')">1개월</button>
+        <button class="period-btn" data-range="3mo" onclick="switchPeriod('3mo')">3개월</button>
+        <button class="period-btn active" data-range="6mo" onclick="switchPeriod('6mo')">6개월</button>
+        <button class="period-btn" data-range="1y" onclick="switchPeriod('1y')">1년</button>
+      </div>
+      <span id="marketStatus" style="color:var(--text2);font-size:12px;margin-left:auto;"></span>
+    </div>
+    <div class="grid grid-4" id="marketCards">
+      <div class="empty-state" style="grid-column:1/-1"><div class="icon">⏳</div>시장 데이터 로딩 중...</div>
     </div>
     <div class="grid grid-2" style="margin-top:16px;">
-      <div class="chart-box"><h3>💱 USD/KRW 환율 (6개월)</h3><canvas id="usdkrwChart"></canvas></div>
-      <div class="chart-box"><h3>🥇 Gold 시세 (6개월)</h3><canvas id="goldChart"></canvas></div>
+      <div class="chart-box"><h3 id="sp500Title">📈 S&P 500</h3><canvas id="sp500Chart"></canvas></div>
+      <div class="chart-box"><h3 id="nasdaqTitle">📈 NASDAQ 100</h3><canvas id="nasdaqChart"></canvas></div>
+    </div>
+    <div class="grid grid-2" style="margin-top:16px;">
+      <div class="chart-box"><h3 id="usdkrwTitle">💱 USD/KRW 환율</h3><canvas id="usdkrwChart"></canvas></div>
+      <div class="chart-box"><h3 id="goldTitle">🥇 Gold 시세</h3><canvas id="goldChart"></canvas></div>
     </div>
   </div>
 
@@ -661,64 +682,129 @@ function init() {{
   renderTuning();
 }}
 
-// ════ TAB 0: 시장 현황 ════
-function renderMarket() {{
-  const mi = D.market_indices || {{}};
-  if (!Object.keys(mi).length) {{
-    document.getElementById('marketCards').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="icon">🌍</div>시장 데이터가 없습니다<br><small style="color:var(--text2)">다음 봇 실행 시 자동 수집됩니다</small></div>';
+// ════ TAB 0: 시장 현황 (실시간 API) ════
+const MARKET_CFG = {{
+  sp500:   {{ ticker: '%5EGSPC', name: 'S&P 500',    icon: '🇺🇸', unit: '',  color: '#38bdf8', bg: 'rgba(56,189,248,0.08)',  canvas: 'sp500Chart',  title: 'sp500Title' }},
+  nasdaq:  {{ ticker: '%5ENDX',  name: 'NASDAQ 100', icon: '💻', unit: '',  color: '#a78bfa', bg: 'rgba(167,139,250,0.08)', canvas: 'nasdaqChart', title: 'nasdaqTitle' }},
+  usd_krw: {{ ticker: 'KRW%3DX', name: 'USD/KRW',   icon: '💱', unit: '₩', color: '#fbbf24', bg: 'rgba(251,191,36,0.08)',  canvas: 'usdkrwChart', title: 'usdkrwTitle' }},
+  gold:    {{ ticker: 'GC%3DF',  name: 'Gold',       icon: '🥇', unit: '$', color: '#fb923c', bg: 'rgba(251,146,60,0.08)',  canvas: 'goldChart',   title: 'goldTitle' }},
+}};
+let marketCharts = {{}};
+let currentPeriod = '6mo';
+const periodLabels = {{ '1mo': '1개월', '3mo': '3개월', '6mo': '6개월', '1y': '1년' }};
+
+function switchPeriod(range) {{
+  currentPeriod = range;
+  document.querySelectorAll('.period-btn').forEach(b => b.classList.toggle('active', b.dataset.range === range));
+  fetchMarketData(range);
+}}
+
+async function fetchYahoo(ticker, range) {{
+  const intervals = {{ '1mo': '1d', '3mo': '1d', '6mo': '1d', '1y': '1wk' }};
+  const interval = intervals[range] || '1d';
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${{ticker}}?range=${{range}}&interval=${{interval}}`;
+  // 직접 호출 시도 → CORS 실패시 프록시 폴백
+  try {{
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(resp.status);
+    return await resp.json();
+  }} catch(e) {{
+    const proxy = `https://corsproxy.io/?${{encodeURIComponent(url)}}`;
+    const resp2 = await fetch(proxy);
+    if (!resp2.ok) throw new Error(`proxy ${{resp2.status}}`);
+    return await resp2.json();
+  }}
+}}
+
+function parseYahoo(json) {{
+  const r = json?.chart?.result?.[0];
+  if (!r) return null;
+  const ts = r.timestamp || [];
+  const closes = r.indicators?.quote?.[0]?.close || [];
+  const dates = [], values = [];
+  for (let i = 0; i < ts.length; i++) {{
+    if (closes[i] == null) continue;
+    const d = new Date(ts[i] * 1000);
+    dates.push(`${{String(d.getMonth()+1).padStart(2,'0')}}-${{String(d.getDate()).padStart(2,'0')}}`);
+    values.push(Math.round(closes[i] * 100) / 100);
+  }}
+  if (!values.length) return null;
+  const current = values[values.length - 1];
+  const prev = values.length >= 2 ? values[values.length - 2] : current;
+  const first = values[0];
+  const dayChg = prev ? Math.round((current - prev) / prev * 10000) / 100 : 0;
+  const perChg = first ? Math.round((current - first) / first * 10000) / 100 : 0;
+  return {{ current, dayChg, perChg, dates, values }};
+}}
+
+async function fetchMarketData(range) {{
+  const statusEl = document.getElementById('marketStatus');
+  statusEl.textContent = '⏳ 데이터 가져오는 중...';
+
+  const results = {{}};
+  const promises = Object.entries(MARKET_CFG).map(async ([key, cfg]) => {{
+    try {{
+      const json = await fetchYahoo(cfg.ticker, range);
+      const parsed = parseYahoo(json);
+      if (parsed) results[key] = parsed;
+    }} catch(e) {{
+      console.warn(`${{cfg.name}} 로드 실패:`, e);
+    }}
+  }});
+  await Promise.all(promises);
+
+  const now = new Date();
+  statusEl.textContent = `✅ ${{now.toLocaleTimeString('ko-KR')}} 기준 · ${{Object.keys(results).length}}/4 지표`;
+
+  // 카드 렌더링
+  const fmtPrice = (k, v) => k === 'usd_krw' ? v.toLocaleString('ko-KR', {{maximumFractionDigits:2}}) : v.toLocaleString('en-US', {{maximumFractionDigits:2}});
+
+  if (!Object.keys(results).length) {{
+    document.getElementById('marketCards').innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="icon">🌍</div>시장 데이터를 가져올 수 없습니다<br><small style="color:var(--text2)">네트워크 확인 후 새로고침해 주세요</small></div>';
     return;
   }}
 
-  // 카드
-  const icons = {{ sp500: '🇺🇸', nasdaq: '💻', usd_krw: '💱', gold: '🥇' }};
-  const units = {{ sp500: '', nasdaq: '', usd_krw: '₩', gold: '$' }};
-  const fmtPrice = (k, v) => {{
-    if (k === 'usd_krw') return v.toLocaleString('ko-KR', {{maximumFractionDigits:2}});
-    return v.toLocaleString('en-US', {{maximumFractionDigits:2}});
-  }};
-
   let cards = '';
-  for (const [key, d] of Object.entries(mi)) {{
-    const icon = icons[key] || '📊';
-    const unit = units[key] || '';
-    const dc = d.day_change;
-    const pc = d.period_change;
+  for (const [key, cfg] of Object.entries(MARKET_CFG)) {{
+    const d = results[key];
+    if (!d) continue;
+    const dc = d.dayChg, pc = d.perChg;
     cards += `<div class="card">
-      <div class="card-header">${{icon}} ${{d.name}}</div>
-      <div class="card-value" style="font-size:22px;">${{unit}}${{fmtPrice(key, d.current)}}</div>
+      <div class="card-header">${{cfg.icon}} ${{cfg.name}}</div>
+      <div class="card-value" style="font-size:22px;">${{cfg.unit}}${{fmtPrice(key, d.current)}}</div>
       <div class="card-sub">
         <span class="${{pnlClass(dc)}}">일간 ${{dc > 0 ? '+' : ''}}${{dc.toFixed(2)}}%</span>
         &nbsp;·&nbsp;
-        <span class="${{pnlClass(pc)}}">6개월 ${{pc > 0 ? '+' : ''}}${{pc.toFixed(2)}}%</span>
+        <span class="${{pnlClass(pc)}}"> ${{periodLabels[range]}} ${{pc > 0 ? '+' : ''}}${{pc.toFixed(2)}}%</span>
       </div>
     </div>`;
   }}
   document.getElementById('marketCards').innerHTML = cards;
 
-  // 차트
-  const chartMap = {{ sp500: 'sp500Chart', nasdaq: 'nasdaqChart', usd_krw: 'usdkrwChart', gold: 'goldChart' }};
-  const colors = {{ sp500: '#38bdf8', nasdaq: '#a78bfa', usd_krw: '#fbbf24', gold: '#fb923c' }};
-  const bgColors = {{ sp500: 'rgba(56,189,248,0.08)', nasdaq: 'rgba(167,139,250,0.08)', usd_krw: 'rgba(251,191,36,0.08)', gold: 'rgba(251,146,60,0.08)' }};
-
-  for (const [key, d] of Object.entries(mi)) {{
-    const canvasId = chartMap[key];
-    if (!canvasId || !d.dates?.length) continue;
-
-    const el = document.getElementById(canvasId);
+  // 차트 렌더링
+  for (const [key, cfg] of Object.entries(MARKET_CFG)) {{
+    const d = results[key];
+    const el = document.getElementById(cfg.canvas);
+    const titleEl = document.getElementById(cfg.title);
     if (!el) continue;
 
-    // 라벨을 좀 줄임 (월-일만)
-    const labels = d.dates.map(dt => dt.slice(5));
+    const titleIcons = {{ sp500: '📈', nasdaq: '📈', usd_krw: '💱', gold: '🥇' }};
+    if (titleEl) titleEl.textContent = `${{titleIcons[key] || '📈'}} ${{cfg.name}} (${{periodLabels[range]}})`;
 
-    new Chart(el, {{
+    // 기존 차트 파괴
+    if (marketCharts[key]) {{ marketCharts[key].destroy(); marketCharts[key] = null; }}
+
+    if (!d || !d.dates.length) continue;
+
+    marketCharts[key] = new Chart(el, {{
       type: 'line',
       data: {{
-        labels: labels,
+        labels: d.dates,
         datasets: [{{
-          label: d.name,
+          label: cfg.name,
           data: d.values,
-          borderColor: colors[key],
-          backgroundColor: bgColors[key],
+          borderColor: cfg.color,
+          backgroundColor: cfg.bg,
           fill: true,
           tension: 0.3,
           pointRadius: 0,
@@ -731,10 +817,9 @@ function renderMarket() {{
         plugins: {{
           legend: {{ display: false }},
           tooltip: {{
-            mode: 'index',
-            intersect: false,
+            mode: 'index', intersect: false,
             callbacks: {{
-              label: (ctx) => `${{d.name}}: ${{key === 'usd_krw' ? '₩' : '$'}}${{ctx.parsed.y.toLocaleString()}}`
+              label: (ctx) => `${{cfg.name}}: ${{cfg.unit || '$'}}${{ctx.parsed.y.toLocaleString()}}`
             }}
           }},
         }},
@@ -742,6 +827,10 @@ function renderMarket() {{
       }},
     }});
   }}
+}}
+
+function renderMarket() {{
+  fetchMarketData(currentPeriod);
 }}
 
 // ════ TAB 1: 포지션 ════
