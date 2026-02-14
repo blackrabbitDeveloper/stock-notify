@@ -373,6 +373,16 @@ body {{
 .tab.active {{ background: var(--accent); color: #0a0e17; font-weight: 600; }}
 
 .tab-content {{ display: none; }}
+.tab-desc {{
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text2);
+  margin: 0 0 16px 0;
+  padding: 10px 14px;
+  background: var(--surface);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+}}
 
 .period-btns {{ display: flex; gap: 4px; }}
 .period-btn {{
@@ -579,6 +589,7 @@ canvas {{ max-height: 320px; }}
 
   <!-- ════ TAB 0: 시장 현황 ════ -->
   <div id="tab-market" class="tab-content active">
+    <p class="tab-desc">주요 시장 지수와 환율, 원자재 시세를 실시간으로 확인합니다.</p>
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
       <span style="color:var(--text2);font-size:14px;">📅 기간:</span>
       <div class="period-btns" id="periodBtns">
@@ -604,6 +615,7 @@ canvas {{ max-height: 320px; }}
 
   <!-- ════ TAB 1: 포지션 ════ -->
   <div id="tab-positions" class="tab-content">
+    <p class="tab-desc">현재 보유 중인 포지션과 최근 청산 이력을 관리합니다.</p>
     <div class="grid grid-4" id="statCards"></div>
     <div class="section-title">📌 오픈 포지션</div>
     <div class="table-wrap" id="openPositionsTable"></div>
@@ -613,6 +625,7 @@ canvas {{ max-height: 320px; }}
 
   <!-- ════ TAB 2: 성과 ════ -->
   <div id="tab-performance" class="tab-content">
+    <p class="tab-desc">누적 수익률, 월별 성과, 청산 유형 등 전체 트레이딩 성과를 분석합니다.</p>
     <div class="grid grid-2">
       <div class="chart-box"><h3>📈 누적 수익률</h3><canvas id="cumulativeChart"></canvas></div>
       <div class="chart-box"><h3>📊 월별 성과</h3><canvas id="monthlyChart"></canvas></div>
@@ -625,6 +638,7 @@ canvas {{ max-height: 320px; }}
 
   <!-- ════ TAB 3: 백테스트 ════ -->
   <div id="tab-backtest" class="tab-content">
+    <p class="tab-desc">과거 데이터 기반으로 현재 전략의 성과를 검증한 결과입니다.</p>
     <div class="grid grid-4" id="btStatCards"></div>
     <div class="grid grid-2" style="margin-top:16px;">
       <div class="chart-box"><h3>📡 신호별 성과</h3><canvas id="signalChart"></canvas></div>
@@ -635,6 +649,7 @@ canvas {{ max-height: 320px; }}
 
   <!-- ════ TAB 4: 자기학습 ════ -->
   <div id="tab-tuning" class="tab-content">
+    <p class="tab-desc">시장 레짐에 따라 자동으로 최적화되는 전략 파라미터와 신호 가중치입니다.</p>
     <div class="section-title">⚙️ 현재 전략 파라미터</div>
     <div class="param-grid" id="paramGrid"></div>
     <div class="section-title" style="margin-top:24px;">📡 신호 가중치</div>
