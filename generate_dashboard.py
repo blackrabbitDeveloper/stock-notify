@@ -43,6 +43,7 @@ STRATEGY_STATE_FILE = CONFIG_DIR / "strategy_state.json"
 SIGNAL_WEIGHTS_FILE = CONFIG_DIR / "signal_weights.json"
 TUNING_HISTORY_FILE = DATA_DIR / "tuning_history.json"
 BACKTEST_DIR = DATA_DIR / "backtest"
+UNIVERSE_FILE = CONFIG_DIR / "universe.yaml"
 
 
 def load_json(path, default=None):
@@ -241,6 +242,16 @@ def collect_dashboard_data() -> dict:
     # 7. 시장 지표 수집
     market_indices = fetch_market_indices()
 
+    # 8. 유니버스 설정 (universe.yaml)
+    universe_cfg = {}
+    if UNIVERSE_FILE.exists():
+        try:
+            import yaml
+            with open(UNIVERSE_FILE, "r", encoding="utf-8") as f:
+                universe_cfg = yaml.safe_load(f) or {}
+        except Exception:
+            pass
+
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "positions": positions,
@@ -264,6 +275,7 @@ def collect_dashboard_data() -> dict:
             "monthly_returns": backtest.get("monthly_returns", []),
             "score_buckets": backtest.get("score_buckets", []),
         },
+        "universe": universe_cfg,
     }
 
 
@@ -534,6 +546,22 @@ canvas {{ max-height: 320px; }}
   margin-top: 4px;
 }}
 
+.strat-row {{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}}
+.strat-row:last-child {{ border-bottom: none; }}
+.strat-row .label {{ color: var(--text2); }}
+.strat-row .val {{ font-weight: 600; color: var(--text); }}
+.strat-row .val.accent {{ color: var(--accent); }}
+.strat-row .val.green {{ color: var(--green); }}
+.strat-row .val.yellow {{ color: var(--yellow); }}
+
 .empty-state {{
   text-align: center;
   padding: 60px 20px;
@@ -585,6 +613,7 @@ canvas {{ max-height: 320px; }}
     <button class="tab" onclick="showTab('performance')">📊 성과</button>
     <button class="tab" onclick="showTab('backtest')">🔬 백테스트</button>
     <button class="tab" onclick="showTab('tuning')">🧠 자기학습</button>
+    <button class="tab" onclick="showTab('strategy')">⚙️ 전략 설정</button>
   </div>
 
   <!-- ════ TAB 0: 시장 현황 ════ -->
@@ -657,6 +686,45 @@ canvas {{ max-height: 320px; }}
     <div class="section-title" style="margin-top:24px;">📜 튜닝 이력</div>
     <div class="table-wrap" id="tuningHistoryTable"></div>
   </div>
+
+  <!-- ════ TAB 5: 전략 설정 ════ -->
+  <div id="tab-strategy" class="tab-content">
+    <p class="tab-desc">현재 적용 중인 전략의 전체 설정값을 한눈에 확인합니다.</p>
+
+    <div class="grid grid-2">
+      <!-- 유니버스 설정 -->
+      <div class="card">
+        <div class="card-header">🌐 종목 유니버스</div>
+        <div id="stratUniverse" style="margin-top:12px;"></div>
+      </div>
+      <!-- 진입/청산 조건 -->
+      <div class="card">
+        <div class="card-header">🎯 진입 & 청산 조건</div>
+        <div id="stratEntry" style="margin-top:12px;"></div>
+      </div>
+    </div>
+
+    <div class="grid grid-2" style="margin-top:16px;">
+      <!-- 시장 레짐 -->
+      <div class="card">
+        <div class="card-header">🌡️ 시장 레짐</div>
+        <div id="stratRegime" style="margin-top:12px;"></div>
+      </div>
+      <!-- AI 설정 -->
+      <div class="card">
+        <div class="card-header">🤖 AI & 분석 설정</div>
+        <div id="stratAI" style="margin-top:12px;"></div>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;">
+      <!-- 신호 가중치 전체 -->
+      <div class="card">
+        <div class="card-header">📡 신호별 가중치 현황</div>
+        <div id="stratWeightsChart" style="margin-top:12px;"><canvas id="stratWeightCanvas"></canvas></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <footer style="max-width:1400px;margin:40px auto 0;padding:20px 20px 32px;border-top:1px solid var(--border);text-align:center;font-family:var(--font-mono);font-size:11px;color:var(--text2);line-height:1.8;">
@@ -701,6 +769,7 @@ function init() {{
   renderPerformance();
   renderBacktest();
   renderTuning();
+  renderStrategy();
 }}
 
 // ════ TAB 0: 시장 현황 (실시간 API) ════
@@ -1119,6 +1188,99 @@ function renderTuning() {{
     document.getElementById('tuningHistoryTable').innerHTML = thtml;
   }} else {{
     document.getElementById('tuningHistoryTable').innerHTML = '<div class="empty-state"><div class="icon">🧠</div>튜닝 이력이 없습니다</div>';
+  }}
+}}
+
+// ════ TAB 5: 전략 설정 ════
+function renderStrategy() {{
+  const uni = D.universe || {{}};
+  const auto = uni.auto || {{}};
+  const ai = uni.ai_explainer || {{}};
+  const params = D.strategy?.current_params || {{}};
+  const regime = D.strategy?.current_regime || 'unknown';
+  const conf = D.strategy?.regime_confidence || 0;
+  const lastTuned = D.strategy?.last_tuned_at || '';
+  const w = D.signal_weights || {{}};
+
+  const row = (label, val, cls) => '<div class="strat-row"><span class="label">' + label + '</span><span class="val ' + (cls||'') + '">' + val + '</span></div>';
+
+  // 1. 유니버스
+  let uhtml = '';
+  uhtml += row('종목 풀', (auto.pool || 'nasdaq100').toUpperCase(), 'accent');
+  uhtml += row('최소 가격', '$' + (auto.min_price || 5));
+  uhtml += row('최대 가격', '$' + (auto.max_price || 500));
+  uhtml += row('최종 유니버스', (auto.max_final_universe || 150) + '종목');
+  uhtml += row('기술적 필터', '상위 ' + (auto.tech_filter_count || 30) + '종목');
+  uhtml += row('데이터 기간', (auto.data_days || 90) + '일');
+  uhtml += row('뉴스 보너스', auto.use_news_bonus !== false ? '✅ 사용' : '❌ 미사용', auto.use_news_bonus !== false ? 'green' : '');
+  document.getElementById('stratUniverse').innerHTML = uhtml;
+
+  // 2. 진입/청산 조건
+  let ehtml = '';
+  ehtml += row('최소 기술 점수', params.min_tech_score || auto.min_tech_score || 4.0, 'accent');
+  ehtml += row('일별 선택 종목', (params.top_n || 5) + '개');
+  ehtml += row('손절 ATR 배수', (params.atr_stop_mult || 2.0) + 'x');
+  ehtml += row('익절 ATR 배수', (params.atr_tp_mult || 4.0) + 'x');
+  ehtml += row('최대 보유일', (params.max_hold_days || 7) + '일');
+  ehtml += row('스코어링', '기술 70% + 뉴스 30%');
+  document.getElementById('stratEntry').innerHTML = ehtml;
+
+  // 3. 시장 레짐
+  let rhtml = '';
+  const rIcon = regimeIcon(regime);
+  rhtml += row('현재 레짐', rIcon + ' ' + regime.toUpperCase(), regime === 'bullish' ? 'green' : regime === 'bearish' ? '' : 'yellow');
+  rhtml += row('신뢰도', Math.round(conf * 100) + '%', 'accent');
+  rhtml += row('마지막 튜닝', lastTuned ? lastTuned.slice(0, 10) : '미실행');
+  rhtml += row('튜닝 이력', (D.tuning_history || []).length + '회');
+  const bt = D.backtest?.summary || {{}};
+  if (bt.total_trades) {{
+    rhtml += row('백테스트 승률', fmt(bt.win_rate, 1) + '%', bt.win_rate >= 50 ? 'green' : '');
+    rhtml += row('Profit Factor', fmt(bt.profit_factor), bt.profit_factor >= 1 ? 'green' : '');
+  }}
+  document.getElementById('stratRegime').innerHTML = rhtml;
+
+  // 4. AI 설정
+  let ahtml = '';
+  ahtml += row('AI 분석', ai.enabled !== false ? '✅ 활성화' : '❌ 비활성', ai.enabled !== false ? 'green' : '');
+  ahtml += row('모델', ai.model_name || 'gemini-2.5-flash', 'accent');
+  ahtml += row('감성 분석', 'VADER (NLTK)', 'accent');
+  ahtml += row('뉴스 소스', 'Finnhub API');
+  ahtml += row('가격 데이터', 'Yahoo Finance');
+  document.getElementById('stratAI').innerHTML = ahtml;
+
+  // 5. 신호 가중치 수평 바 차트
+  const wKeys = Object.keys(w).sort((a, b) => w[b] - w[a]);
+  if (wKeys.length) {{
+    new Chart(document.getElementById('stratWeightCanvas'), {{
+      type: 'bar',
+      data: {{
+        labels: wKeys,
+        datasets: [{{
+          label: '가중치',
+          data: wKeys.map(k => w[k]),
+          backgroundColor: wKeys.map(k => w[k] > 1.2 ? 'rgba(52,211,153,0.7)' : w[k] < 0.8 ? 'rgba(248,113,113,0.7)' : 'rgba(56,189,248,0.5)'),
+          borderRadius: 4,
+        }}]
+      }},
+      options: {{
+        ...chartOpts(''),
+        indexAxis: 'y',
+        plugins: {{
+          legend: {{ display: false }},
+          tooltip: {{
+            callbacks: {{
+              label: function(ctx) {{ return '가중치: ' + ctx.parsed.x.toFixed(2); }}
+            }}
+          }}
+        }},
+        scales: {{
+          x: {{ min: 0, max: 2.5, ticks: {{ color: '#64748b' }}, grid: {{ color: 'rgba(42,52,72,0.5)' }} }},
+          y: {{ ticks: {{ color: '#94a3b8', font: {{ family: "'JetBrains Mono'", size: 11 }} }}, grid: {{ display: false }} }},
+        }},
+      }},
+    }});
+  }} else {{
+    document.getElementById('stratWeightsChart').innerHTML = '<div class="empty-state" style="padding:30px;">아직 신호 가중치 데이터가 없습니다<br><small style="color:var(--text2)">자기학습 실행 후 표시됩니다</small></div>';
   }}
 }}
 
