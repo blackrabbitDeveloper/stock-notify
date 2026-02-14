@@ -644,6 +644,12 @@ canvas {{ max-height: 320px; }}
   </div>
 </div>
 
+<footer style="max-width:1400px;margin:40px auto 0;padding:20px 20px 32px;border-top:1px solid var(--border);text-align:center;font-family:var(--font-mono);font-size:11px;color:var(--text2);line-height:1.8;">
+  <div style="margin-bottom:6px;">⚠️ <strong style="color:var(--yellow);">면책 조항</strong></div>
+  이 봇은 교육 및 정보 제공 목적으로만 사용됩니다.<br>
+  투자 자문이 아닙니다 · 모든 투자 결정은 본인의 책임입니다 · 과거 성과가 미래 수익을 보장하지 않습니다 · 반드시 손절매를 설정하세요
+</footer>
+
 <script>
 const D = {data_json};
 
