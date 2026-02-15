@@ -1,5 +1,5 @@
 # save as fetch_sp500.py
-import os, re, sys, traceback
+import io, os, re, sys, traceback
 import requests, pandas as pd
 
 URL = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
@@ -15,7 +15,7 @@ def clean(sym: str) -> str:
     return re.sub(r"[^A-Z0-9\-]", "", s)
 
 def read_symbols_from_html(html: str) -> list[str]:
-    tables = pd.read_html(html)  # requires: pandas, lxml/html5lib
+    tables = pd.read_html(io.StringIO(html))  # requires: pandas, lxml/html5lib
     for df in tables:
         for col in df.columns:
             if "symbol" in str(col).lower() or "ticker" in str(col).lower():
@@ -45,7 +45,7 @@ def fetch_sp500() -> list[str]:
 def main():
     syms = fetch_sp500()
     # 저장
-    pd.Series(syms, name="Symbol").to_csv("data/pool/sp500.txt", index=False, header=False)
+    pd.Series(syms, name="Symbol").to_csv("data/pools/sp500.txt", index=False, header=False)
     pd.DataFrame({"Symbol": syms}).to_csv("sp500.csv", index=False)
     # 콘솔에도 일부 표시
     print(f"[DONE] wrote sp500.txt & sp500.csv (count={len(syms)})")

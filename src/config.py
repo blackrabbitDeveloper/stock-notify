@@ -16,7 +16,7 @@ class ConfigValidator:
     }
     
     OPTIONAL_ENV_VARS = {
-        "GEMINI_MODEL_NAME": "gemini-2.5-flash",
+        "GEMINI_MODEL_NAME": "gemini-2.5-pro",
         "GENAI_TRANSPORT": "rest",
         "MAX_TICKERS": "5",
         "AI_EXPLAINER_MAX_TOKENS": "1024",

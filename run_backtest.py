@@ -51,18 +51,18 @@ def main():
     parser.add_argument("--days", type=int, default=90,
                         help="백테스트 기간 (거래일, 기본 90)")
     parser.add_argument("--top", type=int, default=5,
-                        help="일별 선택 종목 수 (기본 5)")
-    parser.add_argument("--pool", type=str, default="nasdaq100",
+                        help="일별 선택 종목 수 (기본 3)")
+    parser.add_argument("--pool", type=str, default="sp500",
                         choices=["nasdaq100", "sp500"],
                         help="종목 풀 (기본 nasdaq100)")
-    parser.add_argument("--min-score", type=float, default=4.0,
-                        help="최소 기술 점수 (기본 4.0)")
-    parser.add_argument("--hold", type=int, default=7,
-                        help="최대 보유일 (기본 7)")
-    parser.add_argument("--sl-mult", type=float, default=2.0,
-                        help="손절 ATR 배수 (기본 2.0)")
-    parser.add_argument("--tp-mult", type=float, default=4.0,
-                        help="익절 ATR 배수 (기본 4.0)")
+    parser.add_argument("--min-score", type=float, default=5.0,
+                        help="최소 기술 점수 (기본 5.0)")
+    parser.add_argument("--hold", type=int, default=365,
+                        help="최대 보유일 (기본 365)")
+    parser.add_argument("--sl-mult", type=float, default=20.0,
+                        help="손절 ATR 배수 (기본 3.0)")
+    parser.add_argument("--tp-mult", type=float, default=30.0,
+                        help="익절 ATR 배수 (기본 5.0)")
 
     # 출력 옵션
     parser.add_argument("--export", action="store_true",
