@@ -1,0 +1,107 @@
+[
+  {
+    "timestamp": "2026-02-15T03:58:48.357713+00:00",
+    "regime": "conservative",
+    "params": {
+      "top_n": 3,
+      "min_tech_score": 5.5,
+      "atr_stop_mult": 1.5,
+      "atr_tp_mult": 3.0,
+      "max_hold_days": 5
+    },
+    "summary": {
+      "total_trades": 236,
+      "win_rate": 53.39,
+      "avg_pnl_pct": 0.7406,
+      "median_pnl_pct": 0.3522,
+      "total_pnl_pct": 174.7837,
+      "std_pnl_pct": 4.443,
+      "avg_win_pct": 3.9568,
+      "avg_loss_pct": -2.9434,
+      "profit_factor": 1.5398,
+      "expected_value_pct": 0.7406,
+      "sharpe_ratio": 2.6461,
+      "max_consecutive_wins": 7,
+      "max_consecutive_losses": 15,
+      "avg_hold_days": 5.47,
+      "portfolio_max_drawdown_pct": 85.6075
+    },
+    "param_changes": {
+      "top_n": {
+        "old": 5,
+        "new": 3,
+        "reason": "safety_mode"
+      },
+      "min_tech_score": {
+        "old": 4.0,
+        "new": 5.5,
+        "reason": "safety_mode"
+      },
+      "atr_stop_mult": {
+        "old": 2.0,
+        "new": 1.5,
+        "reason": "safety_mode"
+      },
+      "atr_tp_mult": {
+        "old": 4.0,
+        "new": 3.0,
+        "reason": "safety_mode"
+      },
+      "max_hold_days": {
+        "old": 7,
+        "new": 5,
+        "reason": "safety_mode"
+      }
+    },
+    "weight_changes": {
+      "pullback_score": {
+        "old": 1.0,
+        "new": 1.038,
+        "delta": 0.0384,
+        "perf_score": 0.256
+      },
+      "stoch_cross_up": {
+        "old": 1.0,
+        "new": 1.058,
+        "delta": 0.0585,
+        "perf_score": 0.39
+      },
+      "ma_alignment": {
+        "old": 1.0,
+        "new": 1.013,
+        "delta": 0.0126,
+        "perf_score": 0.084
+      },
+      "divergence_score": {
+        "old": 1.0,
+        "new": 1.088,
+        "delta": 0.0879,
+        "perf_score": 0.586
+      },
+      "macd_cross_up": {
+        "old": 1.0,
+        "new": 1.089,
+        "delta": 0.0894,
+        "perf_score": 0.596
+      },
+      "golden_cross": {
+        "old": 1.0,
+        "new": 1.016,
+        "delta": 0.016,
+        "perf_score": 0.106
+      },
+      "bullish_volume": {
+        "old": 1.0,
+        "new": 1.03,
+        "delta": 0.0295,
+        "perf_score": 0.197
+      },
+      "breakout_score": {
+        "old": 1.0,
+        "new": 1.018,
+        "delta": 0.0183,
+        "perf_score": 0.122
+      }
+    }
+  }
+]
