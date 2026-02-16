@@ -22,6 +22,10 @@
         {
           "date": "2026-02-13",
           "close": 81.48
+        },
+        {
+          "date": "2026-02-16",
+          "close": 81.48
         }
       ]
     },
@@ -46,6 +50,10 @@
         },
         {
           "date": "2026-02-13",
+          "close": 27.99
+        },
+        {
+          "date": "2026-02-16",
           "close": 27.99
         }
       ]
@@ -72,6 +80,10 @@
         {
           "date": "2026-02-13",
           "close": 121.35
+        },
+        {
+          "date": "2026-02-16",
+          "close": 121.35
         }
       ]
     },
@@ -96,6 +108,10 @@
         },
         {
           "date": "2026-02-13",
+          "close": 417.44
+        },
+        {
+          "date": "2026-02-16",
           "close": 417.44
         }
       ]
@@ -122,6 +138,10 @@
         {
           "date": "2026-02-13",
           "close": 96.66
+        },
+        {
+          "date": "2026-02-16",
+          "close": 96.66
         }
       ]
     },
@@ -146,6 +166,10 @@
         },
         {
           "date": "2026-02-13",
+          "close": 485.84
+        },
+        {
+          "date": "2026-02-16",
           "close": 485.84
         }
       ]
@@ -172,6 +196,10 @@
         {
           "date": "2026-02-13",
           "close": 219.5
+        },
+        {
+          "date": "2026-02-16",
+          "close": 219.5
         }
       ]
     },
@@ -185,6 +213,171 @@
       "take_profit": 306.08,
       "tech_score": 5.0,
       "combined_score": 3.86,
+      "exit_price": null,
+      "exit_date": null,
+      "pnl_pct": null,
+      "close_reason": null,
+      "price_history": [
+        {
+          "date": "2026-02-16",
+          "close": 263.97
+        }
+      ]
+    },
+    {
+      "ticker": "DIS",
+      "status": "open",
+      "entry_price": 105.3,
+      "entry_date": "2026-02-16",
+      "atr": 3.7857,
+      "stop_loss": 97.7286,
+      "take_profit": 120.4429,
+      "tech_score": 8.77,
+      "combined_score": 6.39,
+      "exit_price": null,
+      "exit_date": null,
+      "pnl_pct": null,
+      "close_reason": null,
+      "price_history": []
+    },
+    {
+      "ticker": "XYZ",
+      "status": "open",
+      "entry_price": 49.8801,
+      "entry_date": "2026-02-16",
+      "atr": 2.9253,
+      "stop_loss": 44.0295,
+      "take_profit": 61.5812,
+      "tech_score": 7.53,
+      "combined_score": 5.53,
+      "exit_price": null,
+      "exit_date": null,
+      "pnl_pct": null,
+      "close_reason": null,
+      "price_history": []
+    },
+    {
+      "ticker": "ORCL",
+      "status": "open",
+      "entry_price": 160.3992,
+      "entry_date": "2026-02-16",
+      "atr": 9.4507,
+      "stop_loss": 141.4978,
+      "take_profit": 198.2021,
+      "tech_score": 6.94,
+      "combined_score": 5.36,
+      "exit_price": null,
+      "exit_date": null,
+      "pnl_pct": null,
+      "close_reason": null,
+      "price_history": []
+    },
+    {
+      "ticker": "LULU",
+      "status": "open",
+      "entry_price": 176.21,
+      "entry_date": "2026-02-16",
+      "atr": 7.4164,
+      "stop_loss": 161.3771,
+      "take_profit": 205.8757,
+      "tech_score": 8.0,
+      "combined_score": 5.33,
+      "exit_price": null,
+      "exit_date": null,
+      "pnl_pct": null,
+      "close_reason": null,
+      "price_history": []
+    },
+    {
+      "ticker": "ANET",
+      "status": "open",
+      "entry_price": 141.16,
+      "entry_date": "2026-02-16",
+      "atr": 7.1737,
+      "stop_loss": 126.8126,
+      "take_profit": 169.8549,
+      "tech_score": 7.0,
+      "combined_score": 5.16,
+      "exit_price": null,
+      "exit_date": null,
+      "pnl_pct": null,
+      "close_reason": null,
+      "price_history": []
+    },
+    {
+      "ticker": "TYL",
+      "status": "open",
+      "entry_price": 301.0,
+      "entry_date": "2026-02-16",
+      "atr": 24.45,
+      "stop_loss": 252.1,
+      "take_profit": 398.8,
+      "tech_score": 7.5,
+      "combined_score": 4.88,
+      "exit_price": null,
+      "exit_date": null,
+      "pnl_pct": null,
+      "close_reason": null,
+      "price_history": []
+    },
+    {
+      "ticker": "COIN",
+      "status": "open",
+      "entry_price": 166.0,
+      "entry_date": "2026-02-16",
+      "atr": 13.4207,
+      "stop_loss": 139.1586,
+      "take_profit": 219.6828,
+      "tech_score": 6.64,
+      "combined_score": 4.8,
+      "exit_price": null,
+      "exit_date": null,
+      "pnl_pct": null,
+      "close_reason": null,
+      "price_history": []
+    },
+    {
+      "ticker": "OMC",
+      "status": "open",
+      "entry_price": 69.0,
+      "entry_date": "2026-02-16",
+      "atr": 2.9736,
+      "stop_loss": 63.0529,
+      "take_profit": 80.8943,
+      "tech_score": 6.75,
+      "combined_score": 4.5,
+      "exit_price": null,
+      "exit_date": null,
+      "pnl_pct": null,
+      "close_reason": null,
+      "price_history": []
+    },
+    {
+      "ticker": "CDNS",
+      "status": "open",
+      "entry_price": 299.45,
+      "entry_date": "2026-02-16",
+      "atr": 12.7386,
+      "stop_loss": 273.9729,
+      "take_profit": 350.4043,
+      "tech_score": 6.94,
+      "combined_score": 4.48,
+      "exit_price": null,
+      "exit_date": null,
+      "pnl_pct": null,
+      "close_reason": null,
+      "price_history": []
+    },
+    {
+      "ticker": "EBAY",
+      "status": "open",
+      "entry_price": 81.94,
+      "entry_date": "2026-02-16",
+      "atr": 3.5836,
+      "stop_loss": 74.7729,
+      "take_profit": 96.2743,
+      "tech_score": 6.12,
+      "combined_score": 4.25,
       "exit_price": null,
       "exit_date": null,
       "pnl_pct": null,
