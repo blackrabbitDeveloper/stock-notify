@@ -26,6 +26,10 @@
         {
           "date": "2026-02-16",
           "close": 81.48
+        },
+        {
+          "date": "2026-02-17",
+          "close": 82.9
         }
       ]
     },
@@ -55,6 +59,10 @@
         {
           "date": "2026-02-16",
           "close": 27.99
+        },
+        {
+          "date": "2026-02-17",
+          "close": 28.75
         }
       ]
     },
@@ -84,6 +92,10 @@
         {
           "date": "2026-02-16",
           "close": 121.35
+        },
+        {
+          "date": "2026-02-17",
+          "close": 124.23
         }
       ]
     },
@@ -113,6 +125,10 @@
         {
           "date": "2026-02-16",
           "close": 417.44
+        },
+        {
+          "date": "2026-02-17",
+          "close": 410.63
         }
       ]
     },
@@ -142,6 +158,10 @@
         {
           "date": "2026-02-16",
           "close": 96.66
+        },
+        {
+          "date": "2026-02-17",
+          "close": 92.6
         }
       ]
     },
@@ -171,6 +191,10 @@
         {
           "date": "2026-02-16",
           "close": 485.84
+        },
+        {
+          "date": "2026-02-17",
+          "close": 493.35
         }
       ]
     },
@@ -221,6 +245,10 @@
         {
           "date": "2026-02-16",
           "close": 263.97
+        },
+        {
+          "date": "2026-02-17",
+          "close": 260.45
         }
       ]
     },
@@ -238,7 +266,12 @@
       "exit_date": null,
       "pnl_pct": null,
       "close_reason": null,
-      "price_history": []
+      "price_history": [
+        {
+          "date": "2026-02-17",
+          "close": 105.44
+        }
+      ]
     },
     {
       "ticker": "XYZ",
@@ -254,7 +287,12 @@
       "exit_date": null,
       "pnl_pct": null,
       "close_reason": null,
-      "price_history": []
+      "price_history": [
+        {
+          "date": "2026-02-17",
+          "close": 50.81
+        }
+      ]
     },
     {
       "ticker": "ORCL",
@@ -270,7 +308,12 @@
       "exit_date": null,
       "pnl_pct": null,
       "close_reason": null,
-      "price_history": []
+      "price_history": [
+        {
+          "date": "2026-02-17",
+          "close": 153.97
+        }
+      ]
     },
     {
       "ticker": "LULU",
@@ -286,7 +329,12 @@
       "exit_date": null,
       "pnl_pct": null,
       "close_reason": null,
-      "price_history": []
+      "price_history": [
+        {
+          "date": "2026-02-17",
+          "close": 177.72
+        }
+      ]
     },
     {
       "ticker": "ANET",
@@ -302,7 +350,12 @@
       "exit_date": null,
       "pnl_pct": null,
       "close_reason": null,
-      "price_history": []
+      "price_history": [
+        {
+          "date": "2026-02-17",
+          "close": 142.58
+        }
+      ]
     },
     {
       "ticker": "TYL",
@@ -318,7 +371,12 @@
       "exit_date": null,
       "pnl_pct": null,
       "close_reason": null,
-      "price_history": []
+      "price_history": [
+        {
+          "date": "2026-02-17",
+          "close": 312.48
+        }
+      ]
     },
     {
       "ticker": "COIN",
@@ -334,7 +392,12 @@
       "exit_date": null,
       "pnl_pct": null,
       "close_reason": null,
-      "price_history": []
+      "price_history": [
+        {
+          "date": "2026-02-17",
+          "close": 166.02
+        }
+      ]
     },
     {
       "ticker": "OMC",
@@ -350,7 +413,12 @@
       "exit_date": null,
       "pnl_pct": null,
       "close_reason": null,
-      "price_history": []
+      "price_history": [
+        {
+          "date": "2026-02-17",
+          "close": 67.98
+        }
+      ]
     },
     {
       "ticker": "CDNS",
@@ -366,7 +434,12 @@
       "exit_date": null,
       "pnl_pct": null,
       "close_reason": null,
-      "price_history": []
+      "price_history": [
+        {
+          "date": "2026-02-17",
+          "close": 283.46
+        }
+      ]
     },
     {
       "ticker": "EBAY",
@@ -378,6 +451,27 @@
       "take_profit": 96.2743,
       "tech_score": 6.12,
       "combined_score": 4.25,
+      "exit_price": null,
+      "exit_date": null,
+      "pnl_pct": null,
+      "close_reason": null,
+      "price_history": [
+        {
+          "date": "2026-02-17",
+          "close": 79.95
+        }
+      ]
+    },
+    {
+      "ticker": "PLTR",
+      "status": "open",
+      "entry_price": 132.9,
+      "entry_date": "2026-02-17",
+      "atr": 9.6976,
+      "stop_loss": 113.5047,
+      "take_profit": 171.6906,
+      "tech_score": 5.75,
+      "combined_score": 4.89,
       "exit_price": null,
       "exit_date": null,
       "pnl_pct": null,
