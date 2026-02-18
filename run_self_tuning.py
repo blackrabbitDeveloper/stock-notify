@@ -23,7 +23,7 @@ from src.logger import logger
 def main():
     parser = argparse.ArgumentParser(description="자기 학습 전략 엔진")
     parser.add_argument("--days", type=int, default=60, help="백테스트 기간 (거래일)")
-    parser.add_argument("--pool", type=str, default="nasdaq100", help="종목 풀")
+    parser.add_argument("--pool", type=str, default="sp500", help="종목 풀")
     parser.add_argument("--discord", action="store_true", help="Discord 알림 전송")
     parser.add_argument("--dry-run", action="store_true", help="변경사항 미적용 (확인만)")
     args = parser.parse_args()

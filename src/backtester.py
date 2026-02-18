@@ -144,10 +144,12 @@ class Trade:
         self.exit_date: Optional[str] = None
         self.exit_price: Optional[float] = None
         self.pnl_pct: Optional[float] = None
-        self.status: Optional[str] = None  # take_profit / stop_loss / expired
+        self.status: Optional[str] = None  # take_profit / stop_loss / expired / sell_signal
         self.hold_days: int = 0
         self.max_drawdown_pct: float = 0.0     # 보유 중 최대 낙폭
         self.max_favorable_pct: float = 0.0    # 보유 중 최대 이익
+        self.sell_signals: List[str] = []      # 매도 신호 목록
+        self.sell_score: float = 0.0           # 매도 점수
 
     def to_dict(self) -> Dict:
         return {
@@ -165,14 +167,20 @@ class Trade:
             "hold_days": self.hold_days,
             "max_drawdown_pct": round(self.max_drawdown_pct, 4),
             "max_favorable_pct": round(self.max_favorable_pct, 4),
+            "sell_signals": self.sell_signals,
+            "sell_score": round(self.sell_score, 2),
         }
 
 
-def _simulate_trade(trade: Trade, future_data: pd.DataFrame) -> Trade:
+def _simulate_trade(trade: Trade, future_data: pd.DataFrame,
+                    max_hold_days: int = MAX_HOLD_DAYS,
+                    sell_threshold: float = 4.0,
+                    hist_data: pd.DataFrame = None) -> Trade:
     """
     진입 이후 실제 가격으로 트레이드 청산 시뮬레이션.
 
     future_data: 진입일 다음날부터의 OHLCV (해당 종목)
+    hist_data: 진입일까지의 OHLCV (매도 신호 분석용, optional)
     """
     if future_data.empty:
         trade.status = "no_data"
@@ -185,43 +193,65 @@ def _simulate_trade(trade: Trade, future_data: pd.DataFrame) -> Trade:
     max_dd = 0.0
     max_fav = 0.0
 
+    # 매도 신호 분석용 히스토리 구축
+    use_sell_signal = (hist_data is not None and len(hist_data) >= 30
+                       and sell_threshold < 99)
+
     for i, (_, row) in enumerate(future_data.iterrows()):
-        day_num = i + 1  # 보유 1일차부터
+        day_num = i + 1
         low = row["Low"]
         high = row["High"]
         close = row["Close"]
 
-        # 최대 낙폭 / 최대 이익 추적
         dd_pct = (low - entry) / entry * 100
         fav_pct = (high - entry) / entry * 100
         max_dd = min(max_dd, dd_pct)
         max_fav = max(max_fav, fav_pct)
 
-        # 손절 체크 (장중 저가가 SL 이하)
+        # 1순위: 손절
         if low <= sl:
-            trade.exit_price = sl  # SL 가격에 청산 가정
+            trade.exit_price = sl
             trade.exit_date = str(row["Date"].date()) if hasattr(row["Date"], "date") else str(row["Date"])
             trade.status = "stop_loss"
             trade.hold_days = day_num
             break
 
-        # 익절 체크 (장중 고가가 TP 이상)
+        # 2순위: 익절
         if high >= tp:
-            trade.exit_price = tp  # TP 가격에 청산 가정
+            trade.exit_price = tp
             trade.exit_date = str(row["Date"].date()) if hasattr(row["Date"], "date") else str(row["Date"])
             trade.status = "take_profit"
             trade.hold_days = day_num
             break
 
-        # 만료 체크
-        if day_num >= MAX_HOLD_DAYS:
-            trade.exit_price = close  # 종가에 청산
+        # 3순위: 매도 신호 (2일차부터)
+        if use_sell_signal and day_num >= 2:
+            try:
+                from .technical_analyzer import analyze_stock_technical, calculate_sell_score
+                combined = pd.concat([hist_data, future_data.iloc[:i+1]], ignore_index=True)
+                if len(combined) >= 30:
+                    analysis = analyze_stock_technical(combined)
+                    if analysis:
+                        sell_result = calculate_sell_score(analysis)
+                        if sell_result["sell_score"] >= sell_threshold:
+                            trade.exit_price = close
+                            trade.exit_date = str(row["Date"].date()) if hasattr(row["Date"], "date") else str(row["Date"])
+                            trade.status = "sell_signal"
+                            trade.hold_days = day_num
+                            trade.sell_signals = sell_result["sell_signals"]
+                            trade.sell_score = sell_result["sell_score"]
+                            break
+            except Exception:
+                pass
+
+        # 4순위: 만료
+        if day_num >= max_hold_days:
+            trade.exit_price = close
             trade.exit_date = str(row["Date"].date()) if hasattr(row["Date"], "date") else str(row["Date"])
             trade.status = "expired"
             trade.hold_days = day_num
             break
     else:
-        # 데이터 부족으로 만료되지 못한 경우 → 마지막 종가 청산
         last = future_data.iloc[-1]
         trade.exit_price = last["Close"]
         trade.exit_date = str(last["Date"].date()) if hasattr(last["Date"], "date") else str(last["Date"])
@@ -338,6 +368,7 @@ class BacktestEngine:
         max_hold_days: int = MAX_HOLD_DAYS,
         atr_stop_mult: float = ATR_STOP_MULT,
         atr_tp_mult: float = ATR_TP_MULT,
+        sell_threshold: float = 4.0,
     ):
         self.pool = pool
         self.backtest_days = backtest_days
@@ -346,6 +377,7 @@ class BacktestEngine:
         self.max_hold_days = max_hold_days
         self.atr_stop_mult = atr_stop_mult
         self.atr_tp_mult = atr_tp_mult
+        self.sell_threshold = sell_threshold
 
         self.trades: List[Trade] = []
         self.daily_log: List[Dict] = []
@@ -462,7 +494,18 @@ class BacktestEngine:
                     (self.all_data["Date"] > sim_date)
                 ].sort_values("Date").head(self.max_hold_days + 2)
 
-                trade = _simulate_trade(trade, future)
+                # 매도 신호 분석용 히스토리 (진입일까지)
+                hist_for_sell = self.all_data[
+                    (self.all_data["ticker"] == ticker) &
+                    (self.all_data["Date"] <= sim_date)
+                ].sort_values("Date").tail(LOOKBACK_BARS)
+
+                trade = _simulate_trade(
+                    trade, future,
+                    max_hold_days=self.max_hold_days,
+                    sell_threshold=self.sell_threshold,
+                    hist_data=hist_for_sell,
+                )
                 self.trades.append(trade)
                 active_tickers.add(ticker)
 
@@ -568,6 +611,7 @@ class BacktestEngine:
         tp_trades = [t for t in completed if t.status == "take_profit"]
         sl_trades = [t for t in completed if t.status == "stop_loss"]
         exp_trades = [t for t in completed if t.status == "expired"]
+        sell_trades = [t for t in completed if t.status == "sell_signal"]
 
         # 기본 통계
         total = len(completed)
@@ -637,6 +681,7 @@ class BacktestEngine:
                 "max_hold_days": self.max_hold_days,
                 "atr_stop_mult": self.atr_stop_mult,
                 "atr_tp_mult": self.atr_tp_mult,
+                "sell_threshold": self.sell_threshold,
                 "commission_pct": COMMISSION_PCT,
                 "slippage_pct": SLIPPAGE_PCT,
             },
@@ -661,9 +706,11 @@ class BacktestEngine:
                 "take_profit": len(tp_trades),
                 "stop_loss": len(sl_trades),
                 "expired": len(exp_trades),
+                "sell_signal": len(sell_trades),
                 "tp_rate": round(len(tp_trades) / total * 100, 2) if total > 0 else 0,
                 "sl_rate": round(len(sl_trades) / total * 100, 2) if total > 0 else 0,
                 "exp_rate": round(len(exp_trades) / total * 100, 2) if total > 0 else 0,
+                "sell_rate": round(len(sell_trades) / total * 100, 2) if total > 0 else 0,
             },
             "monthly_returns": monthly,
             "top_traded_tickers": [
@@ -812,7 +859,7 @@ def print_report(result: Dict):
     print(f"   풀: {cfg.get('pool', '?')} | 기간: {cfg.get('backtest_days', '?')}거래일")
     print(f"   상위 {cfg.get('top_n', '?')}종목/일 | 최소점수: {cfg.get('min_tech_score', '?')}")
     print(f"   손절: ATR×{cfg.get('atr_stop_mult', '?')} | 익절: ATR×{cfg.get('atr_tp_mult', '?')}")
-    print(f"   최대보유: {cfg.get('max_hold_days', '?')}일 | 수수료: {cfg.get('commission_pct', 0)}%")
+    print(f"   최대보유: {cfg.get('max_hold_days', '?')}일 | 매도임계: {cfg.get('sell_threshold', '?')} | 수수료: {cfg.get('commission_pct', 0)}%")
 
     # 핵심 지표
     print(f"\n{'─' * 70}")
@@ -844,6 +891,7 @@ def print_report(result: Dict):
     print(f"   ✅ 익절: {eb.get('take_profit', 0)}회 ({eb.get('tp_rate', 0):.1f}%)")
     print(f"   🛑 손절: {eb.get('stop_loss', 0)}회 ({eb.get('sl_rate', 0):.1f}%)")
     print(f"   ⏰ 만료: {eb.get('expired', 0)}회 ({eb.get('exp_rate', 0):.1f}%)")
+    print(f"   📉 매도: {eb.get('sell_signal', 0)}회 ({eb.get('sell_rate', 0):.1f}%)")
 
     # 월별 수익
     monthly = result.get("monthly_returns", [])

@@ -233,7 +233,7 @@ def collect_dashboard_data() -> dict:
         monthly_perf[m]["total_pnl"] = round(monthly_perf[m]["total_pnl"], 2)
 
     # 히스토리에서 청산 유형 비율
-    exit_types = {"take_profit": 0, "stop_loss": 0, "expired": 0}
+    exit_types = {"take_profit": 0, "stop_loss": 0, "expired": 0, "sell_signal": 0}
     for h in history:
         reason = h.get("close_reason", "")
         if reason in exit_types:
@@ -474,6 +474,7 @@ tr:hover td {{ background: rgba(56,189,248,0.04); }}
 .status-take_profit {{ color: var(--green); }}
 .status-stop_loss {{ color: var(--red); }}
 .status-expired {{ color: var(--yellow); }}
+.status-sell_signal {{ color: var(--accent); }}
 
 .chart-box {{
   background: var(--surface);
@@ -814,7 +815,7 @@ async function fetchLiveData() {{
     }}
     D.monthly_performance = mp;
     // 청산 유형
-    const et = {{take_profit:0, stop_loss:0, expired:0}};
+    const et = {{take_profit:0, stop_loss:0, expired:0, sell_signal:0}};
     for (const h of D.history) {{ if (et[h.close_reason] !== undefined) et[h.close_reason]++; }}
     D.exit_types = et;
     updated = true;
@@ -854,6 +855,18 @@ const pnlClass = v => v > 0 ? 'positive' : v < 0 ? 'negative' : 'neutral';
 const pnlSign = v => v > 0 ? '+' + fmt(v) : fmt(v);
 const regimeIcon = r => ({{bullish:'🐂',bearish:'🐻',sideways:'📊',conservative:'🛡️'}})[r] || '❓';
 const regimeClass = r => 'regime-' + (r || 'unknown');
+
+// ── 신호 가중치 한국어 라벨 ──
+const weightLabels = {{
+  pullback_score: '눈림목', breakout_score: '돌파', divergence_score: '다이버전스',
+  stoch_cross_up: '스토캐스틱', golden_cross: '골든크로스', ma_alignment: '정배열',
+  macd_cross_up: 'MACD상향', bullish_volume: '거래량', obv_rising: 'OBV상승',
+  strong_trend: '추세강도', bb_squeeze_breakout: 'BB스퀀즈', rr_bonus: 'R:R보너스',
+  rsi_oversold_bounce: 'RSI반등',
+  sell_dead_cross: '매도:데드크로스', sell_macd_down: '매도:MACD하향',
+  sell_bearish_div: '매도:약세다이버', sell_rsi_overbought: '매도:RSI과매수',
+  sell_stoch_overbought: '매도:스토캐스틱', sell_bb_upper_reject: '매도:BB상단',
+}};
 
 // ── 탭 전환 ──
 function showTab(id) {{
@@ -1042,7 +1055,7 @@ function renderStatCards() {{
   const html = [
     statCard('오픈 포지션', openCount, '', 'accent'),
     statCard('총 거래', s.total_trades || 0, `승 ${{s.wins||0}} / 패 ${{s.losses||0}}`, ''),
-    statCard('승률', fmt(s.win_rate||0,1)+'%', `만료 ${{s.expired||0}}건`, pnlClass(s.win_rate-50)),
+    statCard('승률', fmt(s.win_rate||0,1)+'%', `만료 ${{s.expired||0}} / 매도 ${{s.sell_signal||0}}건`, pnlClass(s.win_rate-50)),
     statCard('누적 수익', pnlSign(s.total_pnl_pct||0)+'%', `평균 ${{pnlSign(s.avg_pnl_pct||0)}}%`, pnlClass(s.total_pnl_pct)),
   ].join('');
   document.getElementById('statCards').innerHTML = html;
@@ -1091,7 +1104,7 @@ function renderHistory() {{
       <td>${{fmt(h.entry_price)}}</td>
       <td>${{fmt(h.exit_price)}}</td>
       <td class="${{pnlClass(h.pnl_pct)}}"><strong>${{pnlSign(h.pnl_pct)}}%</strong></td>
-      <td class="status-${{reason}}">${{{{take_profit:'✅ 익절',stop_loss:'🛑 손절',expired:'⏰ 만료'}}[reason]||reason}}</td>
+      <td class="status-${{reason}}">${{{{take_profit:'✅ 익절',stop_loss:'🛑 손절',expired:'⏰ 만료',sell_signal:'📉 매도'}}[reason]||reason}}</td>
       <td>${{h.hold_days||'—'}}</td>
       <td>${{h.entry_date}}</td>
     </tr>`;
@@ -1154,15 +1167,15 @@ function renderPerformance() {{
 
   // 청산 유형 도넛
   const et = D.exit_types || {{}};
-  const total = (et.take_profit||0) + (et.stop_loss||0) + (et.expired||0);
+  const total = (et.take_profit||0) + (et.stop_loss||0) + (et.expired||0) + (et.sell_signal||0);
   if (total > 0) {{
     new Chart(document.getElementById('exitTypeChart'), {{
       type: 'doughnut',
       data: {{
-        labels: ['익절', '손절', '만료'],
+        labels: ['익절', '손절', '만료', '매도'],
         datasets: [{{
-          data: [et.take_profit||0, et.stop_loss||0, et.expired||0],
-          backgroundColor: ['#34d399', '#f87171', '#fbbf24'],
+          data: [et.take_profit||0, et.stop_loss||0, et.expired||0, et.sell_signal||0],
+          backgroundColor: ['#34d399', '#f87171', '#fbbf24', '#60a5fa'],
           borderWidth: 0,
         }}]
       }},
@@ -1256,7 +1269,9 @@ function renderTuning() {{
     atr_stop_mult: '손절 ATR 배수',
     atr_tp_mult: '익절 ATR 배수',
     max_hold_days: '최대 보유일',
+    sell_threshold: '매도 임계값',
   }};
+
   let phtml = '';
   for (const [k, v] of Object.entries(params)) {{
     phtml += `<div class="param-item"><div class="label">${{paramLabels[k]||k}}</div><div class="value">${{v}}</div></div>`;
@@ -1272,7 +1287,7 @@ function renderTuning() {{
     const pct = Math.min(100, (v / 2.5) * 100);
     const color = v > 1.2 ? 'var(--green)' : v < 0.8 ? 'var(--red)' : 'var(--accent)';
     whtml += `<div class="weight-bar">
-      <span class="label">${{k}}</span>
+      <span class="label">${{weightLabels[k]||k}}</span>
       <div class="bar"><div class="fill" style="width:${{pct}}%;background:${{color}}"></div></div>
       <span class="val" style="color:${{color}}">${{v.toFixed(2)}}</span>
     </div>`;
@@ -1334,6 +1349,7 @@ function renderStrategy() {{
   ehtml += row('손절 ATR 배수', (params.atr_stop_mult || 2.0) + 'x');
   ehtml += row('익절 ATR 배수', (params.atr_tp_mult || 4.0) + 'x');
   ehtml += row('최대 보유일', (params.max_hold_days || 7) + '일');
+  ehtml += row('매도 임계값', (params.sell_threshold || 4.0), 'yellow');
   ehtml += row('스코어링', '기술 70% + 뉴스 30%');
   document.getElementById('stratEntry').innerHTML = ehtml;
 
@@ -1366,7 +1382,7 @@ function renderStrategy() {{
     new Chart(document.getElementById('stratWeightCanvas'), {{
       type: 'bar',
       data: {{
-        labels: wKeys,
+        labels: wKeys.map(k => weightLabels[k]||k),
         datasets: [{{
           label: '가중치',
           data: wKeys.map(k => w[k]),

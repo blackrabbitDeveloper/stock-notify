@@ -609,6 +609,17 @@ class ParameterTuner:
             adjusted["top_n"] = max(2, params.get("top_n", 5) - 1)
             logger.info(f"  높은 MDD({max_dd:.0f}%) → 보수적 전환")
 
+        # ── 매도 신호 임계값 조정 ──
+        sell_rate = eb.get("sell_rate", 0)
+        if sell_rate > 30:
+            # 매도 청산이 너무 많으면 → 임계값 올림 (더 신중하게)
+            adjusted["sell_threshold"] = params.get("sell_threshold", 4.0) + 0.5
+            logger.info(f"  매도 청산 비율 높음({sell_rate:.0f}%) → sell_threshold ↑")
+        elif sell_rate < 5 and exp_rate > 40:
+            # 매도가 거의 없고 만료가 많으면 → 임계값 낮춤 (더 적극적으로)
+            adjusted["sell_threshold"] = params.get("sell_threshold", 4.0) - 0.5
+            logger.info(f"  매도 청산 부족({sell_rate:.0f}%) + 만료 과다({exp_rate:.0f}%) → sell_threshold ↓")
+
         return adjusted
 
 

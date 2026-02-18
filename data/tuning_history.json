@@ -103,5 +103,91 @@
         "perf_score": 0.122
       }
     }
+  },
+  {
+    "timestamp": "2026-02-18T09:57:49.671723+00:00",
+    "regime": "conservative",
+    "params": {
+      "top_n": 3,
+      "min_tech_score": 5.5,
+      "atr_stop_mult": 1.5,
+      "atr_tp_mult": 3.0,
+      "max_hold_days": 5,
+      "sell_threshold": 3.0
+    },
+    "summary": {
+      "total_trades": 138,
+      "win_rate": 51.45,
+      "avg_pnl_pct": 0.1568,
+      "median_pnl_pct": 0.0593,
+      "total_pnl_pct": 21.6409,
+      "std_pnl_pct": 3.1535,
+      "avg_win_pct": 2.6843,
+      "avg_loss_pct": -2.5215,
+      "profit_factor": 1.1281,
+      "expected_value_pct": 0.1568,
+      "sharpe_ratio": 0.7894,
+      "max_consecutive_wins": 5,
+      "max_consecutive_losses": 11,
+      "avg_hold_days": 3.72,
+      "portfolio_max_drawdown_pct": 41.2012
+    },
+    "param_changes": {
+      "sell_threshold": {
+        "old": 4.0,
+        "new": 3.0,
+        "reason": "safety_mode"
+      }
+    },
+    "weight_changes": {
+      "pullback_score": {
+        "old": 1.051,
+        "new": 1.086,
+        "delta": 0.0335,
+        "perf_score": 0.223
+      },
+      "stoch_cross_up": {
+        "old": 1.159,
+        "new": 1.214,
+        "delta": 0.0474,
+        "perf_score": 0.316
+      },
+      "divergence_score": {
+        "old": 1.108,
+        "new": 1.159,
+        "delta": 0.0459,
+        "perf_score": 0.306
+      },
+      "macd_cross_up": {
+        "old": 1.157,
+        "new": 1.188,
+        "delta": 0.0264,
+        "perf_score": 0.176
+      },
+      "ma_alignment": {
+        "old": 0.945,
+        "new": 0.902,
+        "delta": -0.046,
+        "perf_score": -0.307
+      },
+      "golden_cross": {
+        "old": 0.992,
+        "new": 0.96,
+        "delta": -0.0319,
+        "perf_score": -0.213
+      },
+      "bullish_volume": {
+        "old": 1.03,
+        "new": 1.016,
+        "delta": -0.014,
+        "perf_score": -0.093
+      },
+      "breakout_score": {
+        "old": 1.018,
+        "new": 1.075,
+        "delta": 0.0563,
+        "perf_score": 0.375
+      }
+    }
   }
 ]

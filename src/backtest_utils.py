@@ -91,6 +91,7 @@ def send_backtest_to_discord(result: Dict) -> None:
                     f"✅ 익절: {eb.get('take_profit', 0)}회 ({eb.get('tp_rate', 0):.1f}%)\n"
                     f"🛑 손절: {eb.get('stop_loss', 0)}회 ({eb.get('sl_rate', 0):.1f}%)\n"
                     f"⏰ 만료: {eb.get('expired', 0)}회 ({eb.get('exp_rate', 0):.1f}%)\n"
+                    f"📉 매도: {eb.get('sell_signal', 0)}회 ({eb.get('sell_rate', 0):.1f}%)\n"
                     f"\n"
                     f"평균 승: {s.get('avg_win_pct', 0):+.2f}%\n"
                     f"평균 패: {s.get('avg_loss_pct', 0):+.2f}%\n"
