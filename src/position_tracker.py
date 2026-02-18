@@ -69,6 +69,7 @@ def _empty_stats() -> Dict:
         "wins":         0,
         "losses":       0,
         "expired":      0,
+        "sell_signal":  0,
         "total_pnl_pct": 0.0,
         "win_rate":      0.0,
         "avg_pnl_pct":   0.0,
@@ -258,36 +259,6 @@ def _fetch_close_prices(tickers: List[str]) -> Dict[str, float]:
         print(f"[ERROR] _fetch_close_prices: {e}")
         return {}
 
-def _fetch_history_for_analysis(tickers: List[str], days: int = 60) -> Dict[str, pd.DataFrame]:
-    """기술적 분석용 히스토리 데이터 수집."""
-    if not tickers:
-        return {}
-    result = {}
-    try:
-        df = yf.download(tickers, period=f"{days}d", interval="1d",
-                         progress=False, auto_adjust=False, group_by="ticker")
-        if df is None or df.empty:
-            return {}
-        if len(tickers) == 1:
-            t = tickers[0]
-            sub = df[["Open", "High", "Low", "Close", "Volume"]].dropna()
-            if len(sub) >= 30:
-                sub = sub.reset_index()
-                result[t] = sub
-        else:
-            for t in tickers:
-                try:
-                    sub = df[t][["Open", "High", "Low", "Close", "Volume"]].dropna()
-                    if len(sub) >= 30:
-                        sub = sub.reset_index()
-                        result[t] = sub
-                except (KeyError, TypeError):
-                    continue
-    except Exception as e:
-        print(f"[ERROR] _fetch_history_for_analysis: {e}")
-    return result
-
-
 def _calendar_days_since(entry_date: str) -> int:
     try:
         entry = datetime.fromisoformat(entry_date).replace(tzinfo=timezone.utc)
@@ -315,6 +286,13 @@ def update_positions() -> Tuple[List[Dict], List[Dict]]:
     tickers = [p["ticker"] for p in open_pos]
     prices  = _fetch_close_prices(tickers)
     today   = datetime.now(timezone.utc).date().isoformat()
+    tuned   = _load_tuned_params()
+
+    # 기술적 매도 신호 분석을 위한 히스토리 데이터 수집
+    from .technical_analyzer import analyze_stock_technical, calculate_sell_score
+    history_data = _fetch_history_for_analysis(tickers, days=60)
+    sell_threshold = tuned["sell_threshold"]
+    print(f"[INFO] 매도 신호 분석: {len(history_data)}/{len(tickers)}종목 히스토리 확보 | 임계값={sell_threshold}")
 
     newly_closed: List[Dict] = []
     still_open:   List[Dict] = []
@@ -338,14 +316,35 @@ def update_positions() -> Tuple[List[Dict], List[Dict]]:
         days  = _calendar_days_since(pos["entry_date"])
         pnl   = (price - entry) / entry * 100.0
 
-        # ── 청산 판단 ──────────────────────────
+        # ── 청산 판단 (1: 손절/익절/만료) ────────
         reason = None
         if price <= sl:
             reason = STATUS_SL
         elif price >= tp:
             reason = STATUS_TP
-        elif days >= _load_tuned_params()["max_hold_days"]:
+        elif days >= tuned["max_hold_days"]:
             reason = STATUS_EXPIRED
+
+        # ── 청산 판단 (2: 기술적 매도 신호) ──────
+        sell_info = None
+        if reason is None and t in history_data:
+            try:
+                analysis = analyze_stock_technical(history_data[t])
+                if analysis:
+                    sell_result = calculate_sell_score(analysis)
+                    sell_score = sell_result["sell_score"]
+                    sell_signals = sell_result["sell_signals"]
+
+                    if sell_score >= sell_threshold:
+                        reason = STATUS_SELL_SIGNAL
+                        sell_info = sell_result
+                        print(f"[INFO] 📉 {t}: 매도 신호 감지! "
+                              f"score={sell_score:.1f} >= {sell_threshold} "
+                              f"signals={sell_signals}")
+                    else:
+                        print(f"[INFO] {t}: 매도 점수={sell_score:.1f} < {sell_threshold} (유지)")
+            except Exception as e:
+                print(f"[WARN] {t} 매도 분석 실패: {e}")
 
         if reason:
             pos["status"]       = reason
@@ -353,8 +352,12 @@ def update_positions() -> Tuple[List[Dict], List[Dict]]:
             pos["exit_date"]    = today
             pos["pnl_pct"]      = round(pnl, 2)
             pos["close_reason"] = reason
+            if sell_info:
+                pos["sell_signals"] = sell_info.get("sell_signals", [])
+                pos["sell_score"]   = sell_info.get("sell_score", 0)
             newly_closed.append(pos)
-            emoji = {"take_profit": "✅", "stop_loss": "🛑", "expired": "⏰"}.get(reason, "?")
+            emoji = {"take_profit": "✅", "stop_loss": "🛑",
+                     "expired": "⏰", "sell_signal": "📉"}.get(reason, "?")
             print(f"[INFO] closed {emoji} {t}: {reason}  pnl={pnl:+.2f}%  days={days}")
         else:
             still_open.append(pos)
@@ -386,6 +389,7 @@ def _recalc_stats(closed: List[Dict]) -> Dict:
     wins   = [p for p in closed if (p.get("pnl_pct") or 0) > 0]
     losses = [p for p in closed if (p.get("pnl_pct") or 0) <= 0]
     exps   = [p for p in closed if p.get("status") == STATUS_EXPIRED]
+    sells  = [p for p in closed if p.get("status") == STATUS_SELL_SIGNAL]
 
     total_pnl = sum(pnls) if pnls else 0.0
     avg_pnl   = total_pnl / len(pnls) if pnls else 0.0
@@ -399,6 +403,7 @@ def _recalc_stats(closed: List[Dict]) -> Dict:
         "wins":          len(wins),
         "losses":        len(losses),
         "expired":       len(exps),
+        "sell_signal":   len(sells),
         "total_pnl_pct": round(total_pnl, 2),
         "win_rate":      round(win_rate, 1),
         "avg_pnl_pct":   round(avg_pnl, 2),
