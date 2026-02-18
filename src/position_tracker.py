@@ -22,9 +22,31 @@ POSITIONS_FILE = Path("data/positions.json")
 HISTORY_FILE   = Path("data/history.json")
 
 # ── 상수 ──────────────────────────────────────────────
-ATR_STOP_MULT = 2.0   # 손절: 진입가 - 2x ATR
-ATR_TP_MULT   = 4.0   # 익절: 진입가 + 4x ATR
-MAX_HOLD_DAYS = 7     # 최대 보유 기간 (캘린더 기준)
+DEFAULT_ATR_STOP_MULT = 2.0
+DEFAULT_ATR_TP_MULT   = 4.0
+DEFAULT_MAX_HOLD_DAYS = 7
+
+STRATEGY_STATE_FILE = Path("config/strategy_state.json")
+
+def _load_tuned_params():
+    """strategy_state.json에서 자기학습된 파라미터 로드."""
+    if STRATEGY_STATE_FILE.exists():
+        try:
+            with open(STRATEGY_STATE_FILE, "r", encoding="utf-8") as f:
+                state = json.load(f)
+            p = state.get("current_params", {})
+            return {
+                "atr_stop_mult": float(p.get("atr_stop_mult", DEFAULT_ATR_STOP_MULT)),
+                "atr_tp_mult":   float(p.get("atr_tp_mult",   DEFAULT_ATR_TP_MULT)),
+                "max_hold_days": int(p.get("max_hold_days",   DEFAULT_MAX_HOLD_DAYS)),
+            }
+        except Exception:
+            pass
+    return {
+        "atr_stop_mult": DEFAULT_ATR_STOP_MULT,
+        "atr_tp_mult":   DEFAULT_ATR_TP_MULT,
+        "max_hold_days": DEFAULT_MAX_HOLD_DAYS,
+    }
 
 # 포지션 상태
 STATUS_OPEN    = "open"
@@ -139,9 +161,10 @@ def _get_atr(ticker: str, entry_date: str) -> Optional[float]:
 
 def calc_sl_tp(entry_price: float, atr: Optional[float]) -> Tuple[float, float]:
     """손절/익절 가격 반환. ATR 없으면 -5% / +10% 폴백."""
+    tuned = _load_tuned_params()
     if atr and atr > 0:
-        sl = round(entry_price - ATR_STOP_MULT * atr, 4)
-        tp = round(entry_price + ATR_TP_MULT   * atr, 4)
+        sl = round(entry_price - tuned["atr_stop_mult"] * atr, 4)
+        tp = round(entry_price + tuned["atr_tp_mult"]   * atr, 4)
     else:
         sl = round(entry_price * 0.95, 4)
         tp = round(entry_price * 1.10, 4)
@@ -287,7 +310,7 @@ def update_positions() -> Tuple[List[Dict], List[Dict]]:
             reason = STATUS_SL
         elif price >= tp:
             reason = STATUS_TP
-        elif days >= MAX_HOLD_DAYS:
+        elif days >= _load_tuned_params()["max_hold_days"]:
             reason = STATUS_EXPIRED
 
         if reason:

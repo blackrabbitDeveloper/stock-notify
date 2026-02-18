@@ -734,7 +734,119 @@ canvas {{ max-height: 320px; }}
 </footer>
 
 <script>
-const D = {data_json};
+let D = {data_json};
+
+// ── GitHub raw 에서 최신 데이터 fetch (실시간 갱신) ──
+const REPO_RAW = 'https://raw.githubusercontent.com/blackrabbitDeveloper/stock-notify/main';
+
+async function fetchLiveData() {{
+  const files = {{
+    positions:    REPO_RAW + '/data/positions.json',
+    history:      REPO_RAW + '/data/history.json',
+    strategy:     REPO_RAW + '/config/strategy_state.json',
+    weights:      REPO_RAW + '/config/signal_weights.json',
+    tuning:       REPO_RAW + '/data/tuning_history.json',
+    universe:     REPO_RAW + '/config/universe.yaml',
+  }};
+
+  async function grab(url) {{
+    try {{
+      const r = await fetch(url + '?t=' + Date.now());
+      if (!r.ok) return null;
+      return await r.json();
+    }} catch(e) {{ return null; }}
+  }}
+
+  // 백테스트: 최신 JSON 파일 찾기
+  async function grabLatestBacktest() {{
+    try {{
+      // GitHub API로 파일 목록 조회
+      const r = await fetch('https://api.github.com/repos/blackrabbitDeveloper/stock-notify/contents/data/backtest?t=' + Date.now());
+      if (!r.ok) return null;
+      const items = await r.json();
+      const jsons = items.filter(f => f.name.endsWith('.json')).sort((a,b) => b.name.localeCompare(a.name));
+      if (!jsons.length) return null;
+      const r2 = await fetch(jsons[0].download_url);
+      return r2.ok ? await r2.json() : null;
+    }} catch(e) {{ return null; }}
+  }}
+
+  const [pos, hist, strat, wt, tune, bt] = await Promise.all([
+    grab(files.positions),
+    grab(files.history),
+    grab(files.strategy),
+    grab(files.weights),
+    grab(files.tuning),
+    grabLatestBacktest(),
+  ]);
+
+  let updated = false;
+
+  if (pos) {{
+    D.positions = pos.positions || [];
+    D.stats = pos.stats || {{}};
+    updated = true;
+  }}
+  if (hist) {{
+    D.history = Array.isArray(hist) ? hist.slice(-100) : [];
+    // 일별 누적 PnL 재계산
+    let cum = 0;
+    const dailyPnl = {{}};
+    const sorted = D.history.slice().sort((a,b) => (a.exit_date||'').localeCompare(b.exit_date||''));
+    for (const h of sorted) {{
+      cum += (h.pnl_pct || 0);
+      dailyPnl[h.exit_date] = Math.round(cum * 100) / 100;
+    }}
+    D.daily_cumulative_pnl = dailyPnl;
+    // 월별 성과 재계산
+    const mp = {{}};
+    for (const h of sorted) {{
+      const m = (h.exit_date || '').slice(0,7);
+      if (!m) continue;
+      if (!mp[m]) mp[m] = {{trades:0, wins:0, total_pnl:0}};
+      mp[m].trades++;
+      mp[m].total_pnl += (h.pnl_pct || 0);
+      if ((h.pnl_pct || 0) > 0) mp[m].wins++;
+    }}
+    for (const m of Object.keys(mp)) {{
+      mp[m].win_rate = mp[m].trades ? Math.round(mp[m].wins / mp[m].trades * 1000) / 10 : 0;
+      mp[m].total_pnl = Math.round(mp[m].total_pnl * 100) / 100;
+    }}
+    D.monthly_performance = mp;
+    // 청산 유형
+    const et = {{take_profit:0, stop_loss:0, expired:0}};
+    for (const h of D.history) {{ if (et[h.close_reason] !== undefined) et[h.close_reason]++; }}
+    D.exit_types = et;
+    updated = true;
+  }}
+  if (strat) {{
+    D.strategy = {{
+      current_params: strat.current_params || {{}},
+      current_regime: strat.current_regime || 'unknown',
+      regime_confidence: strat.regime_confidence || 0,
+      last_tuned_at: strat.last_tuned_at || '',
+    }};
+    updated = true;
+  }}
+  if (wt) {{ D.signal_weights = wt; updated = true; }}
+  if (tune) {{ D.tuning_history = Array.isArray(tune) ? tune.slice(-20) : []; updated = true; }}
+  if (bt) {{
+    D.backtest = {{
+      summary: bt.summary || {{}},
+      signal_performance: bt.signal_performance || [],
+      monthly_returns: bt.monthly_returns || [],
+      score_buckets: bt.score_buckets || [],
+    }};
+    updated = true;
+  }}
+
+  if (updated) {{
+    D.generated_at = new Date().toISOString();
+    console.log('✅ GitHub 에서 최신 데이터 로드 완료');
+  }} else {{
+    console.log('⚠️ 실시간 데이터 로드 실패, 정적 데이터 사용');
+  }}
+}}
 
 // ── 유틸 ──
 const fmt = (v, d=2) => v != null ? Number(v).toFixed(d) : '—';
@@ -1300,7 +1412,8 @@ function chartOpts(yLabel) {{
   }};
 }}
 
-init();
+// 실시간 데이터 fetch 후 초기화
+fetchLiveData().then(() => init()).catch(() => init());
 </script>
 </body>
 </html>"""

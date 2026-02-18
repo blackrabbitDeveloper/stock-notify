@@ -81,6 +81,10 @@ def run_once():
         min_bars=5, tech_filter_count=tech_filter_count
     )
 
+    # 자기학습된 top_n 적용
+    topn = topn.head(top_n_override)
+    print(f"  🎯 top_n={top_n_override} 적용 → {len(topn)}종목 선별")
+
     if topn.empty:
         send_discord_with_reasons([], "US Pre-Open Watchlist (Technical Analysis)")
         print("no recommendations – dataset too thin")

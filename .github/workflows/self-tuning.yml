@@ -54,7 +54,10 @@ jobs:
             python run_self_tuning.py --days ${{ inputs.days || '60' }} --discord
           fi
 
-      - name: Commit strategy updates
+      - name: Generate dashboard
+        run: python generate_dashboard.py
+
+      - name: Commit strategy updates & dashboard
         if: ${{ inputs.dry_run != 'true' }}
         run: |
           git config user.name  "github-actions[bot]"
@@ -64,11 +67,12 @@ jobs:
                  config/signal_weights.json \
                  config/universe.yaml \
                  data/tuning_history.json \
-                 data/backtest/
+                 data/backtest/ \
+                 docs/
 
           if git diff --staged --quiet; then
             echo "No strategy changes"
           else
-            git commit -m "🧠 self-tuning: strategy update $(date -u +'%Y-%m-%d')"
+            git commit -m "🧠 self-tuning: strategy update & dashboard $(date -u +'%Y-%m-%d')"
             git push
           fi
