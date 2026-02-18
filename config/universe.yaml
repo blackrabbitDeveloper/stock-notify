@@ -6,7 +6,7 @@ auto:
   max_final_universe: 150
   max_price: 500
   min_price: 5
-  min_tech_score: 5.5
+  min_tech_score: 4.5
   pool: sp500
   tech_filter_count: 30
   use_news_bonus: true

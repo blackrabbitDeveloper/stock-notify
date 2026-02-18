@@ -26,6 +26,8 @@ DEFAULT_ATR_STOP_MULT  = 2.0
 DEFAULT_ATR_TP_MULT    = 4.0
 DEFAULT_MAX_HOLD_DAYS  = 7
 DEFAULT_SELL_THRESHOLD = 4.0   # 매도 점수 임계값 (이상이면 기술적 청산)
+DEFAULT_MAX_POSITIONS  = 10    # 최대 동시 보유 포지션 수
+DEFAULT_MAX_DAILY_ENTRIES = 3  # 하루 최대 신규 진입 수
 
 STRATEGY_STATE_FILE = Path("config/strategy_state.json")
 
@@ -37,18 +39,22 @@ def _load_tuned_params():
                 state = json.load(f)
             p = state.get("current_params", {})
             return {
-                "atr_stop_mult":   float(p.get("atr_stop_mult",   DEFAULT_ATR_STOP_MULT)),
-                "atr_tp_mult":     float(p.get("atr_tp_mult",     DEFAULT_ATR_TP_MULT)),
-                "max_hold_days":   int(p.get("max_hold_days",     DEFAULT_MAX_HOLD_DAYS)),
-                "sell_threshold":  float(p.get("sell_threshold",   DEFAULT_SELL_THRESHOLD)),
+                "atr_stop_mult":      float(p.get("atr_stop_mult",      DEFAULT_ATR_STOP_MULT)),
+                "atr_tp_mult":        float(p.get("atr_tp_mult",        DEFAULT_ATR_TP_MULT)),
+                "max_hold_days":      int(p.get("max_hold_days",        DEFAULT_MAX_HOLD_DAYS)),
+                "sell_threshold":     float(p.get("sell_threshold",      DEFAULT_SELL_THRESHOLD)),
+                "max_positions":      int(p.get("max_positions",         DEFAULT_MAX_POSITIONS)),
+                "max_daily_entries":  int(p.get("max_daily_entries",     DEFAULT_MAX_DAILY_ENTRIES)),
             }
         except Exception:
             pass
     return {
-        "atr_stop_mult":  DEFAULT_ATR_STOP_MULT,
-        "atr_tp_mult":    DEFAULT_ATR_TP_MULT,
-        "max_hold_days":  DEFAULT_MAX_HOLD_DAYS,
-        "sell_threshold": DEFAULT_SELL_THRESHOLD,
+        "atr_stop_mult":     DEFAULT_ATR_STOP_MULT,
+        "atr_tp_mult":       DEFAULT_ATR_TP_MULT,
+        "max_hold_days":     DEFAULT_MAX_HOLD_DAYS,
+        "sell_threshold":    DEFAULT_SELL_THRESHOLD,
+        "max_positions":     DEFAULT_MAX_POSITIONS,
+        "max_daily_entries": DEFAULT_MAX_DAILY_ENTRIES,
     }
 
 # 포지션 상태
@@ -184,12 +190,29 @@ def register_positions(rows: List[Dict], recommend_date: str) -> None:
     """
     신규 추천 종목을 포지션으로 등록.
     이미 열려있는 종목은 중복 등록하지 않음.
+    최대 포지션 수/일별 진입 수 제한 적용.
     """
     data = load_positions()
     open_tickers = {p["ticker"] for p in data["positions"] if p["status"] == STATUS_OPEN}
+    open_count = len(open_tickers)
     added = []
 
+    tuned = _load_tuned_params()
+    max_positions = tuned["max_positions"]
+    max_daily = tuned["max_daily_entries"]
+
+    if open_count >= max_positions:
+        print(f"[INFO] 포지션 가득 참 ({open_count}/{max_positions}) → 신규 진입 차단")
+        return
+
+    available_slots = min(max_daily, max_positions - open_count)
+    print(f"[INFO] 포지션 현황: {open_count}/{max_positions} | 오늘 진입 가능: {available_slots}개")
+
     for r in rows:
+        if len(added) >= available_slots:
+            print(f"[INFO] 일별 진입 한도 도달 ({len(added)}/{available_slots}) → 중단")
+            break
+
         ticker = r.get("ticker")
         if not ticker or ticker in open_tickers:
             continue
@@ -258,6 +281,42 @@ def _fetch_close_prices(tickers: List[str]) -> Dict[str, float]:
     except Exception as e:
         print(f"[ERROR] _fetch_close_prices: {e}")
         return {}
+
+def _fetch_history_for_analysis(tickers: List[str], days: int = 60) -> Dict[str, pd.DataFrame]:
+    """기술적 매도 신호 분석을 위한 종목별 OHLCV 히스토리 수집."""
+    if not tickers:
+        return {}
+    try:
+        df = yf.download(tickers, period=f"{days + 10}d", interval="1d",
+                         progress=False, auto_adjust=False, group_by="ticker")
+        if df is None or df.empty:
+            return {}
+
+        result = {}
+        if len(tickers) == 1:
+            t = tickers[0]
+            sub = df[["Open", "High", "Low", "Close", "Volume"]].dropna()
+            if len(sub) >= 20:
+                sub = sub.reset_index()
+                sub.columns = ["Date", "Open", "High", "Low", "Close", "Volume"]
+                result[t] = sub
+        else:
+            for t in tickers:
+                try:
+                    if t not in df.columns.get_level_values(0):
+                        continue
+                    sub = df[t][["Open", "High", "Low", "Close", "Volume"]].dropna()
+                    if len(sub) >= 20:
+                        sub = sub.reset_index()
+                        sub.columns = ["Date", "Open", "High", "Low", "Close", "Volume"]
+                        result[t] = sub
+                except Exception:
+                    continue
+        return result
+    except Exception as e:
+        print(f"[ERROR] _fetch_history_for_analysis: {e}")
+        return {}
+
 
 def _calendar_days_since(entry_date: str) -> int:
     try:
@@ -447,3 +506,149 @@ def get_summary() -> Dict:
         "stats":         data["stats"],
         "recent_closed": recent_closed,
     }
+
+
+# ══════════════════════════════════════════════════════
+#  리밸런싱: 포지션 재검증 + 초과분 청산
+# ══════════════════════════════════════════════════════
+
+def rebalance_positions(
+    max_positions: int = None,
+    fetch_live: bool = True,
+    dry_run: bool = False,
+) -> Dict:
+    """
+    열린 포지션을 재평가하고, max_positions 초과 시 하위 종목을 청산한다.
+
+    Args:
+        max_positions: 유지할 최대 포지션 수 (None이면 strategy_state에서 로드)
+        fetch_live: True면 실시간 가격 fetch, False면 price_history 마지막 종가 사용
+        dry_run: True면 실제 저장하지 않고 결과만 반환
+
+    Returns:
+        {"kept": [...], "closed": [...], "summary": {...}}
+    """
+    data = load_positions()
+    tuned = _load_tuned_params()
+
+    if max_positions is None:
+        max_positions = tuned.get("max_positions", DEFAULT_MAX_POSITIONS)
+
+    open_pos = [p for p in data["positions"] if p["status"] == STATUS_OPEN]
+    print(f"\n{'='*60}")
+    print(f"🔄 포지션 리밸런싱 (현재 {len(open_pos)}개 → 최대 {max_positions}개)")
+    print(f"{'='*60}")
+
+    if len(open_pos) <= max_positions:
+        print(f"  ✅ 포지션 수 정상 ({len(open_pos)} ≤ {max_positions}) → 리밸런싱 불필요")
+        return {"kept": open_pos, "closed": [], "summary": {"action": "none"}}
+
+    # ── 실시간 가격 가져오기 ──
+    tickers = [p["ticker"] for p in open_pos]
+    live_prices = {}
+    if fetch_live:
+        print(f"  📡 {len(tickers)}개 종목 실시간 가격 조회...")
+        live_prices = _fetch_close_prices(tickers)
+        fetched = len([t for t in tickers if t in live_prices])
+        print(f"  📡 {fetched}/{len(tickers)}개 가격 수신")
+
+    # ── 각 포지션 재평가 ──
+    scored = []
+    for p in open_pos:
+        entry = p["entry_price"]
+
+        # 현재가 결정: 실시간 > price_history 마지막 > entry_price
+        if p["ticker"] in live_prices:
+            current = live_prices[p["ticker"]]
+        elif p.get("price_history"):
+            current = p["price_history"][-1]["close"]
+        else:
+            current = entry
+
+        pnl_pct = (current - entry) / entry * 100.0
+        tech = p.get("tech_score", 0)
+        combined = p.get("combined_score", 0)
+
+        # 재평가 점수: combined(50%) + 수익률 보정(30%) + 기술점수(20%)
+        pnl_bonus = min(3.0, max(-3.0, pnl_pct * 0.5))
+        reeval = combined * 0.5 + pnl_bonus * 0.3 + tech * 0.2
+
+        scored.append({
+            "position": p,
+            "current_price": round(current, 4),
+            "pnl_pct": round(pnl_pct, 2),
+            "reeval_score": round(reeval, 3),
+        })
+
+    # 점수순 정렬
+    scored.sort(key=lambda x: x["reeval_score"], reverse=True)
+
+    keep = scored[:max_positions]
+    to_close = scored[max_positions:]
+
+    # ── 결과 출력 ──
+    today = datetime.now(timezone.utc).date().isoformat()
+
+    print(f"\n  ✅ 유지 ({len(keep)}개):")
+    for s in keep:
+        p = s["position"]
+        emoji = "🟢" if s["pnl_pct"] >= 0 else "🔴"
+        print(f"    {emoji} {p['ticker']:<6} P&L: {s['pnl_pct']:+6.1f}%  점수: {s['reeval_score']:.2f}")
+
+    print(f"\n  ❌ 청산 ({len(to_close)}개):")
+    newly_closed = []
+    for s in to_close:
+        p = s["position"]
+        emoji = "🟢" if s["pnl_pct"] >= 0 else "🔴"
+        print(f"    {emoji} {p['ticker']:<6} P&L: {s['pnl_pct']:+6.1f}%  점수: {s['reeval_score']:.2f}")
+
+        if not dry_run:
+            p["status"] = "strategy_rebalance"
+            p["exit_price"] = s["current_price"]
+            p["exit_date"] = today
+            p["pnl_pct"] = s["pnl_pct"]
+            p["close_reason"] = "strategy_rebalance"
+
+        newly_closed.append({
+            "ticker": p["ticker"],
+            "entry_price": p["entry_price"],
+            "entry_date": p["entry_date"],
+            "exit_price": s["current_price"],
+            "exit_date": today,
+            "pnl_pct": s["pnl_pct"],
+            "close_reason": "strategy_rebalance",
+            "tech_score": p.get("tech_score", 0),
+            "combined_score": p.get("combined_score", 0),
+            "hold_days": _calendar_days_since(p["entry_date"]),
+        })
+
+    # ── 저장 ──
+    if not dry_run and to_close:
+        # stats 재계산
+        all_closed = [p for p in data["positions"] if p["status"] != STATUS_OPEN]
+        data["stats"] = _recalc_stats(all_closed)
+        save_positions(data)
+        _append_history(newly_closed)
+        print(f"\n  💾 저장 완료 (positions + history)")
+    elif dry_run and to_close:
+        print(f"\n  ⚠️ DRY RUN — 실제 저장하지 않음")
+
+    # 요약
+    total_pnl = sum(s["pnl_pct"] for s in to_close)
+    wins = len([s for s in to_close if s["pnl_pct"] > 0])
+    losses = len(to_close) - wins
+
+    summary = {
+        "action": "rebalanced" if to_close else "none",
+        "kept": len(keep),
+        "closed": len(to_close),
+        "closed_pnl": round(total_pnl, 2),
+        "wins": wins,
+        "losses": losses,
+    }
+
+    print(f"\n{'─'*60}")
+    print(f"  📊 리밸런싱 결과: 유지 {len(keep)} / 청산 {len(to_close)} "
+          f"(승{wins}/패{losses}, P&L: {total_pnl:+.1f}%)")
+
+    return {"kept": [s["position"] for s in keep], "closed": newly_closed, "summary": summary}

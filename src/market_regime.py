@@ -344,9 +344,10 @@ def detect_market_regime(market_data: Optional[Dict] = None) -> Tuple[str, Dict]
         "reason": REGIME_PROFILES[regime]["description"],
     }
 
+    vix_str = f"{vix_level:.1f}" if vix_level else "?"
     logger.info(
         f"시장 레짐: {regime} (신뢰도 {confidence:.0%}) | "
-        f"VIX={vix_level:.1f if vix_level else '?'} ADX={ind['adx']:.1f} "
+        f"VIX={vix_str} ADX={ind['adx']:.1f} "
         f"RSI={ind['rsi']:.1f} 20d={ind['ret_20d']:+.1f}%"
     )
 

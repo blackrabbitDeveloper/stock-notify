@@ -48,7 +48,9 @@ PARAM_BOUNDS = {
     "atr_stop_mult":  {"min": 1.0, "max": 3.5, "step": 0.25, "type": "float"},
     "atr_tp_mult":    {"min": 2.0, "max": 6.0, "step": 0.25, "type": "float"},
     "max_hold_days":  {"min": 3,   "max": 14,  "step": 1,    "type": "int"},
-    "sell_threshold": {"min": 2.0, "max": 8.0, "step": 0.5,  "type": "float"},
+    "sell_threshold":    {"min": 2.0, "max": 8.0, "step": 0.5,  "type": "float"},
+    "max_positions":     {"min": 3,   "max": 15,  "step": 1,    "type": "int"},
+    "max_daily_entries": {"min": 1,   "max": 5,   "step": 1,    "type": "int"},
 }
 
 # 신호 가중치 범위
@@ -69,6 +71,9 @@ REGIME_PRESETS = {
         "atr_tp_mult": 4.5,
         "max_hold_days": 7,
         "top_n": 5,
+        "sell_threshold": 5.0,      # 상승장: 매도 느괋하게
+        "max_positions": 10,
+        "max_daily_entries": 3,
     },
     "bearish": {
         "min_tech_score": 5.5,
@@ -76,6 +81,9 @@ REGIME_PRESETS = {
         "atr_tp_mult": 3.0,
         "max_hold_days": 5,
         "top_n": 3,
+        "sell_threshold": 3.0,      # 하락장: 매도 빨리
+        "max_positions": 5,
+        "max_daily_entries": 2,
     },
     "sideways": {
         "min_tech_score": 4.5,
@@ -83,14 +91,27 @@ REGIME_PRESETS = {
         "atr_tp_mult": 3.5,
         "max_hold_days": 5,
         "top_n": 4,
+        "sell_threshold": 4.0,
+        "max_positions": 8,
+        "max_daily_entries": 3,
+    },
+    "conservative": {
+        "min_tech_score": 5.0,
+        "atr_stop_mult": 1.5,
+        "atr_tp_mult": 3.0,
+        "max_hold_days": 5,
+        "top_n": 3,
+        "sell_threshold": 3.5,
+        "max_positions": 6,
+        "max_daily_entries": 2,
     },
 }
 
 # 성과 열화 시 안전 모드 기준
 SAFETY_THRESHOLDS = {
-    "min_win_rate": 40.0,
-    "min_profit_factor": 0.8,
-    "max_consecutive_losses": 8,
+    "min_win_rate": 35.0,       # 40→35: 백테스트에서 40% 미만은 너무 자주 발생
+    "min_profit_factor": 0.7,   # 0.8→0.7: 백테스트 초기에는 PF가 낮을 수 있음
+    "max_consecutive_losses": 15, # 8→15: 60일 백테스트에서 8회는 정상 범위
     "min_trades_for_tuning": 20,
 }
 
@@ -459,6 +480,8 @@ class ParameterTuner:
             "atr_tp_mult": 4.0,
             "max_hold_days": 7,
             "sell_threshold": 4.0,
+            "max_positions": 10,
+            "max_daily_entries": 3,
         }
         for k, v in defaults.items():
             if k not in params:
@@ -607,7 +630,9 @@ class ParameterTuner:
         if max_dd > 20:
             adjusted["atr_stop_mult"] = params.get("atr_stop_mult", 2.0) - 0.25
             adjusted["top_n"] = max(2, params.get("top_n", 5) - 1)
-            logger.info(f"  높은 MDD({max_dd:.0f}%) → 보수적 전환")
+            adjusted["max_positions"] = max(3, params.get("max_positions", 10) - 2)
+            adjusted["max_daily_entries"] = max(1, params.get("max_daily_entries", 3) - 1)
+            logger.info(f"  높은 MDD({max_dd:.0f}%) → 보수적 전환 (포지션 축소)")
 
         # ── 매도 신호 임계값 조정 ──
         sell_rate = eb.get("sell_rate", 0)
@@ -677,6 +702,8 @@ class SafetyGuard:
             "atr_tp_mult": 3.0,
             "max_hold_days": 5,
             "sell_threshold": 3.0,   # 보수적 모드: 매도 임계값 낮춤 (빨리 청산)
+            "max_positions": 5,     # 보수적: 적은 포지션
+            "max_daily_entries": 2, # 보수적: 적은 진입
         }
 
 
@@ -767,18 +794,28 @@ class SelfTuningEngine:
         report["safety"] = {"is_safe": is_safe, "message": safety_msg}
 
         if not is_safe:
-            logger.warning(f"⚠️ 보수적 모드 전환: {safety_msg}")
-            new_params = self.safety_guard.get_conservative_params()
-            param_changes = {
-                k: {"old": current_params.get(k), "new": v, "reason": "safety_mode"}
-                for k, v in new_params.items()
-                if current_params.get(k) != v
-            }
+            logger.warning(f"⚠️ 성과 열화 감지: {safety_msg}")
+            logger.info("  → 보수적 베이스라인 적용 후 성과 기반 조정 실행")
+            # 보수적 파라미터를 베이스라인으로 설정
+            conservative = self.safety_guard.get_conservative_params()
+            for k, v in conservative.items():
+                self.param_tuner.current_params[k] = v
             regime = "conservative"
-        else:
-            # ── 4. 파라미터 자동 조정 ──
-            logger.info("\n⚙️ 4단계: 파라미터 자동 조정")
-            new_params, param_changes = self.param_tuner.tune(bt_result, regime, confidence)
+
+        # ── 4. 파라미터 자동 조정 (항상 실행) ──
+        logger.info("\n⚙️ 4단계: 파라미터 자동 조정")
+        new_params, param_changes = self.param_tuner.tune(bt_result, regime, confidence)
+
+        if not is_safe:
+            # safety 로 인한 변경도 change report에 표시
+            for k, v in conservative.items():
+                if current_params.get(k) != new_params.get(k):
+                    if k not in param_changes:
+                        param_changes[k] = {
+                            "old": current_params.get(k),
+                            "new": new_params.get(k),
+                            "reason": "safety_base + tuned",
+                        }
 
         report["param_changes"] = param_changes
 
@@ -796,6 +833,19 @@ class SelfTuningEngine:
 
         # 최종 요약
         self._print_summary(report, new_params, new_weights, param_changes, weight_changes)
+
+        # ── 8. 포지션 리밸런싱 (전략 변경 후 자동 실행) ──
+        logger.info("\n🔄 8단계: 포지션 리밸런싱")
+        try:
+            from .position_tracker import rebalance_positions
+            rb_result = rebalance_positions(
+                max_positions=new_params.get("max_positions", 10),
+                fetch_live=True,
+            )
+            report["rebalance"] = rb_result.get("summary", {})
+        except Exception as e:
+            logger.warning(f"  리밸런싱 실패 (무시): {e}")
+            report["rebalance"] = {"action": "error", "error": str(e)}
 
         report["status"] = "completed"
         return report

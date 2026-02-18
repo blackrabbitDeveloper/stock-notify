@@ -233,7 +233,7 @@ def collect_dashboard_data() -> dict:
         monthly_perf[m]["total_pnl"] = round(monthly_perf[m]["total_pnl"], 2)
 
     # 히스토리에서 청산 유형 비율
-    exit_types = {"take_profit": 0, "stop_loss": 0, "expired": 0, "sell_signal": 0}
+    exit_types = {"take_profit": 0, "stop_loss": 0, "expired": 0, "sell_signal": 0, "strategy_rebalance": 0}
     for h in history:
         reason = h.get("close_reason", "")
         if reason in exit_types:
@@ -475,6 +475,7 @@ tr:hover td {{ background: rgba(56,189,248,0.04); }}
 .status-stop_loss {{ color: var(--red); }}
 .status-expired {{ color: var(--yellow); }}
 .status-sell_signal {{ color: var(--accent); }}
+.status-strategy_rebalance {{ color: #a78bfa; }}
 
 .chart-box {{
   background: var(--surface);
@@ -815,7 +816,7 @@ async function fetchLiveData() {{
     }}
     D.monthly_performance = mp;
     // 청산 유형
-    const et = {{take_profit:0, stop_loss:0, expired:0, sell_signal:0}};
+    const et = {{take_profit:0, stop_loss:0, expired:0, sell_signal:0, strategy_rebalance:0}};
     for (const h of D.history) {{ if (et[h.close_reason] !== undefined) et[h.close_reason]++; }}
     D.exit_types = et;
     updated = true;
@@ -1104,7 +1105,7 @@ function renderHistory() {{
       <td>${{fmt(h.entry_price)}}</td>
       <td>${{fmt(h.exit_price)}}</td>
       <td class="${{pnlClass(h.pnl_pct)}}"><strong>${{pnlSign(h.pnl_pct)}}%</strong></td>
-      <td class="status-${{reason}}">${{{{take_profit:'✅ 익절',stop_loss:'🛑 손절',expired:'⏰ 만료',sell_signal:'📉 매도'}}[reason]||reason}}</td>
+      <td class="status-${{reason}}">${{{{take_profit:'✅ 익절',stop_loss:'🛑 손절',expired:'⏰ 만료',sell_signal:'📉 매도',strategy_rebalance:'🔄 재검증'}}[reason]||reason}}</td>
       <td>${{h.hold_days||'—'}}</td>
       <td>${{h.entry_date}}</td>
     </tr>`;
@@ -1167,15 +1168,15 @@ function renderPerformance() {{
 
   // 청산 유형 도넛
   const et = D.exit_types || {{}};
-  const total = (et.take_profit||0) + (et.stop_loss||0) + (et.expired||0) + (et.sell_signal||0);
+  const total = (et.take_profit||0) + (et.stop_loss||0) + (et.expired||0) + (et.sell_signal||0) + (et.strategy_rebalance||0);
   if (total > 0) {{
     new Chart(document.getElementById('exitTypeChart'), {{
       type: 'doughnut',
       data: {{
-        labels: ['익절', '손절', '만료', '매도'],
+        labels: ['익절', '손절', '만료', '매도', '재검증'],
         datasets: [{{
-          data: [et.take_profit||0, et.stop_loss||0, et.expired||0, et.sell_signal||0],
-          backgroundColor: ['#34d399', '#f87171', '#fbbf24', '#60a5fa'],
+          data: [et.take_profit||0, et.stop_loss||0, et.expired||0, et.sell_signal||0, et.strategy_rebalance||0],
+          backgroundColor: ['#34d399', '#f87171', '#fbbf24', '#60a5fa', '#a78bfa'],
           borderWidth: 0,
         }}]
       }},
@@ -1270,6 +1271,8 @@ function renderTuning() {{
     atr_tp_mult: '익절 ATR 배수',
     max_hold_days: '최대 보유일',
     sell_threshold: '매도 임계값',
+    max_positions: '최대 포지션',
+    max_daily_entries: '일별 진입 제한',
   }};
 
   let phtml = '';
@@ -1350,6 +1353,8 @@ function renderStrategy() {{
   ehtml += row('익절 ATR 배수', (params.atr_tp_mult || 4.0) + 'x');
   ehtml += row('최대 보유일', (params.max_hold_days || 7) + '일');
   ehtml += row('매도 임계값', (params.sell_threshold || 4.0), 'yellow');
+  ehtml += row('최대 포지션', (params.max_positions || 10) + '개');
+  ehtml += row('일별 진입 제한', (params.max_daily_entries || 3) + '개');
   ehtml += row('스코어링', '기술 70% + 뉴스 30%');
   document.getElementById('stratEntry').innerHTML = ehtml;
 

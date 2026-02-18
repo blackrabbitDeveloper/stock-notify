@@ -67,6 +67,8 @@ jobs:
                  config/signal_weights.json \
                  config/universe.yaml \
                  data/tuning_history.json \
+                 data/positions.json \
+                 data/history.json \
                  data/backtest/ \
                  docs/
 

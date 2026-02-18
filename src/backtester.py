@@ -369,6 +369,8 @@ class BacktestEngine:
         atr_stop_mult: float = ATR_STOP_MULT,
         atr_tp_mult: float = ATR_TP_MULT,
         sell_threshold: float = 4.0,
+        max_positions: int = 10,
+        max_daily_entries: int = 3,
     ):
         self.pool = pool
         self.backtest_days = backtest_days
@@ -378,6 +380,8 @@ class BacktestEngine:
         self.atr_stop_mult = atr_stop_mult
         self.atr_tp_mult = atr_tp_mult
         self.sell_threshold = sell_threshold
+        self.max_positions = max_positions
+        self.max_daily_entries = max_daily_entries
 
         self.trades: List[Trade] = []
         self.daily_log: List[Dict] = []
@@ -461,9 +465,17 @@ class BacktestEngine:
             if not candidates:
                 continue
 
-            # 상위 N개 선별
+            # 상위 N개 선별 (포지션 제한 적용)
             candidates.sort(key=lambda x: x["tech_score"], reverse=True)
-            selected = candidates[:self.top_n]
+            available_slots = min(
+                self.top_n,
+                self.max_daily_entries,
+                max(0, self.max_positions - len(active_tickers))
+            )
+            selected = candidates[:available_slots]
+
+            if not selected:
+                continue
 
             # 트레이드 생성
             for c in selected:
@@ -682,6 +694,8 @@ class BacktestEngine:
                 "atr_stop_mult": self.atr_stop_mult,
                 "atr_tp_mult": self.atr_tp_mult,
                 "sell_threshold": self.sell_threshold,
+                "max_positions": self.max_positions,
+                "max_daily_entries": self.max_daily_entries,
                 "commission_pct": COMMISSION_PCT,
                 "slippage_pct": SLIPPAGE_PCT,
             },
