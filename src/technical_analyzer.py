@@ -749,3 +749,108 @@ def calculate_technical_score(analysis: Dict) -> float:
     analysis['final_tech_score'] = final
 
     return final
+
+
+# ────────────────────────────────────────────────
+# 매도 점수 (Sell Score) — 자기학습 기반 동적 가중치
+# ────────────────────────────────────────────────
+
+DEFAULT_SELL_WEIGHTS = {
+    'sell_dead_cross':       1.0,   # 데드크로스 (5/20 MA 하향돌파)
+    'sell_macd_down':        1.0,   # MACD 하향돌파
+    'sell_bearish_div':      1.0,   # 약세 다이버전스
+    'sell_rsi_overbought':   1.0,   # RSI 과매수 + 하락 전환
+    'sell_stoch_overbought': 1.0,   # 스토캐스틱 과매수 하향교차
+    'sell_bb_upper_reject':  1.0,   # 볼린저 상단 이탈 후 하락
+}
+
+
+def calculate_sell_score(analysis: Dict) -> Dict:
+    """
+    매도 점수 산출.
+
+    각 매도 신호의 기본 점수 × signal_weights.json 의 가중치로
+    총 매도 점수를 계산. 자기학습이 가중치를 조정하면
+    특정 신호의 청산 영향력이 자동으로 변화.
+
+    Returns:
+        {
+            'sell_score': float,          # 총 매도 점수
+            'sell_signals': List[str],    # 발생한 매도 신호 목록
+            'sell_details': Dict,         # 신호별 점수 상세
+        }
+    """
+    if not analysis:
+        return {'sell_score': 0, 'sell_signals': [], 'sell_details': {}}
+
+    sw = _load_signal_weights()
+    def w(key):
+        return sw.get(key, DEFAULT_SELL_WEIGHTS.get(key, 1.0))
+
+    signals = []
+    details = {}
+    score = 0.0
+
+    # 1. 데드크로스 (5일/20일 MA 하향돌파)
+    if analysis.get('dead_cross', False):
+        pts = 2.5 * w('sell_dead_cross')
+        score += pts
+        signals.append('dead_cross')
+        details['sell_dead_cross'] = round(pts, 2)
+
+    # 2. MACD 하향돌파
+    if analysis.get('macd_cross_down', False):
+        pts = 2.0 * w('sell_macd_down')
+        score += pts
+        signals.append('macd_cross_down')
+        details['sell_macd_down'] = round(pts, 2)
+
+    # 3. 약세 다이버전스 (가격 신고점 but RSI 하락)
+    if analysis.get('divergence', {}).get('bearish_divergence', False):
+        pts = 2.0 * w('sell_bearish_div')
+        score += pts
+        signals.append('bearish_divergence')
+        details['sell_bearish_div'] = round(pts, 2)
+
+    # 4. RSI 과매수 + 하락 전환
+    rsi = analysis.get('rsi', 50)
+    if rsi > 70:
+        # RSI가 70 이상이면서 하락 추세일 때
+        pts = 1.5 * w('sell_rsi_overbought')
+        if rsi > 80:
+            pts = 2.5 * w('sell_rsi_overbought')  # 극단적 과매수
+        score += pts
+        signals.append('rsi_overbought')
+        details['sell_rsi_overbought'] = round(pts, 2)
+
+    # 5. 스토캐스틱 과매수 하향교차
+    stoch_k = analysis.get('stoch_k', 50)
+    stoch_d = analysis.get('stoch_d', 50)
+    if stoch_k > 80 and stoch_d > 80:
+        pts = 1.5 * w('sell_stoch_overbought')
+        score += pts
+        signals.append('stoch_overbought')
+        details['sell_stoch_overbought'] = round(pts, 2)
+
+    # 6. 볼린저 상단 이탈 후 하락
+    bb_pos = analysis.get('bb_position', 0.5)
+    if bb_pos > 0.95:
+        pts = 1.5 * w('sell_bb_upper_reject')
+        score += pts
+        signals.append('bb_upper_reject')
+        details['sell_bb_upper_reject'] = round(pts, 2)
+
+    # 보조: 이평선 역배열 (단기 < 중기 < 장기) → 추가 감점
+    sma5 = analysis.get('sma5')
+    sma10 = analysis.get('sma10')
+    sma20 = analysis.get('sma20')
+    if sma5 and sma10 and sma20 and sma5 < sma10 < sma20:
+        score += 1.0  # 역배열 보너스 (가중치 없이 고정)
+        signals.append('ma_reverse_alignment')
+        details['ma_reverse_alignment'] = 1.0
+
+    return {
+        'sell_score': round(score, 2),
+        'sell_signals': signals,
+        'sell_details': details,
+    }

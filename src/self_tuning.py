@@ -48,6 +48,7 @@ PARAM_BOUNDS = {
     "atr_stop_mult":  {"min": 1.0, "max": 3.5, "step": 0.25, "type": "float"},
     "atr_tp_mult":    {"min": 2.0, "max": 6.0, "step": 0.25, "type": "float"},
     "max_hold_days":  {"min": 3,   "max": 14,  "step": 1,    "type": "int"},
+    "sell_threshold": {"min": 2.0, "max": 8.0, "step": 0.5,  "type": "float"},
 }
 
 # 신호 가중치 범위
@@ -95,11 +96,15 @@ SAFETY_THRESHOLDS = {
 
 # 기본 신호 키 목록
 DEFAULT_SIGNAL_KEYS = [
+    # 매수 신호
     "pullback_score", "breakout_score", "divergence_score",
     "stoch_cross_up", "golden_cross", "ma_alignment",
     "macd_cross_up", "bullish_volume", "obv_rising",
     "strong_trend", "bb_squeeze_breakout", "rr_bonus",
     "rsi_oversold_bounce",
+    # 매도 신호
+    "sell_dead_cross", "sell_macd_down", "sell_bearish_div",
+    "sell_rsi_overbought", "sell_stoch_overbought", "sell_bb_upper_reject",
 ]
 
 
@@ -453,6 +458,7 @@ class ParameterTuner:
             "atr_stop_mult": 2.0,
             "atr_tp_mult": 4.0,
             "max_hold_days": 7,
+            "sell_threshold": 4.0,
         }
         for k, v in defaults.items():
             if k not in params:
@@ -659,6 +665,7 @@ class SafetyGuard:
             "atr_stop_mult": 1.5,
             "atr_tp_mult": 3.0,
             "max_hold_days": 5,
+            "sell_threshold": 3.0,   # 보수적 모드: 매도 임계값 낮춤 (빨리 청산)
         }
 
 

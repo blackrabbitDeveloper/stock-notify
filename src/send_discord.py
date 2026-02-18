@@ -318,9 +318,10 @@ def _pnl_emoji(pnl: Optional[float]) -> str:
 def _status_label(status: str) -> str:
     return {
         "open":        "📂 보유중",
-        "take_profit": "✅ 익절",
-        "stop_loss":   "🛑 손절",
-        "expired":     "⏰ 기간만료",
+        "take_profit":  "✅ 익절",
+        "stop_loss":    "🛑 손절",
+        "expired":      "⏰ 기간만료",
+        "sell_signal":  "📉 매도신호",
     }.get(status, status)
 
 def _fmt_open_position(pos: Dict) -> str:
@@ -382,9 +383,10 @@ def _fmt_closed_detail(pos: Dict) -> str:
     score_str = f"{score:.1f}" if score is not None else "—"
 
     status_map = {
-        "take_profit": "✅ 익절",
-        "stop_loss":   "🛑 손절",
-        "expired":     "⏰ 기간만료",
+        "take_profit":  "✅ 익절",
+        "stop_loss":    "🛑 손절",
+        "expired":      "⏰ 기간만료",
+        "sell_signal":  "📉 매도신호",
     }
     reason_label = status_map.get(status, status)
 
@@ -401,9 +403,10 @@ def _build_today_closed_embed(newly_closed: List[Dict]) -> Dict:
     당일 청산 종목 전용 임베드.
     익절 / 손절 / 만료 그룹별로 묶어서 표시.
     """
-    tp_list  = [p for p in newly_closed if p.get("status") == "take_profit"]
-    sl_list  = [p for p in newly_closed if p.get("status") == "stop_loss"]
-    exp_list = [p for p in newly_closed if p.get("status") == "expired"]
+    tp_list   = [p for p in newly_closed if p.get("status") == "take_profit"]
+    sl_list   = [p for p in newly_closed if p.get("status") == "stop_loss"]
+    exp_list  = [p for p in newly_closed if p.get("status") == "expired"]
+    sell_list = [p for p in newly_closed if p.get("status") == "sell_signal"]
 
     # 당일 손익 합계 (동일 비중 가정 → 단순 평균)
     pnls = [p["pnl_pct"] for p in newly_closed if p.get("pnl_pct") is not None]
@@ -412,7 +415,7 @@ def _build_today_closed_embed(newly_closed: List[Dict]) -> Dict:
 
     desc = (
         f"오늘 청산 {len(newly_closed)}건  |  "
-        f"익절 ✅ {len(tp_list)} / 손절 🛑 {len(sl_list)} / 만료 ⏰ {len(exp_list)}\n"
+        f"익절 ✅ {len(tp_list)} / 손절 🛑 {len(sl_list)} / 만료 ⏰ {len(exp_list)} / 매도 📉 {len(sell_list)}\n"
         f"{day_emoji} 당일 평균 손익: **{avg_today:+.2f}%**"
     )
 

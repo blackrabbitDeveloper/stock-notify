@@ -22,9 +22,10 @@ POSITIONS_FILE = Path("data/positions.json")
 HISTORY_FILE   = Path("data/history.json")
 
 # ── 상수 ──────────────────────────────────────────────
-DEFAULT_ATR_STOP_MULT = 2.0
-DEFAULT_ATR_TP_MULT   = 4.0
-DEFAULT_MAX_HOLD_DAYS = 7
+DEFAULT_ATR_STOP_MULT  = 2.0
+DEFAULT_ATR_TP_MULT    = 4.0
+DEFAULT_MAX_HOLD_DAYS  = 7
+DEFAULT_SELL_THRESHOLD = 4.0   # 매도 점수 임계값 (이상이면 기술적 청산)
 
 STRATEGY_STATE_FILE = Path("config/strategy_state.json")
 
@@ -36,23 +37,26 @@ def _load_tuned_params():
                 state = json.load(f)
             p = state.get("current_params", {})
             return {
-                "atr_stop_mult": float(p.get("atr_stop_mult", DEFAULT_ATR_STOP_MULT)),
-                "atr_tp_mult":   float(p.get("atr_tp_mult",   DEFAULT_ATR_TP_MULT)),
-                "max_hold_days": int(p.get("max_hold_days",   DEFAULT_MAX_HOLD_DAYS)),
+                "atr_stop_mult":   float(p.get("atr_stop_mult",   DEFAULT_ATR_STOP_MULT)),
+                "atr_tp_mult":     float(p.get("atr_tp_mult",     DEFAULT_ATR_TP_MULT)),
+                "max_hold_days":   int(p.get("max_hold_days",     DEFAULT_MAX_HOLD_DAYS)),
+                "sell_threshold":  float(p.get("sell_threshold",   DEFAULT_SELL_THRESHOLD)),
             }
         except Exception:
             pass
     return {
-        "atr_stop_mult": DEFAULT_ATR_STOP_MULT,
-        "atr_tp_mult":   DEFAULT_ATR_TP_MULT,
-        "max_hold_days": DEFAULT_MAX_HOLD_DAYS,
+        "atr_stop_mult":  DEFAULT_ATR_STOP_MULT,
+        "atr_tp_mult":    DEFAULT_ATR_TP_MULT,
+        "max_hold_days":  DEFAULT_MAX_HOLD_DAYS,
+        "sell_threshold": DEFAULT_SELL_THRESHOLD,
     }
 
 # 포지션 상태
-STATUS_OPEN    = "open"
-STATUS_TP      = "take_profit"
-STATUS_SL      = "stop_loss"
-STATUS_EXPIRED = "expired"
+STATUS_OPEN        = "open"
+STATUS_TP          = "take_profit"
+STATUS_SL          = "stop_loss"
+STATUS_EXPIRED     = "expired"
+STATUS_SELL_SIGNAL = "sell_signal"
 
 
 # ══════════════════════════════════════════════════════
@@ -253,6 +257,36 @@ def _fetch_close_prices(tickers: List[str]) -> Dict[str, float]:
     except Exception as e:
         print(f"[ERROR] _fetch_close_prices: {e}")
         return {}
+
+def _fetch_history_for_analysis(tickers: List[str], days: int = 60) -> Dict[str, pd.DataFrame]:
+    """기술적 분석용 히스토리 데이터 수집."""
+    if not tickers:
+        return {}
+    result = {}
+    try:
+        df = yf.download(tickers, period=f"{days}d", interval="1d",
+                         progress=False, auto_adjust=False, group_by="ticker")
+        if df is None or df.empty:
+            return {}
+        if len(tickers) == 1:
+            t = tickers[0]
+            sub = df[["Open", "High", "Low", "Close", "Volume"]].dropna()
+            if len(sub) >= 30:
+                sub = sub.reset_index()
+                result[t] = sub
+        else:
+            for t in tickers:
+                try:
+                    sub = df[t][["Open", "High", "Low", "Close", "Volume"]].dropna()
+                    if len(sub) >= 30:
+                        sub = sub.reset_index()
+                        result[t] = sub
+                except (KeyError, TypeError):
+                    continue
+    except Exception as e:
+        print(f"[ERROR] _fetch_history_for_analysis: {e}")
+    return result
+
 
 def _calendar_days_since(entry_date: str) -> int:
     try:
