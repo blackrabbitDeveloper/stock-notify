@@ -1,82 +1,6 @@
 {
   "positions": [
     {
-      "ticker": "DIS",
-      "status": "open",
-      "entry_price": 105.3,
-      "entry_date": "2026-02-16",
-      "atr": 3.7857,
-      "stop_loss": 97.7286,
-      "take_profit": 120.4429,
-      "tech_score": 8.77,
-      "combined_score": 6.39,
-      "exit_price": null,
-      "exit_date": null,
-      "pnl_pct": null,
-      "close_reason": null,
-      "price_history": [
-        {
-          "date": "2026-02-17",
-          "close": 105.44
-        },
-        {
-          "date": "2026-02-18",
-          "close": 105.44
-        },
-        {
-          "date": "2026-02-18",
-          "close": 105.44
-        },
-        {
-          "date": "2026-02-18",
-          "close": 107.1
-        },
-        {
-          "date": "2026-02-19",
-          "close": 107.1
-        }
-      ],
-      "highest_price": 107.1
-    },
-    {
-      "ticker": "XYZ",
-      "status": "open",
-      "entry_price": 49.8801,
-      "entry_date": "2026-02-16",
-      "atr": 2.9253,
-      "stop_loss": 44.0295,
-      "take_profit": 61.5812,
-      "tech_score": 7.53,
-      "combined_score": 5.53,
-      "exit_price": null,
-      "exit_date": null,
-      "pnl_pct": null,
-      "close_reason": null,
-      "price_history": [
-        {
-          "date": "2026-02-17",
-          "close": 50.81
-        },
-        {
-          "date": "2026-02-18",
-          "close": 50.81
-        },
-        {
-          "date": "2026-02-18",
-          "close": 50.81
-        },
-        {
-          "date": "2026-02-18",
-          "close": 53.6
-        },
-        {
-          "date": "2026-02-19",
-          "close": 53.6
-        }
-      ],
-      "highest_price": 53.6
-    },
-    {
       "ticker": "EW",
       "status": "open",
       "entry_price": 78.02,
@@ -98,29 +22,49 @@
         {
           "date": "2026-02-19",
           "close": 78.98
+        },
+        {
+          "date": "2026-02-19",
+          "close": 78.92
         }
       ],
       "highest_price": 78.98
+    },
+    {
+      "ticker": "PODD",
+      "status": "open",
+      "entry_price": 249.1,
+      "entry_date": "2026-02-19",
+      "atr": 10.015,
+      "stop_loss": 234.0775,
+      "take_profit": 279.145,
+      "tech_score": 10.0,
+      "combined_score": 8.05,
+      "exit_price": null,
+      "exit_date": null,
+      "pnl_pct": null,
+      "close_reason": null,
+      "price_history": []
     }
   ],
   "stats": {
-    "total_trades": 17,
-    "wins": 9,
+    "total_trades": 19,
+    "wins": 11,
     "losses": 8,
-    "expired": 3,
+    "expired": 5,
     "sell_signal": 14,
     "trailing_stop": 0,
-    "total_pnl_pct": 1.27,
-    "win_rate": 52.9,
-    "avg_pnl_pct": 0.07,
+    "total_pnl_pct": 7.96,
+    "win_rate": 57.9,
+    "avg_pnl_pct": 0.42,
     "best_trade": {
-      "ticker": "TYL",
-      "pnl_pct": 5.4
+      "ticker": "XYZ",
+      "pnl_pct": 6.03
     },
     "worst_trade": {
       "ticker": "CDNS",
       "pnl_pct": -5.34
     },
-    "last_updated": "2026-02-19T11:42:07.768158+00:00"
+    "last_updated": "2026-02-19T21:57:55.410688+00:00"
   }
 }
