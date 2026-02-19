@@ -1,14 +1,22 @@
-name: self-tuning-weekly
+name: self-tuning-monthly
 on:
   schedule:
-    # 매주 일요일 UTC 10:00 (KST 월요일 19:00, 장 시작 전)
-    - cron: "0 10 * * 0"
+    # 매월 첫 일요일 UTC 10:00 (KST 월요일 19:00, 장 시작 전)
+    - cron: "0 10 1-7 * 0"
 
   workflow_dispatch:
     inputs:
       days:
-        description: "백테스트 기간 (거래일)"
-        default: "60"
+        description: "백테스트 기간 (거래일, 504=약 2년)"
+        default: "504"
+        type: string
+      iterations:
+        description: "탐색 반복 횟수 (기본 20)"
+        default: "20"
+        type: string
+      min_improvement:
+        description: "채택 최소 개선률 % (기본 5.0)"
+        default: "5.0"
         type: string
       dry_run:
         description: "DRY RUN (변경사항 미적용)"
@@ -48,10 +56,11 @@ jobs:
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
+          ARGS="--days ${{ inputs.days || '504' }} --iterations ${{ inputs.iterations || '20' }} --min-improvement ${{ inputs.min_improvement || '5.0' }}"
           if [ "${{ inputs.dry_run }}" = "true" ]; then
-            python run_self_tuning.py --days ${{ inputs.days || '60' }} --dry-run --discord
+            python run_self_tuning.py $ARGS --dry-run --discord
           else
-            python run_self_tuning.py --days ${{ inputs.days || '60' }} --discord
+            python run_self_tuning.py $ARGS --discord
           fi
 
       - name: Generate dashboard

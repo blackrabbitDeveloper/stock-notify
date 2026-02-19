@@ -1,14 +1,12 @@
-name: backtest-weekly
+name: backtest-manual
 on:
-  schedule:
-    # 매주 토요일 UTC 12:00 (KST 일요일 21:00)
-    - cron: "0 12 * * 6"
-
+  # 스케줄 제거: 셀프튜닝(월 1회) 실행 시 백테스트가 포함됨
+  # 필요 시 수동 실행만 사용
   workflow_dispatch:
     inputs:
       days:
-        description: "백테스트 기간 (거래일)"
-        default: "90"
+        description: "백테스트 기간 (거래일, 504=약 2년)"
+        default: "504"
         type: string
       top_n:
         description: "일별 선택 종목 수"

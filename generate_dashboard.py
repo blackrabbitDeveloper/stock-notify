@@ -176,6 +176,9 @@ def _fetch_single_ticker(info: dict):
         return None
 
 
+EARNINGS_FILE = DATA_DIR / "earnings_calendar.json"
+
+
 def collect_dashboard_data() -> dict:
     """모든 데이터 소스를 하나의 dict로 수집."""
 
@@ -233,7 +236,7 @@ def collect_dashboard_data() -> dict:
         monthly_perf[m]["total_pnl"] = round(monthly_perf[m]["total_pnl"], 2)
 
     # 히스토리에서 청산 유형 비율
-    exit_types = {"take_profit": 0, "stop_loss": 0, "expired": 0, "sell_signal": 0, "strategy_rebalance": 0}
+    exit_types = {"take_profit": 0, "stop_loss": 0, "expired": 0, "sell_signal": 0, "strategy_rebalance": 0, "trailing_stop": 0}
     for h in history:
         reason = h.get("close_reason", "")
         if reason in exit_types:
@@ -252,15 +255,60 @@ def collect_dashboard_data() -> dict:
         except Exception:
             pass
 
+    # 포지션 비율 + 현금 비중 계산
+    open_positions = [p for p in positions if p.get("status") == "open"]
+    current_params = strategy.get("current_params", {})
+    max_positions = current_params.get("max_positions", 10)
+    current_regime = strategy.get("current_regime", "unknown")
+    regime_cash = {
+        "bullish": 10, "sideways": 30, "bearish": 50,
+        "volatile": 60, "conservative": 40,
+    }
+    target_cash_pct = regime_cash.get(current_regime, 30)
+    open_count = len(open_positions)
+    usage_pct = round(open_count / max_positions * 100, 1) if max_positions > 0 else 0
+    current_invest_pct = round(min(100, usage_pct * (100 - target_cash_pct) / 100), 1)
+    current_cash_pct = round(100 - current_invest_pct, 1)
+
+    portfolio = {
+        "open_count": open_count,
+        "max_positions": max_positions,
+        "usage_pct": usage_pct,
+        "target_cash_pct": target_cash_pct,
+        "current_cash_pct": current_cash_pct,
+        "current_invest_pct": current_invest_pct,
+        "available_slots": max(0, max_positions - open_count),
+        "regime": current_regime,
+    }
+
+    # 9. 어닝 캘린더 (data/earnings_calendar.json에서 읽기)
+    #    수집은 run_earnings.py로 별도 실행
+    earnings_calendar = []
+    try:
+        if EARNINGS_FILE.exists():
+            with open(EARNINGS_FILE, "r", encoding="utf-8") as f:
+                earn_data = json.load(f)
+            earnings_calendar = earn_data.get("earnings", [])
+            # 보유 종목 상태 실시간 갱신
+            open_ticker_set = set(p.get("ticker") for p in open_positions)
+            for e in earnings_calendar:
+                e["is_holding"] = e["ticker"] in open_ticker_set
+            print(f"[INFO] 어닝 캘린더 로드: {len(earnings_calendar)}건 "
+                  f"(수집일: {earn_data.get('collected_at', 'N/A')})")
+    except Exception as e:
+        print(f"[WARN] 어닝 캘린더 로드 실패: {e}")
+
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "positions": positions,
         "stats": stats,
-        "history": history[-100:],  # 최근 100건
+        "history": history[-100:],
         "daily_cumulative_pnl": daily_pnl,
         "monthly_performance": monthly_perf,
         "exit_types": exit_types,
         "market_indices": market_indices,
+        "portfolio": portfolio,
+        "earnings_calendar": earnings_calendar,
         "strategy": {
             "current_params": strategy.get("current_params", {}),
             "current_regime": strategy.get("current_regime", "unknown"),
@@ -320,10 +368,9 @@ body {{
 .topbar {{
   background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
   border-bottom: 1px solid var(--border);
-  padding: 16px 24px;
+  padding: 12px 24px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -362,16 +409,16 @@ body {{
 .tabs {{
   display: flex;
   gap: 4px;
-  margin-bottom: 20px;
-  background: var(--surface);
-  border-radius: 12px;
-  padding: 4px;
+  margin: 0;
+  background: rgba(15,23,42,0.6);
+  border-radius: 8px;
+  padding: 3px;
   border: 1px solid var(--border);
   overflow-x: auto;
 }}
 .tab {{
-  padding: 10px 20px;
-  border-radius: 8px;
+  padding: 7px 14px;
+  border-radius: 6px;
   cursor: pointer;
   font-family: var(--font-mono);
   font-size: 13px;
@@ -476,6 +523,7 @@ tr:hover td {{ background: rgba(56,189,248,0.04); }}
 .status-expired {{ color: var(--yellow); }}
 .status-sell_signal {{ color: var(--accent); }}
 .status-strategy_rebalance {{ color: #a78bfa; }}
+.status-trailing_stop {{ color: #22d3ee; }}
 
 .chart-box {{
   background: var(--surface);
@@ -591,24 +639,25 @@ canvas {{ max-height: 320px; }}
 @media (max-width: 768px) {{
   .grid-4 {{ grid-template-columns: repeat(2, 1fr); }}
   .grid-2 {{ grid-template-columns: 1fr; }}
-  .topbar {{ flex-wrap: wrap; gap: 8px; }}
+  .topbar {{ padding: 8px 12px; }}
+  .topbar h1 {{ font-size: 16px; }}
   .tabs {{ flex-wrap: nowrap; }}
+  .tab {{ padding: 6px 10px; font-size: 11px; }}
 }}
 </style>
 </head>
 <body>
 
 <div class="topbar">
-  <div>
-    <h1>📈 Stock Bot Dashboard</h1>
-    <div class="meta" id="lastUpdate"></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;width:100%;margin-bottom:8px;">
+    <div>
+      <h1>📈 Stock Bot Dashboard</h1>
+      <div class="meta" id="lastUpdate"></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span class="regime-badge" id="regimeBadge"></span>
+    </div>
   </div>
-  <div style="display:flex;align-items:center;gap:12px;">
-    <span class="regime-badge" id="regimeBadge"></span>
-  </div>
-</div>
-
-<div class="container">
   <div class="tabs">
     <button class="tab active" onclick="showTab('market')">🌍 시장 현황</button>
     <button class="tab" onclick="showTab('positions')">💼 포지션</button>
@@ -616,7 +665,12 @@ canvas {{ max-height: 320px; }}
     <button class="tab" onclick="showTab('backtest')">🔬 백테스트</button>
     <button class="tab" onclick="showTab('tuning')">🧠 자기학습</button>
     <button class="tab" onclick="showTab('strategy')">⚙️ 전략 설정</button>
+    <button class="tab" onclick="showTab('earnings')">📅 실적 캘린더</button>
+    <button class="tab" onclick="showTab('reports')">📋 주간 리포트</button>
   </div>
+</div>
+
+<div class="container">
 
   <!-- ════ TAB 0: 시장 현황 ════ -->
   <div id="tab-market" class="tab-content active">
@@ -648,6 +702,10 @@ canvas {{ max-height: 320px; }}
   <div id="tab-positions" class="tab-content">
     <p class="tab-desc">현재 보유 중인 포지션과 최근 청산 이력을 관리합니다.</p>
     <div class="grid grid-4" id="statCards"></div>
+    <div class="grid grid-2" style="margin-top:16px;">
+      <div class="chart-box"><h3>💰 포지션 / 현금 비율</h3><canvas id="cashRatioChart"></canvas></div>
+      <div class="chart-box"><h3>📊 포지션 사용률</h3><div id="portfolioInfo"></div></div>
+    </div>
     <div class="section-title">📌 오픈 포지션</div>
     <div class="table-wrap" id="openPositionsTable"></div>
     <div class="section-title">📜 최근 청산 이력</div>
@@ -727,6 +785,33 @@ canvas {{ max-height: 320px; }}
       </div>
     </div>
   </div>
+
+  <!-- ════ TAB 6: 실적 캘린더 ════ -->
+  <div id="tab-earnings" class="tab-content">
+    <p class="tab-desc">유니버스 종목의 실적 발표 일정입니다. 보유 종목은 빨간색으로 표시됩니다.</p>
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="card-header">⚠️ 이번 주 & 다음 주 실적 발표</div>
+        <div id="earningsUpcoming" style="margin-top:12px;"></div>
+      </div>
+      <div class="card">
+        <div class="card-header">📊 실적 발표 통계</div>
+        <div id="earningsStats" style="margin-top:12px;"></div>
+      </div>
+    </div>
+    <div style="margin-top:16px;">
+      <div class="card">
+        <div class="card-header">📅 월간 실적 캘린더</div>
+        <div id="earningsCalendar" style="margin-top:12px;overflow-x:auto;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ TAB 7: 주간 리포트 ════ -->
+  <div id="tab-reports" class="tab-content">
+    <p class="tab-desc">매주 일요일 자동 생성되는 주간 리포트 목록입니다.</p>
+    <div id="weeklyReportsList"></div>
+  </div>
 </div>
 
 <footer style="max-width:1400px;margin:40px auto 0;padding:20px 20px 32px;border-top:1px solid var(--border);text-align:center;font-family:var(--font-mono);font-size:11px;color:var(--text2);line-height:1.8;">
@@ -749,6 +834,7 @@ async function fetchLiveData() {{
     weights:      REPO_RAW + '/config/signal_weights.json',
     tuning:       REPO_RAW + '/data/tuning_history.json',
     universe:     REPO_RAW + '/config/universe.yaml',
+    weeklyIndex:  REPO_RAW + '/data/weekly_reports/index.json',
   }};
 
   async function grab(url) {{
@@ -816,7 +902,7 @@ async function fetchLiveData() {{
     }}
     D.monthly_performance = mp;
     // 청산 유형
-    const et = {{take_profit:0, stop_loss:0, expired:0, sell_signal:0, strategy_rebalance:0}};
+    const et = {{take_profit:0, stop_loss:0, expired:0, sell_signal:0, strategy_rebalance:0, trailing_stop:0}};
     for (const h of D.history) {{ if (et[h.close_reason] !== undefined) et[h.close_reason]++; }}
     D.exit_types = et;
     updated = true;
@@ -896,6 +982,8 @@ function init() {{
   renderBacktest();
   renderTuning();
   renderStrategy();
+  renderEarnings();
+  renderReports();
 }}
 
 // ════ TAB 0: 시장 현황 (실시간 API) ════
@@ -1060,6 +1148,62 @@ function renderStatCards() {{
     statCard('누적 수익', pnlSign(s.total_pnl_pct||0)+'%', `평균 ${{pnlSign(s.avg_pnl_pct||0)}}%`, pnlClass(s.total_pnl_pct)),
   ].join('');
   document.getElementById('statCards').innerHTML = html;
+
+  // ── 포지션/현금 비율 차트 ──
+  const pf = D.portfolio || {{}};
+  const investPct = pf.current_invest_pct || 0;
+  const cashPct = pf.current_cash_pct || 100;
+  const targetCash = pf.target_cash_pct || 30;
+
+  new Chart(document.getElementById('cashRatioChart'), {{
+    type: 'doughnut',
+    data: {{
+      labels: ['투자 비중', '현금 비중'],
+      datasets: [{{
+        data: [investPct, cashPct],
+        backgroundColor: ['#38bdf8', '#1e293b'],
+        borderColor: ['#38bdf8', '#334155'],
+        borderWidth: 2,
+      }}]
+    }},
+    options: {{
+      responsive: true,
+      cutout: '65%',
+      plugins: {{
+        legend: {{ position: 'bottom', labels: {{ color: '#94a3b8', font: {{ family: "'JetBrains Mono'" }} }} }},
+        tooltip: {{
+          callbacks: {{
+            label: function(ctx) {{ return ctx.label + ': ' + ctx.parsed.toFixed(1) + '%'; }}
+          }}
+        }}
+      }},
+    }},
+  }});
+
+  // ── 포지션 정보 패널 ──
+  const regimeEmoji = {{'bullish':'🐂','bearish':'🐻','sideways':'📊','conservative':'🛡️','volatile':'⚡'}}[pf.regime] || '❓';
+  document.getElementById('portfolioInfo').innerHTML = `
+    <div style="padding:12px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+        <div style="text-align:center;padding:16px;background:var(--bg);border-radius:8px;">
+          <div style="font-size:28px;font-weight:bold;color:var(--accent)">${{investPct.toFixed(1)}}%</div>
+          <div style="color:var(--text2);font-size:12px;margin-top:4px;">투자 비중</div>
+        </div>
+        <div style="text-align:center;padding:16px;background:var(--bg);border-radius:8px;">
+          <div style="font-size:28px;font-weight:bold;color:#64748b">${{cashPct.toFixed(1)}}%</div>
+          <div style="color:var(--text2);font-size:12px;margin-top:4px;">현금 비중</div>
+        </div>
+      </div>
+      <div style="font-size:13px;color:var(--text2);line-height:1.8;">
+        ${{regimeEmoji}} 레짐: <strong style="color:var(--text1)">${{pf.regime || 'unknown'}}</strong><br>
+        📦 포지션: <strong style="color:var(--text1)">${{pf.open_count || 0}} / ${{pf.max_positions || 10}}</strong>
+        <span style="color:var(--accent)">(${{pf.usage_pct || 0}}%)</span><br>
+        🎯 목표 현금: <strong style="color:var(--text1)">${{targetCash}}%</strong>
+        (${{pf.regime === 'bearish' ? '하락장 방어' : pf.regime === 'bullish' ? '공격적 투자' : '균형 유지'}})<br>
+        🔓 남은 슬롯: <strong style="color:var(--green)">${{pf.available_slots || 0}}개</strong>
+      </div>
+    </div>
+  `;
 }}
 
 function statCard(title, value, sub, cls) {{
@@ -1105,7 +1249,7 @@ function renderHistory() {{
       <td>${{fmt(h.entry_price)}}</td>
       <td>${{fmt(h.exit_price)}}</td>
       <td class="${{pnlClass(h.pnl_pct)}}"><strong>${{pnlSign(h.pnl_pct)}}%</strong></td>
-      <td class="status-${{reason}}">${{{{take_profit:'✅ 익절',stop_loss:'🛑 손절',expired:'⏰ 만료',sell_signal:'📉 매도',strategy_rebalance:'🔄 재검증'}}[reason]||reason}}</td>
+      <td class="status-${{reason}}">${{{{take_profit:'✅ 익절',stop_loss:'🛑 손절',expired:'⏰ 만료',sell_signal:'📉 매도',strategy_rebalance:'🔄 재검증',trailing_stop:'📈 트레일링'}}[reason]||reason}}</td>
       <td>${{h.hold_days||'—'}}</td>
       <td>${{h.entry_date}}</td>
     </tr>`;
@@ -1168,15 +1312,15 @@ function renderPerformance() {{
 
   // 청산 유형 도넛
   const et = D.exit_types || {{}};
-  const total = (et.take_profit||0) + (et.stop_loss||0) + (et.expired||0) + (et.sell_signal||0) + (et.strategy_rebalance||0);
+  const total = (et.take_profit||0) + (et.stop_loss||0) + (et.expired||0) + (et.sell_signal||0) + (et.strategy_rebalance||0) + (et.trailing_stop||0);
   if (total > 0) {{
     new Chart(document.getElementById('exitTypeChart'), {{
       type: 'doughnut',
       data: {{
-        labels: ['익절', '손절', '만료', '매도', '재검증'],
+        labels: ['익절', '손절', '만료', '매도', '재검증', '트레일링'],
         datasets: [{{
-          data: [et.take_profit||0, et.stop_loss||0, et.expired||0, et.sell_signal||0, et.strategy_rebalance||0],
-          backgroundColor: ['#34d399', '#f87171', '#fbbf24', '#60a5fa', '#a78bfa'],
+          data: [et.take_profit||0, et.stop_loss||0, et.expired||0, et.sell_signal||0, et.strategy_rebalance||0, et.trailing_stop||0],
+          backgroundColor: ['#34d399', '#f87171', '#fbbf24', '#60a5fa', '#a78bfa', '#22d3ee'],
           borderWidth: 0,
         }}]
       }},
@@ -1273,6 +1417,8 @@ function renderTuning() {{
     sell_threshold: '매도 임계값',
     max_positions: '최대 포지션',
     max_daily_entries: '일별 진입 제한',
+    trailing_atr_mult: '트레일링 ATR 배수',
+    trailing_min_pct: '트레일링 최소 %',
   }};
 
   let phtml = '';
@@ -1415,6 +1561,222 @@ function renderStrategy() {{
   }} else {{
     document.getElementById('stratWeightsChart').innerHTML = '<div class="empty-state" style="padding:30px;">아직 신호 가중치 데이터가 없습니다<br><small style="color:var(--text2)">자기학습 실행 후 표시됩니다</small></div>';
   }}
+}}
+
+// ════ TAB 6: 실적 캘린더 ════
+function renderEarnings() {{
+  const earnings = D.earnings_calendar || [];
+  const today = new Date();
+  today.setHours(0,0,0,0);
+
+  const toDate = (s) => {{ const d = new Date(s + 'T00:00:00'); d.setHours(0,0,0,0); return d; }};
+  const fmt = (d) => `${{d.getMonth()+1}}/${{d.getDate()}}`;
+  const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+
+  // ── 이번 주 & 다음 주 ──
+  const weekEnd = new Date(today); weekEnd.setDate(today.getDate() + 14);
+  const upcoming = earnings.filter(e => {{
+    const d = toDate(e.date);
+    return d >= today && d <= weekEnd;
+  }});
+
+  let upHtml = '';
+  if (upcoming.length === 0) {{
+    upHtml = '<div class="empty-state" style="padding:20px;">다가오는 2주 내 실적 발표가 없습니다</div>';
+  }} else {{
+    upHtml = '<table class="table"><thead><tr><th>날짜</th><th>요일</th><th>종목</th><th>상태</th></tr></thead><tbody>';
+    for (const e of upcoming) {{
+      const d = toDate(e.date);
+      const isHold = e.is_holding;
+      const rowClass = isHold ? 'style="background:rgba(248,113,113,0.1);"' : '';
+      const badge = isHold ? '<span style="color:#f87171;font-weight:bold;">⚠️ 보유중</span>' : '<span style="color:var(--text2);">—</span>';
+      upHtml += `<tr ${{rowClass}}><td>${{fmt(d)}}</td><td>${{dayNames[d.getDay()]}}</td><td><strong>${{e.ticker}}</strong></td><td>${{badge}}</td></tr>`;
+    }}
+    upHtml += '</tbody></table>';
+  }}
+  document.getElementById('earningsUpcoming').innerHTML = upHtml;
+
+  // ── 통계 ──
+  const holdEarnings = earnings.filter(e => e.is_holding);
+  const thisMonth = earnings.filter(e => {{
+    const d = toDate(e.date);
+    return d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+  }});
+  const nextMonth = earnings.filter(e => {{
+    const d = toDate(e.date);
+    const nm = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+    return d.getMonth() === nm.getMonth() && d.getFullYear() === nm.getFullYear();
+  }});
+
+  let stHtml = '<div style="padding:12px;font-size:14px;line-height:2;">';
+  stHtml += `📋 전체 수집: <strong>${{earnings.length}}</strong>건<br>`;
+  stHtml += `📅 이번 달: <strong>${{thisMonth.length}}</strong>건<br>`;
+  stHtml += `📅 다음 달: <strong>${{nextMonth.length}}</strong>건<br>`;
+  stHtml += `⚠️ 보유종목 실적: <strong style="color:#f87171;">${{holdEarnings.length}}</strong>건`;
+  if (holdEarnings.length > 0) {{
+    stHtml += ' (' + holdEarnings.map(e => e.ticker).join(', ') + ')';
+  }}
+  stHtml += '</div>';
+  document.getElementById('earningsStats').innerHTML = stHtml;
+
+  // ── 월간 캘린더 렌더링 ──
+  const year = today.getFullYear();
+  const month = today.getMonth();
+
+  // 이번 달 + 다음 달 렌더링
+  let calHtml = '';
+  for (let m = 0; m < 2; m++) {{
+    const cm = new Date(year, month + m, 1);
+    const monthName = `${{cm.getFullYear()}}년 ${{cm.getMonth()+1}}월`;
+    const firstDay = cm.getDay();
+    const daysInMonth = new Date(cm.getFullYear(), cm.getMonth() + 1, 0).getDate();
+
+    // 이 달의 어닝 데이터 맵
+    const monthEarnings = {{}};
+    earnings.forEach(e => {{
+      const d = toDate(e.date);
+      if (d.getMonth() === cm.getMonth() && d.getFullYear() === cm.getFullYear()) {{
+        const day = d.getDate();
+        if (!monthEarnings[day]) monthEarnings[day] = [];
+        monthEarnings[day].push(e);
+      }}
+    }});
+
+    calHtml += `<h3 style="margin:20px 0 10px;color:var(--text1);">${{monthName}}</h3>`;
+    calHtml += '<table style="width:100%;border-collapse:collapse;table-layout:fixed;">';
+    calHtml += '<thead><tr>';
+    for (const dn of dayNames) calHtml += `<th style="padding:8px;text-align:center;color:var(--text2);border-bottom:1px solid var(--border);font-size:12px;">${{dn}}</th>`;
+    calHtml += '</tr></thead><tbody><tr>';
+
+    // 첫 주 빈칸
+    for (let i = 0; i < firstDay; i++) calHtml += '<td style="padding:4px;border:1px solid var(--border);vertical-align:top;height:80px;"></td>';
+
+    for (let day = 1; day <= daysInMonth; day++) {{
+      const dow = (firstDay + day - 1) % 7;
+      const isToday = (cm.getMonth() === today.getMonth() && cm.getFullYear() === today.getFullYear() && day === today.getDate());
+      const todayBorder = isToday ? 'border:2px solid var(--accent);' : 'border:1px solid var(--border);';
+      const todayBg = isToday ? 'background:rgba(56,189,248,0.05);' : '';
+
+      calHtml += `<td style="padding:4px;vertical-align:top;height:80px;${{todayBorder}}${{todayBg}}">`;
+      calHtml += `<div style="font-size:11px;color:${{isToday ? 'var(--accent)' : 'var(--text2)'}};margin-bottom:2px;">${{day}}</div>`;
+
+      if (monthEarnings[day]) {{
+        for (const e of monthEarnings[day]) {{
+          const bg = e.is_holding ? 'rgba(248,113,113,0.2)' : 'rgba(56,189,248,0.1)';
+          const color = e.is_holding ? '#f87171' : 'var(--text1)';
+          const icon = e.is_holding ? '⚠️' : '📊';
+          calHtml += `<div style="font-size:10px;padding:1px 3px;margin:1px 0;border-radius:3px;background:${{bg}};color:${{color}};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${{e.ticker}}">${{icon}} ${{e.ticker}}</div>`;
+        }}
+      }}
+
+      calHtml += '</td>';
+      if (dow === 6 && day < daysInMonth) calHtml += '</tr><tr>';
+    }}
+
+    // 마지막 주 빈칸
+    const lastDow = (firstDay + daysInMonth - 1) % 7;
+    for (let i = lastDow + 1; i < 7; i++) calHtml += '<td style="padding:4px;border:1px solid var(--border);vertical-align:top;height:80px;"></td>';
+    calHtml += '</tr></tbody></table>';
+  }}
+
+  document.getElementById('earningsCalendar').innerHTML = calHtml;
+}}
+
+// ════ TAB 7: 주간 리포트 (GitHub raw fetch) ════
+async function renderReports() {{
+  const container = document.getElementById('weeklyReportsList');
+  container.innerHTML = '<div class="empty-state" style="padding:40px;">📡 주간 리포트 로딩 중...</div>';
+
+  // 1) index.json fetch
+  let index = [];
+  try {{
+    const res = await fetch(DATA_URLS.weeklyIndex + '?t=' + Date.now());
+    if (res.ok) index = await res.json();
+  }} catch (e) {{
+    container.innerHTML = '<div class="empty-state" style="padding:40px;">아직 주간 리포트가 없습니다.<br><small style="color:var(--text2);">매주 일요일 자동 생성됩니다.</small></div>';
+    return;
+  }}
+
+  if (!index.length) {{
+    container.innerHTML = '<div class="empty-state" style="padding:40px;">아직 주간 리포트가 없습니다.<br><small style="color:var(--text2);">매주 일요일 자동 생성됩니다.</small></div>';
+    return;
+  }}
+
+  // 2) 각 리포트 fetch (병렬)
+  const baseUrl = REPO_RAW + '/data/weekly_reports/';
+  const fetches = index.map(async (entry) => {{
+    try {{
+      const res = await fetch(baseUrl + entry.file + '?t=' + Date.now());
+      if (res.ok) return await res.json();
+    }} catch (e) {{}}
+    return null;
+  }});
+  const reports = (await Promise.all(fetches)).filter(Boolean);
+
+  if (!reports.length) {{
+    container.innerHTML = '<div class="empty-state" style="padding:40px;">리포트 파일을 불러올 수 없습니다.</div>';
+    return;
+  }}
+
+  // 3) 렌더링
+  let html = '';
+  for (const r of reports) {{
+    const ts = r.trade_summary || {{}};
+    const regime = r.regime || {{}};
+    const pnl = ts.total_pnl_pct || 0;
+    const pnlColor = pnl > 0 ? 'var(--green)' : pnl < 0 ? 'var(--red)' : 'var(--text2)';
+    const regimeEmoji = {{'bullish':'🐂','bearish':'🐻','sideways':'📊','conservative':'🛡️','volatile':'⚡'}}[regime.regime] || '❓';
+
+    html += `<div class="card" style="margin-bottom:12px;">`;
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">`;
+    html += `<div style="font-size:15px;font-weight:600;color:var(--text1);">📋 ${{ts.period || r.week || ''}}</div>`;
+    html += `<div style="font-size:20px;font-weight:700;color:${{pnlColor}};">${{pnl >= 0 ? '+' : ''}}${{pnl.toFixed(2)}}%</div>`;
+    html += `</div>`;
+
+    html += `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;">`;
+    html += `<div style="text-align:center;padding:8px;background:var(--bg);border-radius:6px;">
+      <div style="font-size:18px;font-weight:bold;color:var(--accent);">${{ts.new_entries || 0}}</div>
+      <div style="font-size:10px;color:var(--text2);">신규 진입</div></div>`;
+    html += `<div style="text-align:center;padding:8px;background:var(--bg);border-radius:6px;">
+      <div style="font-size:18px;font-weight:bold;">${{ts.closed || 0}}</div>
+      <div style="font-size:10px;color:var(--text2);">청산</div></div>`;
+    html += `<div style="text-align:center;padding:8px;background:var(--bg);border-radius:6px;">
+      <div style="font-size:18px;font-weight:bold;color:var(--green);">${{ts.win_rate || 0}}%</div>
+      <div style="font-size:10px;color:var(--text2);">승률</div></div>`;
+    html += `<div style="text-align:center;padding:8px;background:var(--bg);border-radius:6px;">
+      <div style="font-size:18px;font-weight:bold;">${{regimeEmoji}} ${{regime.regime || '?'}}</div>
+      <div style="font-size:10px;color:var(--text2);">레짐</div></div>`;
+    html += `</div>`;
+
+    const details = ts.closed_details || [];
+    if (details.length > 0) {{
+      html += `<div style="font-size:12px;color:var(--text2);margin-bottom:4px;">청산 내역:</div>`;
+      html += `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">`;
+      for (const d of details.slice(0, 10)) {{
+        const dc = (d.pnl_pct||0) > 0 ? 'var(--green)' : 'var(--red)';
+        html += `<span style="font-size:11px;padding:2px 6px;border-radius:4px;background:var(--bg);color:${{dc}};">
+          ${{d.reason}} ${{d.ticker}} ${{(d.pnl_pct||0) >= 0 ? '+' : ''}}${{(d.pnl_pct||0).toFixed(1)}}%</span>`;
+      }}
+      html += `</div>`;
+    }}
+
+    const holdings = r.holdings || [];
+    if (holdings.length > 0) {{
+      html += `<div style="font-size:12px;color:var(--text2);margin-bottom:4px;">보유 포지션 (${{holdings.length}}개):</div>`;
+      html += `<div style="display:flex;flex-wrap:wrap;gap:4px;">`;
+      for (const h of holdings) {{
+        const hp = h.unrealized_pnl;
+        const hc = hp != null ? (hp > 0 ? 'var(--green)' : 'var(--red)') : 'var(--text2)';
+        const hv = hp != null ? `${{hp >= 0 ? '+' : ''}}${{hp.toFixed(1)}}%` : 'N/A';
+        html += `<span style="font-size:11px;padding:2px 6px;border-radius:4px;background:var(--bg);color:${{hc}};">${{h.ticker}} ${{hv}}</span>`;
+      }}
+      html += `</div>`;
+    }}
+
+    html += `</div>`;
+  }}
+
+  container.innerHTML = html;
 }}
 
 // ── Chart.js 공통 옵션 ──

@@ -1,0 +1,68 @@
+name: earnings-calendar
+on:
+  #schedule:
+    # 매월 1일, 15일 UTC 08:00 (KST 17:00)
+    # 어닝 시즌(1/4/7/10월)은 더 자주 실행 가능 (workflow_dispatch)
+    #- cron: "0 8 1,15 * *"
+
+  workflow_dispatch:
+    inputs:
+      pool:
+        description: "종목 풀 (sp500 | nasdaq100, 미지정 시 전략 설정 사용)"
+        default: ""
+        type: string
+      days:
+        description: "수집 범위 (일)"
+        default: "60"
+        type: string
+
+jobs:
+  collect-earnings:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - run: python -m pip install -U pip
+      - run: python -m pip install -r requirements.txt
+
+      - name: Collect earnings calendar
+        run: |
+          POOL_ARG=""
+          if [ -n "${{ inputs.pool }}" ]; then
+            POOL_ARG="--pool ${{ inputs.pool }}"
+          fi
+          python run_earnings.py $POOL_ARG --days ${{ inputs.days || '60' }}
+
+      - name: Generate dashboard
+        run: python generate_dashboard.py
+
+      - name: Commit earnings data & dashboard
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add data/earnings_calendar.json docs/
+
+          if git diff --staged --quiet; then
+            echo "No earnings changes"
+          else
+            git commit -m "📅 earnings calendar update $(date -u +'%Y-%m-%d')"
+            git push
+          fi

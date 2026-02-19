@@ -51,6 +51,8 @@ PARAM_BOUNDS = {
     "sell_threshold":    {"min": 2.0, "max": 8.0, "step": 0.5,  "type": "float"},
     "max_positions":     {"min": 3,   "max": 15,  "step": 1,    "type": "int"},
     "max_daily_entries": {"min": 1,   "max": 5,   "step": 1,    "type": "int"},
+    "trailing_atr_mult": {"min": 1.0, "max": 3.0, "step": 0.25, "type": "float"},
+    "trailing_min_pct":  {"min": 2.0, "max": 5.0, "step": 0.5,  "type": "float"},
 }
 
 # 신호 가중치 범위
@@ -71,9 +73,11 @@ REGIME_PRESETS = {
         "atr_tp_mult": 4.5,
         "max_hold_days": 7,
         "top_n": 5,
-        "sell_threshold": 5.0,      # 상승장: 매도 느괋하게
+        "sell_threshold": 5.0,
         "max_positions": 10,
         "max_daily_entries": 3,
+        "trailing_atr_mult": 1.5,   # 상승장: 널널하게 따라가기
+        "trailing_min_pct": 3.0,
     },
     "bearish": {
         "min_tech_score": 5.5,
@@ -81,9 +85,11 @@ REGIME_PRESETS = {
         "atr_tp_mult": 3.0,
         "max_hold_days": 5,
         "top_n": 3,
-        "sell_threshold": 3.0,      # 하락장: 매도 빨리
+        "sell_threshold": 3.0,
         "max_positions": 5,
         "max_daily_entries": 2,
+        "trailing_atr_mult": 1.0,   # 하락장: 타이트하게
+        "trailing_min_pct": 2.0,
     },
     "sideways": {
         "min_tech_score": 4.5,
@@ -94,6 +100,8 @@ REGIME_PRESETS = {
         "sell_threshold": 4.0,
         "max_positions": 8,
         "max_daily_entries": 3,
+        "trailing_atr_mult": 1.5,
+        "trailing_min_pct": 3.0,
     },
     "conservative": {
         "min_tech_score": 5.0,
@@ -104,6 +112,8 @@ REGIME_PRESETS = {
         "sell_threshold": 3.5,
         "max_positions": 6,
         "max_daily_entries": 2,
+        "trailing_atr_mult": 1.0,
+        "trailing_min_pct": 2.5,
     },
 }
 
@@ -565,16 +575,34 @@ class ParameterTuner:
         return final, changes
 
     def _evaluate_performance(self, summary: Dict) -> float:
-        """성과 종합 점수 (높을수록 좋음)."""
-        pf = summary.get("profit_factor", 0)
-        wr = summary.get("win_rate", 0)
+        """
+        복합 성과 점수 (높을수록 좋음).
+
+        구성:
+          승률 가중 (30%) + Profit Factor (25%) + 샤프 비율 (20%)
+          + 기대값 (15%) - MDD 페널티 (10%)
+        """
+        pf = max(0, summary.get("profit_factor", 0))
+        wr = max(0, summary.get("win_rate", 0))
         sharpe = summary.get("sharpe_ratio", 0)
         ev = summary.get("expected_value_pct", 0)
-        max_dd = summary.get("portfolio_max_drawdown_pct", 0)
+        max_dd = abs(summary.get("portfolio_max_drawdown_pct", 0))
 
-        # 복합 점수: PF × (WR/100) + EV + Sharpe×0.3 - MDD×0.1
-        score = pf * (wr / 100) + ev + sharpe * 0.3 - max_dd * 0.1
-        return score
+        # 정규화
+        wr_score = wr / 100.0                          # 0~1
+        pf_score = min(pf / 3.0, 1.0)                  # 0~1 (PF 3이면 만점)
+        sharpe_score = max(0, min(sharpe / 2.0, 1.0))   # 0~1 (샤프 2면 만점)
+        ev_score = max(0, min((ev + 2) / 6.0, 1.0))     # -2~4 → 0~1
+        mdd_penalty = min(max_dd / 30.0, 1.0)           # 0~1 (MDD 30%면 최대 페널티)
+
+        score = (
+            wr_score * 0.30
+            + pf_score * 0.25
+            + sharpe_score * 0.20
+            + ev_score * 0.15
+            - mdd_penalty * 0.10
+        )
+        return round(score, 6)
 
     def _performance_based_adjustment(self, params: Dict, summary: Dict,
                                        backtest_result: Dict) -> Dict:
@@ -647,6 +675,49 @@ class ParameterTuner:
 
         return adjusted
 
+    def generate_candidate(self, base_params: Dict, regime: str,
+                           regime_confidence: float) -> Dict:
+        """
+        탐색용 후보 파라미터 생성.
+        레짐 프리셋 블렌딩 + 랜덤 변이를 조합.
+        """
+        import random
+        candidate = dict(base_params)
+
+        # 레짐 프리셋 블렌딩 (0~50% 랜덤)
+        regime_params = REGIME_PRESETS.get(regime, REGIME_PRESETS["sideways"])
+        blend = random.uniform(0.1, 0.5) * regime_confidence
+
+        for key in candidate:
+            if key in regime_params:
+                curr = candidate[key]
+                target = regime_params[key]
+                candidate[key] = curr * (1 - blend) + target * blend
+
+        # 랜덤 변이 (각 파라미터를 ±1~2스텝 랜덤 조정)
+        for key, bounds in PARAM_BOUNDS.items():
+            if key not in candidate:
+                continue
+            step = bounds.get("step", 0.5)
+            lo = bounds.get("min", candidate[key])
+            hi = bounds.get("max", candidate[key])
+
+            # 70% 확률로 변이 적용 (모든 파라미터가 바뀌면 과적합)
+            if random.random() < 0.7:
+                delta = random.choice([-2, -1, 0, 1, 2]) * step
+                candidate[key] = _clamp(candidate[key] + delta, lo, hi)
+
+        # 타입 보정
+        for key, bounds in PARAM_BOUNDS.items():
+            if key in candidate:
+                if bounds.get("type") == "int":
+                    candidate[key] = int(round(candidate[key]))
+                else:
+                    s = bounds.get("step", 0.25)
+                    candidate[key] = round(round(candidate[key] / s) * s, 2)
+
+        return candidate
+
 
 # ══════════════════════════════════════════════════════
 #  4. 안전 장치
@@ -701,9 +772,11 @@ class SafetyGuard:
             "atr_stop_mult": 1.5,
             "atr_tp_mult": 3.0,
             "max_hold_days": 5,
-            "sell_threshold": 3.0,   # 보수적 모드: 매도 임계값 낮춤 (빨리 청산)
-            "max_positions": 5,     # 보수적: 적은 포지션
-            "max_daily_entries": 2, # 보수적: 적은 진입
+            "sell_threshold": 3.0,
+            "max_positions": 5,
+            "max_daily_entries": 2,
+            "trailing_atr_mult": 1.0,  # 보수적: 타이트
+            "trailing_min_pct": 2.5,
         }
 
 
@@ -724,9 +797,12 @@ class SelfTuningEngine:
     7. Discord 알림
     """
 
-    def __init__(self, pool: str = "nasdaq100", backtest_days: int = 60):
+    def __init__(self, pool: str = "nasdaq100", backtest_days: int = 60,
+                 max_iterations: int = 20, min_improvement: float = 5.0):
         self.pool = pool
         self.backtest_days = backtest_days
+        self.max_iterations = max_iterations
+        self.min_improvement = min_improvement  # 최소 개선율 (%)
 
         self.regime_detector = MarketRegimeDetector()
         self.signal_optimizer = SignalWeightOptimizer()
@@ -742,9 +818,21 @@ class SelfTuningEngine:
         })
 
     def run(self) -> Dict:
-        """자기 학습 파이프라인 실행."""
+        """
+        자기 학습 파이프라인 실행.
+
+        1. 현재 파라미터로 기준 백테스트 (baseline)
+        2. 시장 레짐 감지
+        3. 안전 체크
+        4. 반복 탐색: N회 후보 생성 → 백테스트 → 점수 비교
+        5. 최고 후보가 기준 대비 5% 이상 개선이면 채택
+        6. 신호 가중치 조정
+        7. 저장 + 리밸런싱
+        """
         logger.info("=" * 70)
         logger.info("🧠 자기 학습 엔진 시작")
+        logger.info(f"   반복 탐색: 최대 {self.max_iterations}회, "
+                     f"채택 기준: {self.min_improvement}% 이상 개선")
         logger.info("=" * 70)
 
         timestamp = datetime.now(timezone.utc).isoformat()
@@ -752,89 +840,200 @@ class SelfTuningEngine:
             "timestamp": timestamp,
             "pool": self.pool,
             "backtest_days": self.backtest_days,
+            "max_iterations": self.max_iterations,
+            "min_improvement": self.min_improvement,
         }
 
-        # ── 1. 현재 파라미터로 백테스트 ──
-        logger.info("\n📊 1단계: 백테스트 실행")
-        current_params = self.param_tuner.current_params
+        # ══════════════════════════════════════════════
+        # 1단계: 현재 파라미터로 기준(baseline) 백테스트
+        # ══════════════════════════════════════════════
+        logger.info("\n📊 1단계: 기준(baseline) 백테스트")
+        current_params = dict(self.param_tuner.current_params)
 
-        engine = BacktestEngine(
+        baseline_engine = BacktestEngine(
             pool=self.pool,
             backtest_days=self.backtest_days,
             **current_params,
         )
-        bt_result = engine.run()
-        summary = bt_result.get("summary", {})
-        report["backtest_summary"] = summary
+        baseline_result = baseline_engine.run()
+        baseline_summary = baseline_result.get("summary", {})
+        report["baseline_summary"] = baseline_summary
 
-        if summary.get("total_trades", 0) < 10:
+        if baseline_summary.get("total_trades", 0) < 10:
             logger.warning("거래 수 부족 — 자기 학습 스킵")
             report["status"] = "skipped"
             report["reason"] = "insufficient_trades"
             return report
 
-        print_report(bt_result)
+        baseline_score = self.param_tuner._evaluate_performance(baseline_summary)
+        logger.info(f"  기준 점수: {baseline_score:.6f}")
+        logger.info(f"  승률: {baseline_summary.get('win_rate', 0):.1f}%  "
+                     f"PF: {baseline_summary.get('profit_factor', 0):.2f}  "
+                     f"샤프: {baseline_summary.get('sharpe_ratio', 0):.2f}  "
+                     f"MDD: {baseline_summary.get('portfolio_max_drawdown_pct', 0):.1f}%")
 
-        # ── 2. 시장 레짐 감지 ──
+        print_report(baseline_result)
+
+        # ══════════════════════════════════════════════
+        # 2단계: 시장 레짐 감지
+        # ══════════════════════════════════════════════
         logger.info("\n🌍 2단계: 시장 레짐 감지")
-        regime, confidence = self.regime_detector.detect(bt_result)
+        regime, confidence = self.regime_detector.detect(baseline_result)
         report["regime"] = {"type": regime, "confidence": round(confidence, 2)}
 
-        # 가격 데이터가 있으면 직접 감지도 시도
-        if engine.all_data is not None:
-            regime_price, conf_price = self.regime_detector.detect_from_prices(engine.all_data)
-            # 두 방법의 결과가 일치하면 신뢰도 높임
+        if baseline_engine.all_data is not None:
+            regime_price, conf_price = self.regime_detector.detect_from_prices(
+                baseline_engine.all_data)
             if regime_price == regime:
                 confidence = min(0.95, confidence + 0.15)
             report["regime"]["price_based"] = regime_price
 
-        # ── 3. 안전 체크 ──
+        # ══════════════════════════════════════════════
+        # 3단계: 안전 체크
+        # ══════════════════════════════════════════════
         logger.info("\n🛡️ 3단계: 안전 체크")
-        is_safe, safety_msg = self.safety_guard.check(summary)
+        is_safe, safety_msg = self.safety_guard.check(baseline_summary)
         report["safety"] = {"is_safe": is_safe, "message": safety_msg}
 
+        search_base = dict(current_params)
         if not is_safe:
             logger.warning(f"⚠️ 성과 열화 감지: {safety_msg}")
-            logger.info("  → 보수적 베이스라인 적용 후 성과 기반 조정 실행")
-            # 보수적 파라미터를 베이스라인으로 설정
+            logger.info("  → 보수적 베이스라인에서 탐색 시작")
             conservative = self.safety_guard.get_conservative_params()
-            for k, v in conservative.items():
-                self.param_tuner.current_params[k] = v
+            search_base = dict(conservative)
             regime = "conservative"
 
-        # ── 4. 파라미터 자동 조정 (항상 실행) ──
-        logger.info("\n⚙️ 4단계: 파라미터 자동 조정")
-        new_params, param_changes = self.param_tuner.tune(bt_result, regime, confidence)
+        # ══════════════════════════════════════════════
+        # 4단계: 반복 탐색 (핵심)
+        # ══════════════════════════════════════════════
+        logger.info(f"\n🔍 4단계: 반복 탐색 ({self.max_iterations}회)")
+        logger.info("-" * 50)
 
-        if not is_safe:
-            # safety 로 인한 변경도 change report에 표시
-            for k, v in conservative.items():
-                if current_params.get(k) != new_params.get(k):
-                    if k not in param_changes:
-                        param_changes[k] = {
-                            "old": current_params.get(k),
-                            "new": new_params.get(k),
-                            "reason": "safety_base + tuned",
-                        }
+        best_score = baseline_score
+        best_params = dict(current_params)
+        best_summary = baseline_summary
+        best_result = baseline_result
+        search_log = []
+
+        for i in range(1, self.max_iterations + 1):
+            # 후보 파라미터 생성
+            candidate = self.param_tuner.generate_candidate(
+                search_base, regime, confidence)
+
+            # 후보로 백테스트
+            try:
+                candidate_engine = BacktestEngine(
+                    pool=self.pool,
+                    backtest_days=self.backtest_days,
+                    **candidate,
+                )
+                candidate_result = candidate_engine.run()
+                candidate_summary = candidate_result.get("summary", {})
+
+                if candidate_summary.get("total_trades", 0) < 10:
+                    logger.info(f"  [{i:2d}/{self.max_iterations}] 거래 부족 — 스킵")
+                    search_log.append({"iter": i, "score": None, "reason": "no_trades"})
+                    continue
+
+                candidate_score = self.param_tuner._evaluate_performance(candidate_summary)
+                improvement = ((candidate_score - baseline_score) / max(abs(baseline_score), 0.001)) * 100
+
+                # 로그
+                marker = ""
+                if candidate_score > best_score:
+                    marker = " ⭐ NEW BEST"
+                    best_score = candidate_score
+                    best_params = dict(candidate)
+                    best_summary = candidate_summary
+                    best_result = candidate_result
+
+                logger.info(
+                    f"  [{i:2d}/{self.max_iterations}] "
+                    f"점수={candidate_score:.6f} "
+                    f"(기준 대비 {improvement:+.1f}%) "
+                    f"승률={candidate_summary.get('win_rate', 0):.1f}% "
+                    f"PF={candidate_summary.get('profit_factor', 0):.2f}"
+                    f"{marker}"
+                )
+
+                search_log.append({
+                    "iter": i,
+                    "score": round(candidate_score, 6),
+                    "improvement_pct": round(improvement, 2),
+                    "win_rate": candidate_summary.get("win_rate", 0),
+                    "profit_factor": candidate_summary.get("profit_factor", 0),
+                    "is_best": marker != "",
+                })
+
+            except Exception as e:
+                logger.warning(f"  [{i:2d}/{self.max_iterations}] 백테스트 실패: {e}")
+                search_log.append({"iter": i, "score": None, "reason": str(e)})
+                continue
+
+        # ══════════════════════════════════════════════
+        # 5단계: 채택 판단
+        # ══════════════════════════════════════════════
+        total_improvement = ((best_score - baseline_score) / max(abs(baseline_score), 0.001)) * 100
+        logger.info("-" * 50)
+        logger.info(f"\n📋 5단계: 채택 판단")
+        logger.info(f"  기준 점수:  {baseline_score:.6f}")
+        logger.info(f"  최고 점수:  {best_score:.6f}")
+        logger.info(f"  개선율:     {total_improvement:+.1f}%")
+        logger.info(f"  채택 기준:  {self.min_improvement}% 이상")
+
+        adopted = total_improvement >= self.min_improvement
+        report["search"] = {
+            "iterations": self.max_iterations,
+            "baseline_score": round(baseline_score, 6),
+            "best_score": round(best_score, 6),
+            "improvement_pct": round(total_improvement, 2),
+            "adopted": adopted,
+            "log": search_log,
+        }
+
+        if adopted:
+            new_params = best_params
+            bt_result = best_result
+            logger.info(f"  ✅ 채택! ({total_improvement:+.1f}% 개선)")
+            # 변경 내역
+            param_changes = {}
+            for k in new_params:
+                old_v = current_params.get(k)
+                new_v = new_params.get(k)
+                if old_v is not None and new_v is not None and abs(float(new_v) - float(old_v)) > 0.001:
+                    param_changes[k] = {"old": old_v, "new": new_v}
+        else:
+            new_params = current_params
+            bt_result = baseline_result
+            param_changes = {}
+            logger.info(f"  ❌ 기각 (개선 {total_improvement:+.1f}% < 기준 {self.min_improvement}%)")
+            logger.info(f"  → 현재 파라미터 유지")
 
         report["param_changes"] = param_changes
+        report["backtest_summary"] = best_summary if adopted else baseline_summary
 
-        # ── 5. 신호 가중치 자동 조정 ──
-        logger.info("\n📡 5단계: 신호 가중치 조정")
+        # ══════════════════════════════════════════════
+        # 6단계: 신호 가중치 조정
+        # ══════════════════════════════════════════════
+        logger.info("\n📡 6단계: 신호 가중치 조정")
         new_weights, weight_changes = self.signal_optimizer.optimize(bt_result)
         report["weight_changes"] = weight_changes
 
-        # ── 6. 설정 파일 업데이트 ──
-        logger.info("\n💾 6단계: 설정 저장")
+        # ══════════════════════════════════════════════
+        # 7단계: 저장
+        # ══════════════════════════════════════════════
+        logger.info("\n💾 7단계: 설정 저장")
         self._save_state(new_params, new_weights, regime, confidence, report)
 
-        # ── 7. 내보내기 ──
+        # 백테스트 결과 내보내기
         export_results(bt_result, output_dir="data/backtest")
 
         # 최종 요약
         self._print_summary(report, new_params, new_weights, param_changes, weight_changes)
 
-        # ── 8. 포지션 리밸런싱 (전략 변경 후 자동 실행) ──
+        # ══════════════════════════════════════════════
+        # 8단계: 포지션 리밸런싱
+        # ══════════════════════════════════════════════
         logger.info("\n🔄 8단계: 포지션 리밸런싱")
         try:
             from .position_tracker import rebalance_positions

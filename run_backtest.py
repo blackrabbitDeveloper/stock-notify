@@ -48,7 +48,7 @@ def main():
     )
 
     # 백테스트 기본 옵션
-    parser.add_argument("--days", type=int, default=90,
+    parser.add_argument("--days", type=int, default=504,
                         help="백테스트 기간 (거래일, 기본 90)")
     parser.add_argument("--top", type=int, default=5,
                         help="일별 선택 종목 수 (기본 3)")

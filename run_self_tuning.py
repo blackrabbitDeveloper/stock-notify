@@ -22,8 +22,10 @@ from src.logger import logger
 
 def main():
     parser = argparse.ArgumentParser(description="자기 학습 전략 엔진")
-    parser.add_argument("--days", type=int, default=60, help="백테스트 기간 (거래일)")
+    parser.add_argument("--days", type=int, default=504, help="백테스트 기간 거래일 (504=약 2년)")
     parser.add_argument("--pool", type=str, default="sp500", help="종목 풀")
+    parser.add_argument("--iterations", type=int, default=10, help="탐색 반복 횟수 (기본 10)")
+    parser.add_argument("--min-improvement", type=float, default=5.0, help="채택 최소 개선률 %% (기본 5.0)")
     parser.add_argument("--discord", action="store_true", help="Discord 알림 전송")
     parser.add_argument("--dry-run", action="store_true", help="변경사항 미적용 (확인만)")
     args = parser.parse_args()
@@ -31,6 +33,8 @@ def main():
     engine = SelfTuningEngine(
         pool=args.pool,
         backtest_days=args.days,
+        max_iterations=args.iterations,
+        min_improvement=args.min_improvement,
     )
 
     if args.dry_run:

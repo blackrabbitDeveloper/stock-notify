@@ -150,6 +150,7 @@ class Trade:
         self.max_favorable_pct: float = 0.0    # 보유 중 최대 이익
         self.sell_signals: List[str] = []      # 매도 신호 목록
         self.sell_score: float = 0.0           # 매도 점수
+        self.partial_closed: bool = False      # 부분 청산 여부
 
     def to_dict(self) -> Dict:
         return {
@@ -175,9 +176,12 @@ class Trade:
 def _simulate_trade(trade: Trade, future_data: pd.DataFrame,
                     max_hold_days: int = MAX_HOLD_DAYS,
                     sell_threshold: float = 4.0,
-                    hist_data: pd.DataFrame = None) -> Trade:
+                    hist_data: pd.DataFrame = None,
+                    trailing_atr_mult: float = 1.5,
+                    trailing_min_pct: float = 3.0) -> Trade:
     """
     진입 이후 실제 가격으로 트레이드 청산 시뮬레이션.
+    트레일링 스탑 + 부분 청산 지원.
 
     future_data: 진입일 다음날부터의 OHLCV (해당 종목)
     hist_data: 진입일까지의 OHLCV (매도 신호 분석용, optional)
@@ -192,6 +196,17 @@ def _simulate_trade(trade: Trade, future_data: pd.DataFrame,
     tp = trade.take_profit
     max_dd = 0.0
     max_fav = 0.0
+
+    # ATR 역산 (sl에서 atr_stop_mult 기반)
+    atr = (entry - sl) / ATR_STOP_MULT if entry > sl else entry * 0.02
+
+    # 트레일링 상태
+    tp_half = entry + (tp - entry) * 0.5   # TP의 50% 지점
+    highest_price = entry
+    trailing_active = False
+    trailing_sl = sl
+    partial_closed = False
+    partial_pnl = 0.0   # 부분 청산 수익
 
     # 매도 신호 분석용 히스토리 구축
     use_sell_signal = (hist_data is not None and len(hist_data) >= 30
@@ -208,21 +223,40 @@ def _simulate_trade(trade: Trade, future_data: pd.DataFrame,
         max_dd = min(max_dd, dd_pct)
         max_fav = max(max_fav, fav_pct)
 
-        # 1순위: 손절
-        if low <= sl:
-            trade.exit_price = sl
+        # 최고가 갱신
+        if high > highest_price:
+            highest_price = high
+
+        # 트레일링 활성화 체크
+        if not trailing_active and highest_price >= tp_half:
+            trailing_active = True
+
+        # 트레일링 SL 갱신
+        if trailing_active and atr > 0:
+            trail_dist = max(atr * trailing_atr_mult, highest_price * trailing_min_pct / 100)
+            new_trail_sl = highest_price - trail_dist
+            if new_trail_sl > trailing_sl:
+                trailing_sl = new_trail_sl
+
+        effective_sl = trailing_sl if trailing_active else sl
+
+        # 1순위: 손절 / 트레일링 스탑
+        if low <= effective_sl:
+            exit_px = effective_sl
+            trade.exit_price = exit_px
             trade.exit_date = str(row["Date"].date()) if hasattr(row["Date"], "date") else str(row["Date"])
-            trade.status = "stop_loss"
+            trade.status = "trailing_stop" if trailing_active else "stop_loss"
             trade.hold_days = day_num
             break
 
-        # 2순위: 익절
-        if high >= tp:
-            trade.exit_price = tp
-            trade.exit_date = str(row["Date"].date()) if hasattr(row["Date"], "date") else str(row["Date"])
-            trade.status = "take_profit"
-            trade.hold_days = day_num
-            break
+        # 2순위: TP 도달 → 부분 청산
+        if high >= tp and not partial_closed:
+            partial_closed = True
+            partial_pnl = (tp - entry) / entry * 100  # 50% 물량의 수익률
+            # 나머지 50%는 트레일링 계속, 만료 면제
+            if not trailing_active:
+                trailing_active = True
+            continue  # 전량 청산하지 않고 계속
 
         # 3순위: 매도 신호 (2일차부터)
         if use_sell_signal and day_num >= 2:
@@ -244,8 +278,8 @@ def _simulate_trade(trade: Trade, future_data: pd.DataFrame,
             except Exception:
                 pass
 
-        # 4순위: 만료
-        if day_num >= max_hold_days:
+        # 4순위: 만료 (부분 청산 안 된 포지션만)
+        if day_num >= max_hold_days and not partial_closed:
             trade.exit_price = close
             trade.exit_date = str(row["Date"].date()) if hasattr(row["Date"], "date") else str(row["Date"])
             trade.status = "expired"
@@ -255,13 +289,19 @@ def _simulate_trade(trade: Trade, future_data: pd.DataFrame,
         last = future_data.iloc[-1]
         trade.exit_price = last["Close"]
         trade.exit_date = str(last["Date"].date()) if hasattr(last["Date"], "date") else str(last["Date"])
-        trade.status = "expired"
+        trade.status = "trailing_stop" if trailing_active else "expired"
         trade.hold_days = len(future_data)
 
     # 손익 계산 (수수료 + 슬리피지 포함)
     if trade.exit_price and trade.entry_price > 0:
-        raw_pnl = (trade.exit_price - trade.entry_price) / trade.entry_price * 100
-        trade.pnl_pct = raw_pnl - COMMISSION_PCT - SLIPPAGE_PCT
+        remaining_pnl = (trade.exit_price - trade.entry_price) / trade.entry_price * 100
+
+        if partial_closed:
+            # 가중 평균: 50% 부분청산(TP) + 50% 트레일링
+            trade.pnl_pct = (partial_pnl * 0.5 + remaining_pnl * 0.5) - COMMISSION_PCT - SLIPPAGE_PCT
+            trade.partial_closed = True
+        else:
+            trade.pnl_pct = remaining_pnl - COMMISSION_PCT - SLIPPAGE_PCT
     else:
         trade.pnl_pct = 0.0
 
@@ -371,6 +411,8 @@ class BacktestEngine:
         sell_threshold: float = 4.0,
         max_positions: int = 10,
         max_daily_entries: int = 3,
+        trailing_atr_mult: float = 1.5,
+        trailing_min_pct: float = 3.0,
     ):
         self.pool = pool
         self.backtest_days = backtest_days
@@ -382,6 +424,8 @@ class BacktestEngine:
         self.sell_threshold = sell_threshold
         self.max_positions = max_positions
         self.max_daily_entries = max_daily_entries
+        self.trailing_atr_mult = trailing_atr_mult
+        self.trailing_min_pct = trailing_min_pct
 
         self.trades: List[Trade] = []
         self.daily_log: List[Dict] = []
@@ -517,6 +561,8 @@ class BacktestEngine:
                     max_hold_days=self.max_hold_days,
                     sell_threshold=self.sell_threshold,
                     hist_data=hist_for_sell,
+                    trailing_atr_mult=getattr(self, 'trailing_atr_mult', 1.5),
+                    trailing_min_pct=getattr(self, 'trailing_min_pct', 3.0),
                 )
                 self.trades.append(trade)
                 active_tickers.add(ticker)
@@ -624,6 +670,8 @@ class BacktestEngine:
         sl_trades = [t for t in completed if t.status == "stop_loss"]
         exp_trades = [t for t in completed if t.status == "expired"]
         sell_trades = [t for t in completed if t.status == "sell_signal"]
+        trail_trades = [t for t in completed if t.status == "trailing_stop"]
+        partial_trades = [t for t in completed if getattr(t, 'partial_closed', False)]
 
         # 기본 통계
         total = len(completed)
@@ -721,10 +769,13 @@ class BacktestEngine:
                 "stop_loss": len(sl_trades),
                 "expired": len(exp_trades),
                 "sell_signal": len(sell_trades),
+                "trailing_stop": len(trail_trades),
+                "partial_closed": len(partial_trades),
                 "tp_rate": round(len(tp_trades) / total * 100, 2) if total > 0 else 0,
                 "sl_rate": round(len(sl_trades) / total * 100, 2) if total > 0 else 0,
                 "exp_rate": round(len(exp_trades) / total * 100, 2) if total > 0 else 0,
                 "sell_rate": round(len(sell_trades) / total * 100, 2) if total > 0 else 0,
+                "trail_rate": round(len(trail_trades) / total * 100, 2) if total > 0 else 0,
             },
             "monthly_returns": monthly,
             "top_traded_tickers": [

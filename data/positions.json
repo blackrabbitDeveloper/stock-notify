@@ -68,7 +68,7 @@
     },
     {
       "ticker": "TYL",
-      "status": "open",
+      "status": "strategy_rebalance",
       "entry_price": 301.0,
       "entry_date": "2026-02-16",
       "atr": 24.45,
@@ -76,10 +76,10 @@
       "take_profit": 398.8,
       "tech_score": 7.5,
       "combined_score": 4.88,
-      "exit_price": null,
-      "exit_date": null,
-      "pnl_pct": null,
-      "close_reason": null,
+      "exit_price": 317.24,
+      "exit_date": "2026-02-19",
+      "pnl_pct": 5.4,
+      "close_reason": "strategy_rebalance",
       "price_history": [
         {
           "date": "2026-02-17",
@@ -122,22 +122,23 @@
     }
   ],
   "stats": {
-    "total_trades": 16,
-    "wins": 8,
-    "losses": 8,
-    "expired": 3,
-    "sell_signal": 0,
-    "total_pnl_pct": -4.13,
-    "win_rate": 50.0,
-    "avg_pnl_pct": -0.26,
+    "total_trades": 1,
+    "wins": 1,
+    "losses": 0,
+    "expired": 0,
+    "sell_signal": 1,
+    "trailing_stop": 0,
+    "total_pnl_pct": 5.4,
+    "win_rate": 100.0,
+    "avg_pnl_pct": 5.4,
     "best_trade": {
-      "ticker": "TMUS",
-      "pnl_pct": 4.71
+      "ticker": "TYL",
+      "pnl_pct": 5.4
     },
     "worst_trade": {
-      "ticker": "CDNS",
-      "pnl_pct": -5.34
+      "ticker": "TYL",
+      "pnl_pct": 5.4
     },
-    "last_updated": "2026-02-18T21:58:08.478368+00:00"
+    "last_updated": "2026-02-19T06:28:49.801973+00:00"
   }
 }

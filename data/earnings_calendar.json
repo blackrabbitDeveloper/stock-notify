@@ -1,0 +1,1268 @@
+{
+  "collected_at": "2026-02-19T06:37:17.816123+00:00",
+  "pool": "sp500",
+  "total_tickers": 503,
+  "total_earnings": 210,
+  "earnings": [
+    {
+      "ticker": "ABNB",
+      "date": "2026-02-12",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "AEP",
+      "date": "2026-02-12",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "AMAT",
+      "date": "2026-02-12",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "ANET",
+      "date": "2026-02-12",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "BAX",
+      "date": "2026-02-12",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "CBRE",
+      "date": "2026-02-12",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "COIN",
+      "date": "2026-02-12",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "DXCM",
+      "date": "2026-02-12",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "ETR",
+      "date": "2026-02-12",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "ES",
+      "date": "2026-02-12",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "EXC",
+      "date": "2026-02-12",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "EXPE",
+      "date": "2026-02-12",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "FRT",
+      "date": "2026-02-12",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "HWM",
+      "date": "2026-02-12",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "IR",
+      "date": "2026-02-12",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "IRM",
+      "date": "2026-02-12",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "KIM",
+      "date": "2026-02-12",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "PCG",
+      "date": "2026-02-12",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "PSA",
+      "date": "2026-02-12",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "VRTX",
+      "date": "2026-02-12",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "WST",
+      "date": "2026-02-12",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "WYNN",
+      "date": "2026-02-12",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "ZBRA",
+      "date": "2026-02-12",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "ZTS",
+      "date": "2026-02-12",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "MRNA",
+      "date": "2026-02-13",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "ALLE",
+      "date": "2026-02-17",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "BLDR",
+      "date": "2026-02-17",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "CDNS",
+      "date": "2026-02-17",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "DVN",
+      "date": "2026-02-17",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "DTE",
+      "date": "2026-02-17",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "EQT",
+      "date": "2026-02-17",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "EXE",
+      "date": "2026-02-17",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "FE",
+      "date": "2026-02-17",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "GPC",
+      "date": "2026-02-17",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "HST",
+      "date": "2026-02-17",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "KVUE",
+      "date": "2026-02-17",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "LH",
+      "date": "2026-02-17",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "LDOS",
+      "date": "2026-02-17",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "MDT",
+      "date": "2026-02-17",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "PANW",
+      "date": "2026-02-17",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "RSG",
+      "date": "2026-02-17",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "VMC",
+      "date": "2026-02-17",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "AWK",
+      "date": "2026-02-18",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "ADI",
+      "date": "2026-02-18",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "BKNG",
+      "date": "2026-02-18",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "CVNA",
+      "date": "2026-02-18",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "CF",
+      "date": "2026-02-18",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "CRL",
+      "date": "2026-02-18",
+      "is_holding": false,
+      "source": "calendar"
+    },
+    {
+      "ticker": "CRH",
+      "date": "2026-02-18",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "DASH",
+      "date": "2026-02-18",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "EBAY",
+      "date": "2026-02-18",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "EIX",
+      "date": "2026-02-18",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "GRMN",
+      "date": "2026-02-18",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "GPN",
+      "date": "2026-02-18",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "PODD",
+      "date": "2026-02-18",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "TAP",
+      "date": "2026-02-18",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "MCO",
+      "date": "2026-02-18",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "NDSN",
+      "date": "2026-02-18",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "OXY",
+      "date": "2026-02-18",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "OMC",
+      "date": "2026-02-18",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "TPL",
+      "date": "2026-02-18",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "VRSK",
+      "date": "2026-02-18",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "AKAM",
+      "date": "2026-02-19",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "LNT",
+      "date": "2026-02-19",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "CNP",
+      "date": "2026-02-19",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "FIX",
+      "date": "2026-02-19",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "ED",
+      "date": "2026-02-19",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "CPRT",
+      "date": "2026-02-19",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "DE",
+      "date": "2026-02-19",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "EPAM",
+      "date": "2026-02-19",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "EVRG",
+      "date": "2026-02-19",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "EXR",
+      "date": "2026-02-19",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "INVH",
+      "date": "2026-02-19",
+      "is_holding": false,
+      "source": "calendar"
+    },
+    {
+      "ticker": "LYV",
+      "date": "2026-02-19",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "POOL",
+      "date": "2026-02-19",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "PWR",
+      "date": "2026-02-19",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "SO",
+      "date": "2026-02-19",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "TRGP",
+      "date": "2026-02-19",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "WMT",
+      "date": "2026-02-19",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "NEM",
+      "date": "2026-02-20",
+      "is_holding": false,
+      "source": "calendar"
+    },
+    {
+      "ticker": "PPL",
+      "date": "2026-02-20",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "FANG",
+      "date": "2026-02-23",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "D",
+      "date": "2026-02-23",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "DPZ",
+      "date": "2026-02-23",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "ERIE",
+      "date": "2026-02-23",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "KEYS",
+      "date": "2026-02-23",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "OKE",
+      "date": "2026-02-23",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "AMT",
+      "date": "2026-02-24",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "AXON",
+      "date": "2026-02-24",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "CEG",
+      "date": "2026-02-24",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "CSGP",
+      "date": "2026-02-24",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "EOG",
+      "date": "2026-02-24",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "EXPD",
+      "date": "2026-02-24",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "FIS",
+      "date": "2026-02-24",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "FSLR",
+      "date": "2026-02-24",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "GDDY",
+      "date": "2026-02-24",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "HSIC",
+      "date": "2026-02-24",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "HD",
+      "date": "2026-02-24",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "HPQ",
+      "date": "2026-02-24",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "KDP",
+      "date": "2026-02-24",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "MOS",
+      "date": "2026-02-24",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "NRG",
+      "date": "2026-02-24",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "O",
+      "date": "2026-02-24",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "WDAY",
+      "date": "2026-02-24",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "A",
+      "date": "2026-02-25",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "APA",
+      "date": "2026-02-25",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "LOW",
+      "date": "2026-02-25",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "NVDA",
+      "date": "2026-02-25",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "PSKY",
+      "date": "2026-02-25",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "PNW",
+      "date": "2026-02-25",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "CRM",
+      "date": "2026-02-25",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "SNPS",
+      "date": "2026-02-25",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "TJX",
+      "date": "2026-02-25",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "TKO",
+      "date": "2026-02-25",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "TTD",
+      "date": "2026-02-25",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "UHS",
+      "date": "2026-02-25",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "VICI",
+      "date": "2026-02-25",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "AES",
+      "date": "2026-02-26",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "ADSK",
+      "date": "2026-02-26",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "XYZ",
+      "date": "2026-02-26",
+      "is_holding": true,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "CTRA",
+      "date": "2026-02-26",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "DELL",
+      "date": "2026-02-26",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "EME",
+      "date": "2026-02-26",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "HRL",
+      "date": "2026-02-26",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "INTU",
+      "date": "2026-02-26",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "MNST",
+      "date": "2026-02-26",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "NTAP",
+      "date": "2026-02-26",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "PEG",
+      "date": "2026-02-26",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "Q",
+      "date": "2026-02-26",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "SBAC",
+      "date": "2026-02-26",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "SRE",
+      "date": "2026-02-26",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "SJM",
+      "date": "2026-02-26",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "SOLV",
+      "date": "2026-02-26",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "VTRS",
+      "date": "2026-02-26",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "VST",
+      "date": "2026-02-26",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "WBD",
+      "date": "2026-02-26",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "BRK-B",
+      "date": "2026-02-28",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "NCLH",
+      "date": "2026-03-02",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "AZO",
+      "date": "2026-03-03",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "BBY",
+      "date": "2026-03-03",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "CRWD",
+      "date": "2026-03-03",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "ROST",
+      "date": "2026-03-03",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "TGT",
+      "date": "2026-03-03",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "AVGO",
+      "date": "2026-03-04",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "BF-B",
+      "date": "2026-03-04",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "CIEN",
+      "date": "2026-03-05",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "COO",
+      "date": "2026-03-05",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "COST",
+      "date": "2026-03-05",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "KR",
+      "date": "2026-03-05",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "HPE",
+      "date": "2026-03-09",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "ORCL",
+      "date": "2026-03-09",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "CPB",
+      "date": "2026-03-11",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "ADBE",
+      "date": "2026-03-12",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "DG",
+      "date": "2026-03-12",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "ULTA",
+      "date": "2026-03-12",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "GIS",
+      "date": "2026-03-18",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "MU",
+      "date": "2026-03-18",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "WSM",
+      "date": "2026-03-18",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "ACN",
+      "date": "2026-03-19",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "CCL",
+      "date": "2026-03-19",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "DRI",
+      "date": "2026-03-19",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "FDS",
+      "date": "2026-03-19",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "FDX",
+      "date": "2026-03-19",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "JBL",
+      "date": "2026-03-19",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "LEN",
+      "date": "2026-03-19",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "NKE",
+      "date": "2026-03-19",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "CTAS",
+      "date": "2026-03-25",
+      "is_holding": false,
+      "source": "calendar"
+    },
+    {
+      "ticker": "DLTR",
+      "date": "2026-03-25",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "LULU",
+      "date": "2026-03-26",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "PAYX",
+      "date": "2026-03-26",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "MKC",
+      "date": "2026-03-31",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "LW",
+      "date": "2026-04-01",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "CAG",
+      "date": "2026-04-02",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "DAL",
+      "date": "2026-04-08",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "STZ",
+      "date": "2026-04-09",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "BLK",
+      "date": "2026-04-10",
+      "is_holding": false,
+      "source": "calendar"
+    },
+    {
+      "ticker": "FAST",
+      "date": "2026-04-13",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "GS",
+      "date": "2026-04-13",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "C",
+      "date": "2026-04-14",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "IBKR",
+      "date": "2026-04-14",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "JBHT",
+      "date": "2026-04-14",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "JNJ",
+      "date": "2026-04-14",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "JPM",
+      "date": "2026-04-14",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "UAL",
+      "date": "2026-04-14",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "WFC",
+      "date": "2026-04-14",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "ABT",
+      "date": "2026-04-15",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "BAC",
+      "date": "2026-04-15",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "CSX",
+      "date": "2026-04-15",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "KMI",
+      "date": "2026-04-15",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "MTB",
+      "date": "2026-04-15",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "MS",
+      "date": "2026-04-15",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "PNC",
+      "date": "2026-04-15",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "PGR",
+      "date": "2026-04-15",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "PLD",
+      "date": "2026-04-15",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "BX",
+      "date": "2026-04-16",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "BK",
+      "date": "2026-04-16",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "SCHW",
+      "date": "2026-04-16",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "CFG",
+      "date": "2026-04-16",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "KEY",
+      "date": "2026-04-16",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "MRSH",
+      "date": "2026-04-16",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "NFLX",
+      "date": "2026-04-16",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "SNA",
+      "date": "2026-04-16",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "STT",
+      "date": "2026-04-16",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "TRV",
+      "date": "2026-04-16",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "USB",
+      "date": "2026-04-16",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "UNH",
+      "date": "2026-04-16",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "FITB",
+      "date": "2026-04-17",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "RF",
+      "date": "2026-04-17",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "TFC",
+      "date": "2026-04-17",
+      "is_holding": false,
+      "source": "earnings_dates"
+    },
+    {
+      "ticker": "WRB",
+      "date": "2026-04-20",
+      "is_holding": false,
+      "source": "earnings_dates"
+    }
+  ]
+}
