@@ -124,7 +124,7 @@ def rank_with_news(
     min_bars: int = 5,
     tech_filter_count: int = 30,
     min_tech_score: float = 4.0,
-    fundamental_mode: str = "soft_score",
+    fundamental_mode: str = "display_only",
 ) -> pd.DataFrame:
     """
     개선된 종목 랭킹 v2

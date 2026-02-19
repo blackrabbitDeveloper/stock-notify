@@ -2,18 +2,18 @@
   "version": 1,
   "created_at": "2026-02-15T03:58:48.357414+00:00",
   "current_params": {
-    "top_n": 2,
-    "min_tech_score": 5.25,
-    "atr_stop_mult": 1.25,
-    "atr_tp_mult": 2.5,
-    "max_hold_days": 5,
-    "sell_threshold": 3.0,
-    "max_positions": 3,
+    "top_n": 3,
+    "min_tech_score": 5.0,
+    "atr_stop_mult": 1.5,
+    "atr_tp_mult": 3.0,
+    "max_hold_days": 3,
+    "sell_threshold": 2.0,
+    "max_positions": 4,
     "max_daily_entries": 1,
-    "trailing_atr_mult": 1.0,
-    "trailing_min_pct": 2.5
+    "trailing_atr_mult": 1.25,
+    "trailing_min_pct": 2.0
   },
-  "current_regime": "conservative",
+  "current_regime": "bearish",
   "tuning_history": [
     {
       "timestamp": "2026-02-15T03:58:48.357713+00:00",
@@ -777,8 +777,117 @@
           "perf_score": 0.071
         }
       }
+    },
+    {
+      "timestamp": "2026-02-19T12:04:49.233441+00:00",
+      "regime": "bearish",
+      "params": {
+        "top_n": 3,
+        "min_tech_score": 5.0,
+        "atr_stop_mult": 1.5,
+        "atr_tp_mult": 3.0,
+        "max_hold_days": 3,
+        "sell_threshold": 2.0,
+        "max_positions": 4,
+        "max_daily_entries": 1,
+        "trailing_atr_mult": 1.25,
+        "trailing_min_pct": 2.0
+      },
+      "summary": {
+        "total_trades": 350,
+        "win_rate": 51.43,
+        "avg_pnl_pct": 0.028,
+        "median_pnl_pct": 0.1158,
+        "total_pnl_pct": 9.802,
+        "std_pnl_pct": 2.5354,
+        "avg_win_pct": 1.8566,
+        "avg_loss_pct": -1.9082,
+        "profit_factor": 1.0302,
+        "expected_value_pct": 0.028,
+        "sharpe_ratio": 0.1753,
+        "max_consecutive_wins": 7,
+        "max_consecutive_losses": 9,
+        "avg_hold_days": 2.57,
+        "portfolio_max_drawdown_pct": 36.5027
+      },
+      "param_changes": {
+        "top_n": {
+          "old": 2,
+          "new": 3
+        },
+        "min_tech_score": {
+          "old": 5.25,
+          "new": 5.0
+        },
+        "atr_stop_mult": {
+          "old": 1.25,
+          "new": 1.5
+        },
+        "atr_tp_mult": {
+          "old": 2.5,
+          "new": 3.0
+        },
+        "max_hold_days": {
+          "old": 5,
+          "new": 3
+        },
+        "sell_threshold": {
+          "old": 3.0,
+          "new": 2.0
+        },
+        "max_positions": {
+          "old": 3,
+          "new": 4
+        },
+        "trailing_atr_mult": {
+          "old": 1.0,
+          "new": 1.25
+        },
+        "trailing_min_pct": {
+          "old": 2.5,
+          "new": 2.0
+        }
+      },
+      "weight_changes": {
+        "stoch_cross_up": {
+          "old": 1.316,
+          "new": 1.359,
+          "delta": 0.0327,
+          "perf_score": 0.218
+        },
+        "divergence_score": {
+          "old": 1.054,
+          "new": 1.019,
+          "delta": -0.0336,
+          "perf_score": -0.224
+        },
+        "macd_cross_up": {
+          "old": 1.11,
+          "new": 1.059,
+          "delta": -0.0456,
+          "perf_score": -0.304
+        },
+        "ma_alignment": {
+          "old": 0.78,
+          "new": 0.747,
+          "delta": -0.042,
+          "perf_score": -0.28
+        },
+        "golden_cross": {
+          "old": 0.974,
+          "new": 0.932,
+          "delta": -0.0429,
+          "perf_score": -0.286
+        },
+        "breakout_score": {
+          "old": 1.242,
+          "new": 1.27,
+          "delta": 0.0224,
+          "perf_score": 0.149
+        }
+      }
     }
   ],
-  "regime_confidence": 0.64,
-  "last_tuned_at": "2026-02-19T05:26:17.495123+00:00"
+  "regime_confidence": 0.56,
+  "last_tuned_at": "2026-02-19T12:04:49.233441+00:00"
 }

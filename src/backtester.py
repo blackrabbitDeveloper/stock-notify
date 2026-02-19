@@ -413,6 +413,7 @@ class BacktestEngine:
         max_daily_entries: int = 3,
         trailing_atr_mult: float = 1.5,
         trailing_min_pct: float = 3.0,
+        fundamental_mode: str = "display_only",
     ):
         self.pool = pool
         self.backtest_days = backtest_days
@@ -426,10 +427,12 @@ class BacktestEngine:
         self.max_daily_entries = max_daily_entries
         self.trailing_atr_mult = trailing_atr_mult
         self.trailing_min_pct = trailing_min_pct
+        self.fundamental_mode = fundamental_mode
 
         self.trades: List[Trade] = []
         self.daily_log: List[Dict] = []
         self.all_data: Optional[pd.DataFrame] = None
+        self._tech_cache: Dict = {}  # (ticker, date) → {tech, score, atr, ...}
 
     def _get_pool_tickers(self) -> List[str]:
         """종목 풀 가져오기 (universe_builder 재사용)."""
@@ -455,16 +458,24 @@ class BacktestEngine:
         tickers = self._get_pool_tickers()
         logger.info(f"백테스트 시작: {self.pool} ({len(tickers)}종목), {self.backtest_days}일")
 
-        # 데이터 다운로드 (lookback + backtest + hold 기간 포함)
-        total_days = LOOKBACK_BARS + self.backtest_days + self.max_hold_days + 30
-        end_date = datetime.now(timezone.utc).date()
-        start_date = end_date - timedelta(days=total_days)
+        # 캐시 재사용 확인
+        shared = getattr(self, '_shared_cache', None)
+        if shared and shared.get("all_data") is not None:
+            self.all_data = shared["all_data"]
+            self._tech_cache = dict(shared.get("tech_cache", {}))
+            self.fund_data = shared.get("fund_data", {})
+            logger.info(f"  ♻️ 캐시 재사용 (데이터 + 기술분석 {len(self._tech_cache)}건 + 재무 {len(self.fund_data)}건)")
+        else:
+            # 데이터 다운로드 (lookback + backtest + hold 기간 포함)
+            total_days = LOOKBACK_BARS + self.backtest_days + self.max_hold_days + 30
+            end_date = datetime.now(timezone.utc).date()
+            start_date = end_date - timedelta(days=total_days)
 
-        self.all_data = _download_data(
-            tickers,
-            start_date.isoformat(),
-            end_date.isoformat(),
-        )
+            self.all_data = _download_data(
+                tickers,
+                start_date.isoformat(),
+                end_date.isoformat(),
+            )
 
         if self.all_data.empty:
             logger.error("데이터 다운로드 실패")
@@ -489,6 +500,18 @@ class BacktestEngine:
 
         logger.info(f"백테스트 기간: {bt_dates[0].date()} ~ {bt_dates[-1].date()} ({len(bt_dates)}거래일)")
 
+        # 재무 데이터 사전 수집 (캐시 없을 때만)
+        if not hasattr(self, 'fund_data') or not self.fund_data:
+            self.fund_data = {}
+            if self.fundamental_mode != "off":
+                try:
+                    from .fundamental_analyzer import apply_fundamental_filter
+                    self.fund_data = apply_fundamental_filter(
+                        tickers, mode=self.fundamental_mode)
+                    logger.info(f"[재무] {len(self.fund_data)}개 종목 재무 데이터 수집 ({self.fundamental_mode})")
+                except Exception as e:
+                    logger.warning(f"[재무] 수집 실패 (무시): {e}")
+
         # 진행중인 포지션 추적 (동일 종목 중복 진입 방지)
         active_tickers = set()
 
@@ -505,6 +528,21 @@ class BacktestEngine:
 
             # 기술적 분석 실행
             candidates = self._analyze_day(hist_data, sim_date, active_tickers, tickers)
+
+            if not candidates:
+                continue
+
+            # 재무 필터 적용
+            if self.fund_data:
+                if self.fundamental_mode == "hard_filter":
+                    candidates = [
+                        c for c in candidates
+                        if self.fund_data.get(c["ticker"], {}).get("passed_hard_filter", True)
+                    ]
+                elif self.fundamental_mode == "soft_score":
+                    for c in candidates:
+                        fund_score = self.fund_data.get(c["ticker"], {}).get("fundamental_score", 0.0)
+                        c["tech_score"] += fund_score
 
             if not candidates:
                 continue
@@ -585,48 +623,79 @@ class BacktestEngine:
         active_tickers: set,
         all_tickers: List[str],
     ) -> List[Dict]:
-        """특정 날짜 기준 기술적 분석 실행."""
+        """특정 날짜 기준 기술적 분석 실행 (캐시 활용)."""
         candidates = []
+        date_key = str(sim_date.date())
 
         for ticker in all_tickers:
             if ticker in active_tickers:
                 continue
 
+            cache_key = (ticker, date_key)
+
+            # 캐시 히트
+            if cache_key in self._tech_cache:
+                cached = self._tech_cache[cache_key]
+                if cached is None:
+                    continue  # 이전에 분석 실패/과열로 스킵된 종목
+                # min_tech_score만 파라미터 의존 → 매번 체크
+                if cached["score"] < self.min_tech_score:
+                    continue
+                candidates.append({
+                    "ticker": ticker,
+                    "close": cached["close"],
+                    "day_ret": cached["day_ret"],
+                    "tech_score": cached["score"],
+                    "atr": cached["atr"],
+                    "signals": cached["signals"],
+                })
+                continue
+
+            # 캐시 미스 → 분석 실행
             g = hist_data[hist_data["ticker"] == ticker].sort_values("Date")
 
             if len(g) < 30:
+                self._tech_cache[cache_key] = None
                 continue
 
-            # 최근 LOOKBACK_BARS개만 사용
             g = g.tail(LOOKBACK_BARS)
 
             last = g.iloc[-1]
             prev = g.iloc[-2] if len(g) >= 2 else last
 
             if pd.isna(last["Close"]) or last["Close"] <= 0:
+                self._tech_cache[cache_key] = None
                 continue
 
             day_ret = (last["Close"] / prev["Close"] - 1) * 100 if prev["Close"] > 0 else 0
 
-            # 기술적 분석
             tech = analyze_stock_technical(g)
             if not tech:
+                self._tech_cache[cache_key] = None
                 continue
 
             score = calculate_technical_score(tech)
 
-            # 과열 필터
+            # 과열 필터 (파라미터 무관, 캐시 가능)
             if _is_overheated(tech, day_ret):
+                self._tech_cache[cache_key] = None
                 continue
 
-            # 최소 점수 필터
+            atr = _calc_atr_from_df(g)
+            signals = _extract_signals(tech)
+
+            # 캐시 저장 (파라미터 독립적인 결과만)
+            self._tech_cache[cache_key] = {
+                "close": float(last["Close"]),
+                "day_ret": day_ret,
+                "score": score,
+                "atr": atr,
+                "signals": signals,
+            }
+
+            # min_tech_score 필터
             if score < self.min_tech_score:
                 continue
-
-            # ATR 계산
-            atr = _calc_atr_from_df(g)
-
-            signals = _extract_signals(tech)
 
             candidates.append({
                 "ticker": ticker,
@@ -744,6 +813,7 @@ class BacktestEngine:
                 "sell_threshold": self.sell_threshold,
                 "max_positions": self.max_positions,
                 "max_daily_entries": self.max_daily_entries,
+                "fundamental_mode": self.fundamental_mode,
                 "commission_pct": COMMISSION_PCT,
                 "slippage_pct": SLIPPAGE_PCT,
             },

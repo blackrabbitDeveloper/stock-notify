@@ -798,11 +798,13 @@ class SelfTuningEngine:
     """
 
     def __init__(self, pool: str = "nasdaq100", backtest_days: int = 60,
-                 max_iterations: int = 20, min_improvement: float = 5.0):
+                 max_iterations: int = 20, min_improvement: float = 5.0,
+                 fundamental_mode: str = "display_only"):
         self.pool = pool
         self.backtest_days = backtest_days
         self.max_iterations = max_iterations
-        self.min_improvement = min_improvement  # 최소 개선율 (%)
+        self.min_improvement = min_improvement
+        self.fundamental_mode = fundamental_mode  # 최소 개선율 (%)
 
         self.regime_detector = MarketRegimeDetector()
         self.signal_optimizer = SignalWeightOptimizer()
@@ -853,11 +855,17 @@ class SelfTuningEngine:
         baseline_engine = BacktestEngine(
             pool=self.pool,
             backtest_days=self.backtest_days,
+            fundamental_mode=self.fundamental_mode,
             **current_params,
         )
         baseline_result = baseline_engine.run()
         baseline_summary = baseline_result.get("summary", {})
         report["baseline_summary"] = baseline_summary
+
+        # 캐시 보존 (candidate 엔진에 재사용)
+        _shared_data = baseline_engine.all_data
+        _shared_tech_cache = baseline_engine._tech_cache
+        _shared_fund_data = baseline_engine.fund_data if hasattr(baseline_engine, 'fund_data') else {}
 
         if baseline_summary.get("total_trades", 0) < 10:
             logger.warning("거래 수 부족 — 자기 학습 스킵")
@@ -925,8 +933,15 @@ class SelfTuningEngine:
                 candidate_engine = BacktestEngine(
                     pool=self.pool,
                     backtest_days=self.backtest_days,
+                    fundamental_mode=self.fundamental_mode,
                     **candidate,
                 )
+                # 캐시 주입 (데이터 재다운로드 + 기술분석 반복 방지)
+                candidate_engine._shared_cache = {
+                    "all_data": _shared_data,
+                    "tech_cache": _shared_tech_cache,
+                    "fund_data": _shared_fund_data,
+                }
                 candidate_result = candidate_engine.run()
                 candidate_summary = candidate_result.get("summary", {})
 

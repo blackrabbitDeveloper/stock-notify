@@ -26,6 +26,9 @@ def main():
     parser.add_argument("--pool", type=str, default="sp500", help="종목 풀")
     parser.add_argument("--iterations", type=int, default=10, help="탐색 반복 횟수 (기본 10)")
     parser.add_argument("--min-improvement", type=float, default=5.0, help="채택 최소 개선률 %% (기본 5.0)")
+    parser.add_argument("--fundamental-mode", type=str, default="soft_score",
+                        choices=["hard_filter", "soft_score", "display_only", "off"],
+                        help="재무 필터 모드 (기본 soft_score)")
     parser.add_argument("--discord", action="store_true", help="Discord 알림 전송")
     parser.add_argument("--dry-run", action="store_true", help="변경사항 미적용 (확인만)")
     args = parser.parse_args()
@@ -35,6 +38,7 @@ def main():
         backtest_days=args.days,
         max_iterations=args.iterations,
         min_improvement=args.min_improvement,
+        fundamental_mode=args.fundamental_mode,
     )
 
     if args.dry_run:
