@@ -340,8 +340,6 @@ def generate_html(data: dict) -> str:
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3935883771879302"
-     crossorigin="anonymous"></script>
 <style>
 :root {{
   --bg: #0a0e17;
@@ -647,6 +645,8 @@ canvas {{ max-height: 320px; }}
   .tab {{ padding: 6px 10px; font-size: 11px; }}
 }}
 </style>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3935883771879302"
+     crossorigin="anonymous"></script>
 </head>
 <body>
 
@@ -1218,10 +1218,16 @@ function renderOpenPositions() {{
     document.getElementById('openPositionsTable').innerHTML = '<div class="empty-state"><div class="icon">📭</div>오픈 포지션이 없습니다</div>';
     return;
   }}
-  let html = '<table><thead><tr><th>종목</th><th>진입가</th><th>현재가</th><th>P&L</th><th>손절</th><th>익절</th><th>점수</th><th>진입일</th></tr></thead><tbody>';
+  let html = '<table><thead><tr><th>종목</th><th>진입가</th><th>현재가</th><th>P&L</th><th>손절</th><th>익절</th><th>상태</th><th>PER</th><th>ROE</th><th>진입일</th></tr></thead><tbody>';
   for (const p of open) {{
     const last = p.price_history?.length ? p.price_history[p.price_history.length-1].close : p.entry_price;
     const pnl = ((last - p.entry_price) / p.entry_price * 100);
+    const trail = p.trailing_active ? '🔄' : '';
+    const partial = p.partial_closed ? '½' : '';
+    const status = trail + partial || fmt(p.tech_score,1);
+    const fund = p.fundamentals || {{}};
+    const per = fund.per != null ? fund.per.toFixed(1) : '—';
+    const roe = fund.roe != null ? fund.roe.toFixed(1) + '%' : '—';
     html += `<tr>
       <td><strong>${{p.ticker}}</strong></td>
       <td>${{fmt(p.entry_price)}}</td>
@@ -1229,7 +1235,9 @@ function renderOpenPositions() {{
       <td class="${{pnlClass(pnl)}}"><strong>${{pnlSign(pnl)}}%</strong></td>
       <td class="negative">${{fmt(p.stop_loss)}}</td>
       <td class="positive">${{fmt(p.take_profit)}}</td>
-      <td>${{fmt(p.tech_score,1)}}</td>
+      <td>${{status}}</td>
+      <td>${{per}}</td>
+      <td>${{roe}}</td>
       <td>${{p.entry_date}}</td>
     </tr>`;
   }}
@@ -1579,7 +1587,7 @@ function renderEarnings() {{
   const weekEnd = new Date(today); weekEnd.setDate(today.getDate() + 14);
   const upcoming = earnings.filter(e => {{
     const d = toDate(e.date);
-    return d >= today && d <= weekEnd;
+    return d >= today && d <= weekEnd && e.is_holding;
   }});
 
   let upHtml = '';

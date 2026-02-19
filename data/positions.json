@@ -30,8 +30,13 @@
         {
           "date": "2026-02-18",
           "close": 107.1
+        },
+        {
+          "date": "2026-02-19",
+          "close": 107.1
         }
-      ]
+      ],
+      "highest_price": 107.1
     },
     {
       "ticker": "XYZ",
@@ -63,41 +68,13 @@
         {
           "date": "2026-02-18",
           "close": 53.6
+        },
+        {
+          "date": "2026-02-19",
+          "close": 53.6
         }
-      ]
-    },
-    {
-      "ticker": "TYL",
-      "status": "strategy_rebalance",
-      "entry_price": 301.0,
-      "entry_date": "2026-02-16",
-      "atr": 24.45,
-      "stop_loss": 252.1,
-      "take_profit": 398.8,
-      "tech_score": 7.5,
-      "combined_score": 4.88,
-      "exit_price": 317.24,
-      "exit_date": "2026-02-19",
-      "pnl_pct": 5.4,
-      "close_reason": "strategy_rebalance",
-      "price_history": [
-        {
-          "date": "2026-02-17",
-          "close": 312.48
-        },
-        {
-          "date": "2026-02-18",
-          "close": 312.48
-        },
-        {
-          "date": "2026-02-18",
-          "close": 312.48
-        },
-        {
-          "date": "2026-02-18",
-          "close": 317.24
-        }
-      ]
+      ],
+      "highest_price": 53.6
     },
     {
       "ticker": "EW",
@@ -117,28 +94,33 @@
         {
           "date": "2026-02-18",
           "close": 78.98
+        },
+        {
+          "date": "2026-02-19",
+          "close": 78.98
         }
-      ]
+      ],
+      "highest_price": 78.98
     }
   ],
   "stats": {
-    "total_trades": 1,
-    "wins": 1,
-    "losses": 0,
-    "expired": 0,
-    "sell_signal": 1,
+    "total_trades": 17,
+    "wins": 9,
+    "losses": 8,
+    "expired": 3,
+    "sell_signal": 14,
     "trailing_stop": 0,
-    "total_pnl_pct": 5.4,
-    "win_rate": 100.0,
-    "avg_pnl_pct": 5.4,
+    "total_pnl_pct": 1.27,
+    "win_rate": 52.9,
+    "avg_pnl_pct": 0.07,
     "best_trade": {
       "ticker": "TYL",
       "pnl_pct": 5.4
     },
     "worst_trade": {
-      "ticker": "TYL",
-      "pnl_pct": 5.4
+      "ticker": "CDNS",
+      "pnl_pct": -5.34
     },
-    "last_updated": "2026-02-19T06:28:49.801973+00:00"
+    "last_updated": "2026-02-19T11:42:07.768158+00:00"
   }
 }

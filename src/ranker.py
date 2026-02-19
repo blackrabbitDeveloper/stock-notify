@@ -123,7 +123,8 @@ def rank_with_news(
     use_news: bool = True,
     min_bars: int = 5,
     tech_filter_count: int = 30,
-    min_tech_score: float = 4.0  # 기준 하향 (v2 점수 체계에 맞춤)
+    min_tech_score: float = 4.0,
+    fundamental_mode: str = "soft_score",
 ) -> pd.DataFrame:
     """
     개선된 종목 랭킹 v2
@@ -133,11 +134,12 @@ def rank_with_news(
     ② 과열 종목 강제 제거
     ③ 진입 타이밍 점수 중심
     ④ 뉴스 보너스 가중치 정규화
-    ⑤ 섹터 분산 (동일 섹터 과집중 방지) — 향후 확장
+    ⑤ 재무 지표 필터 (hard_filter/soft_score/display_only)
     """
     RESULT_COLS = [
         "ticker", "day_ret", "vol_x", "news_n", "news_bonus",
-        "tech_score", "combined_score", "top_news", "technical_analysis"
+        "tech_score", "combined_score", "top_news", "technical_analysis",
+        "fundamentals", "fundamental_score",
     ]
     
     rows = []
@@ -228,6 +230,30 @@ def rank_with_news(
     # 상위 N개 선택
     top_tech = tech_results[:tech_filter_count]
     
+    # ── 1.5단계: 재무 지표 분석 ──
+    fund_data = {}
+    try:
+        from .fundamental_analyzer import apply_fundamental_filter
+        top_tickers = [item["ticker"] for item in top_tech]
+        fund_data = apply_fundamental_filter(top_tickers, mode=fundamental_mode)
+        
+        if fundamental_mode == "hard_filter":
+            before = len(top_tech)
+            top_tech = [
+                item for item in top_tech
+                if fund_data.get(item["ticker"], {}).get("passed_hard_filter", True)
+            ]
+            filtered_count = before - len(top_tech)
+            if filtered_count > 0:
+                logger.info(f"[재무] 하드 필터로 {filtered_count}개 종목 제외")
+                for t, fd in fund_data.items():
+                    if not fd.get("passed_hard_filter", True):
+                        logger.info(f"  ❌ {t}: {fd.get('filter_reason', '')}")
+        
+        logger.info(f"[재무] 재무 분석 완료: {len(fund_data)}개 ({fundamental_mode})")
+    except Exception as e:
+        logger.warning(f"[재무] 재무 분석 실패 (무시): {e}")
+
     # ── 2단계: 뉴스 분석 ──
     logger.info(f"{'=' * 60}")
     logger.info(f"2단계: 상위 {len(top_tech)}개 뉴스 분석")
@@ -272,6 +298,12 @@ def rank_with_news(
         if rr >= 2.5:
             combined_score += 0.5
         
+        # 재무 소프트 점수 반영 (soft_score 모드일 때)
+        ticker_fund = fund_data.get(t, {})
+        fund_score = ticker_fund.get("fundamental_score", 0.0)
+        if fundamental_mode == "soft_score":
+            combined_score += fund_score
+
         rows.append({
             "ticker": t,
             "day_ret": item["day_ret"],
@@ -281,7 +313,9 @@ def rank_with_news(
             "tech_score": tech_score,
             "combined_score": combined_score,
             "top_news": top_news,
-            "technical_analysis": item["technical_analysis"]
+            "technical_analysis": item["technical_analysis"],
+            "fundamentals": ticker_fund.get("fundamentals"),
+            "fundamental_score": fund_score,
         })
     
     out = pd.DataFrame(rows, columns=RESULT_COLS)
