@@ -28,9 +28,6 @@ DEFAULT_MAX_HOLD_DAYS  = 7
 DEFAULT_SELL_THRESHOLD = 4.0   # 매도 점수 임계값 (이상이면 기술적 청산)
 DEFAULT_MAX_POSITIONS  = 10    # 최대 동시 보유 포지션 수
 DEFAULT_MAX_DAILY_ENTRIES = 3  # 하루 최대 신규 진입 수
-DEFAULT_TRAILING_ATR_MULT = 1.5  # 트레일링 스탑 ATR 배수
-DEFAULT_TRAILING_MIN_PCT  = 3.0  # 트레일링 최소 보장 (%)
-DEFAULT_TP_PARTIAL_PCT    = 0.5  # TP 도달 시 부분 청산 비율 (50%)
 VIRTUAL_CAPITAL        = 100_000  # 가상 자본금 ($100,000)
 
 # 레짐별 목표 현금 비율 (나머지가 투자 비율)
@@ -58,8 +55,6 @@ def _load_tuned_params():
                 "sell_threshold":     float(p.get("sell_threshold",      DEFAULT_SELL_THRESHOLD)),
                 "max_positions":      int(p.get("max_positions",         DEFAULT_MAX_POSITIONS)),
                 "max_daily_entries":  int(p.get("max_daily_entries",     DEFAULT_MAX_DAILY_ENTRIES)),
-                "trailing_atr_mult": float(p.get("trailing_atr_mult",   DEFAULT_TRAILING_ATR_MULT)),
-                "trailing_min_pct":  float(p.get("trailing_min_pct",    DEFAULT_TRAILING_MIN_PCT)),
             }
         except Exception:
             pass
@@ -70,8 +65,6 @@ def _load_tuned_params():
         "sell_threshold":    DEFAULT_SELL_THRESHOLD,
         "max_positions":     DEFAULT_MAX_POSITIONS,
         "max_daily_entries": DEFAULT_MAX_DAILY_ENTRIES,
-        "trailing_atr_mult": DEFAULT_TRAILING_ATR_MULT,
-        "trailing_min_pct":  DEFAULT_TRAILING_MIN_PCT,
     }
 
 # 포지션 상태
@@ -93,7 +86,6 @@ def _empty_stats() -> Dict:
         "losses":       0,
         "expired":      0,
         "sell_signal":  0,
-        "trailing_stop": 0,
         "total_pnl_pct": 0.0,
         "win_rate":      0.0,
         "avg_pnl_pct":   0.0,
@@ -253,6 +245,12 @@ def register_positions(rows: List[Dict], recommend_date: str) -> None:
             "take_profit":    tp,
             "tech_score":     round(float(r.get("tech_score", 0)), 2),
             "combined_score": round(float(r.get("score", 0)), 2),
+            "fundamentals":   r.get("fundamentals"),
+            "fundamental_score": round(float(r.get("fundamental_score", 0)), 3),
+            "mtf_alignment":  r.get("mtf_alignment", ""),
+            "mtf_score":      round(float(r.get("mtf_score", 0)), 3),
+            "timing_details": r.get("timing_details", ""),
+            "sector":         r.get("sector", ""),
             "exit_price":     None,
             "exit_date":      None,
             "pnl_pct":        None,
@@ -392,68 +390,17 @@ def update_positions() -> Tuple[List[Dict], List[Dict]]:
         tp    = pos["take_profit"]
         days  = _calendar_days_since(pos["entry_date"])
         pnl   = (price - entry) / entry * 100.0
-        atr   = pos.get("atr", 0)
 
-        # ── 트레일링 스탑 상태 관리 ──────────
-        trailing_atr_mult = tuned.get("trailing_atr_mult", DEFAULT_TRAILING_ATR_MULT)
-        trailing_min_pct  = tuned.get("trailing_min_pct", DEFAULT_TRAILING_MIN_PCT)
-
-        # TP의 50% 지점 계산 (트레일링 활성화 기준)
-        tp_half = entry + (tp - entry) * 0.5
-
-        # 최고가 갱신
-        highest = pos.get("highest_price", entry)
-        if price > highest:
-            highest = price
-        pos["highest_price"] = round(highest, 4)
-
-        # 트레일링 활성화 체크: 최고가가 TP의 50% 이상 도달
-        trailing_active = pos.get("trailing_active", False)
-        if not trailing_active and highest >= tp_half:
-            trailing_active = True
-            pos["trailing_active"] = True
-            print(f"[INFO] 🔄 {t}: 트레일링 활성화 (최고={highest:.2f} >= TP50%={tp_half:.2f})")
-
-        # 트레일링 손절가 계산
-        if trailing_active and atr > 0:
-            trail_dist = max(atr * trailing_atr_mult, highest * trailing_min_pct / 100)
-            trailing_sl = highest - trail_dist
-            # 트레일링 SL은 기존 SL보다 높아야 의미 있음
-            if trailing_sl > sl:
-                pos["trailing_stop"] = round(trailing_sl, 4)
-
-        effective_sl = pos.get("trailing_stop", sl)
-
-        # ── 청산 판단 (1: 손절/트레일링스탑) ────────
+        # ── 청산 판단 (1: 손절/익절/만료) ────────
         reason = None
-        partial_close = False  # 부분 청산 여부
-
-        if price <= effective_sl:
-            if trailing_active and pos.get("trailing_stop") and price <= pos["trailing_stop"]:
-                reason = "trailing_stop"
-            else:
-                reason = STATUS_SL
-
-        # ── 청산 판단 (2: TP 도달 → 부분 청산) ────────
-        elif price >= tp and not pos.get("partial_closed", False):
-            # TP 도달: 50% 부분 청산, 나머지 트레일링 계속
-            partial_close = True
-            pos["partial_closed"] = True
-            pos["partial_close_price"] = round(price, 4)
-            pos["partial_close_date"] = today
-            pos["partial_close_pnl"] = round(pnl, 2)
-            # 트레일링이 아직 비활성이면 활성화
-            if not trailing_active:
-                pos["trailing_active"] = True
-                trailing_active = True
-            print(f"[INFO] 🎯 {t}: TP 도달! 50% 부분 청산 (P&L={pnl:+.1f}%) + 나머지 트레일링")
-
-        # ── 청산 판단 (3: 만료) ────────
-        elif days >= tuned["max_hold_days"] and not pos.get("partial_closed"):
+        if price <= sl:
+            reason = STATUS_SL
+        elif price >= tp:
+            reason = STATUS_TP
+        elif days >= tuned["max_hold_days"]:
             reason = STATUS_EXPIRED
-        # 이미 부분 청산된 포지션은 만료 면제 (트레일링에 맡김)
 
-        # ── 청산 판단 (4: 기술적 매도 신호) ──────
+        # ── 청산 판단 (2: 기술적 매도 신호) ──────
         sell_info = None
         if reason is None and t in history_data:
             try:
@@ -474,8 +421,7 @@ def update_positions() -> Tuple[List[Dict], List[Dict]]:
             except Exception as e:
                 print(f"[WARN] {t} 매도 분석 실패: {e}")
 
-        if reason and not partial_close:
-            # ── 전량 청산 ──
+        if reason:
             pos["status"]       = reason
             pos["exit_price"]   = round(price, 4)
             pos["exit_date"]    = today
@@ -484,22 +430,11 @@ def update_positions() -> Tuple[List[Dict], List[Dict]]:
             if sell_info:
                 pos["sell_signals"] = sell_info.get("sell_signals", [])
                 pos["sell_score"]   = sell_info.get("sell_score", 0)
-            # 이미 부분 청산했으면 나머지 50% 기준 정보 추가
-            if pos.get("partial_closed"):
-                pos["final_close"] = "remaining_50pct"
             newly_closed.append(pos)
-            emoji = {"take_profit": "✅", "stop_loss": "🛑", "trailing_stop": "📈",
+            emoji = {"take_profit": "✅", "stop_loss": "🛑",
                      "expired": "⏰", "sell_signal": "📉"}.get(reason, "?")
-            trail_info = f"  trail_sl={pos.get('trailing_stop','N/A')}" if trailing_active else ""
-            print(f"[INFO] closed {emoji} {t}: {reason}  pnl={pnl:+.2f}%  days={days}{trail_info}")
-        elif partial_close:
-            # ── 부분 청산 (50%) — 포지션은 유지, 트레일링 계속 ──
-            still_open.append(pos)
+            print(f"[INFO] closed {emoji} {t}: {reason}  pnl={pnl:+.2f}%  days={days}")
         else:
-            # ── 보유 유지 ──
-            if trailing_active:
-                trail_sl = pos.get("trailing_stop", sl)
-                print(f"[INFO] 🔄 {t}: 트레일링 중 (최고={highest:.2f} SL={trail_sl:.2f} P&L={pnl:+.1f}%)")
             still_open.append(pos)
 
     # positions.json: 청산 종목 제거, 보유 종목만 유지
@@ -530,7 +465,6 @@ def _recalc_stats(closed: List[Dict]) -> Dict:
     losses = [p for p in closed if (p.get("pnl_pct") or 0) <= 0]
     exps   = [p for p in closed if p.get("close_reason") == STATUS_EXPIRED]
     sells  = [p for p in closed if p.get("close_reason") in (STATUS_SELL_SIGNAL, "strategy_rebalance")]
-    trails = [p for p in closed if p.get("close_reason") == "trailing_stop"]
 
     total_pnl = sum(pnls) if pnls else 0.0
     avg_pnl   = total_pnl / len(pnls) if pnls else 0.0
@@ -545,7 +479,6 @@ def _recalc_stats(closed: List[Dict]) -> Dict:
         "losses":        len(losses),
         "expired":       len(exps),
         "sell_signal":   len(sells),
-        "trailing_stop": len(trails),
         "total_pnl_pct": round(total_pnl, 2),
         "win_rate":      round(win_rate, 1),
         "avg_pnl_pct":   round(avg_pnl, 2),

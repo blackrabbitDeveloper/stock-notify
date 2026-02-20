@@ -124,7 +124,7 @@ def rank_with_news(
     min_bars: int = 5,
     tech_filter_count: int = 30,
     min_tech_score: float = 4.0,
-    fundamental_mode: str = "display_only",
+    fundamental_mode: str = "hard_filter",
 ) -> pd.DataFrame:
     """
     개선된 종목 랭킹 v2
@@ -194,8 +194,30 @@ def rank_with_news(
         
         tech_score = calculate_technical_score(tech_analysis)
         
-        # 시장 컨텍스트 조정 적용
-        adjusted_score = tech_score + market_adj
+        # 멀티 타임프레임 분석
+        mtf_adj = 0.0
+        mtf_data = None
+        try:
+            from .mtf_analyzer import calculate_mtf_score
+            mtf_data = calculate_mtf_score(g)
+            if not mtf_data.get("should_trade", True):
+                skips["mtf_bearish"] += 1
+                continue
+            mtf_adj = mtf_data.get("mtf_score", 0.0)
+        except Exception:
+            pass
+
+        # 진입 타이밍 정밀 분석
+        timing_adj = 0.0
+        try:
+            from .entry_timing import calculate_entry_timing_score
+            timing = calculate_entry_timing_score(g)
+            timing_adj = timing.get("timing_score", 0.0)
+        except Exception:
+            pass
+
+        # 시장 컨텍스트 + MTF + 타이밍 조정 적용
+        adjusted_score = tech_score + market_adj + mtf_adj + timing_adj
         
         # 과열 종목 사전 제거 (v2 신규)
         if _is_overheated(tech_analysis, day_ret):

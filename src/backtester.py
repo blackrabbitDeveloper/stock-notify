@@ -278,8 +278,8 @@ def _simulate_trade(trade: Trade, future_data: pd.DataFrame,
             except Exception:
                 pass
 
-        # 4순위: 만료 (부분 청산 안 된 포지션만)
-        if day_num >= max_hold_days and not partial_closed:
+        # 4순위: 만료 (부분 청산/트레일링 활성화 안 된 포지션만)
+        if day_num >= max_hold_days and not partial_closed and not trailing_active:
             trade.exit_price = close
             trade.exit_date = str(row["Date"].date()) if hasattr(row["Date"], "date") else str(row["Date"])
             trade.status = "expired"
@@ -401,7 +401,7 @@ class BacktestEngine:
 
     def __init__(
         self,
-        pool: str = "nasdaq100",
+        pool: str = "sp500",
         backtest_days: int = 90,
         top_n: int = 5,
         min_tech_score: float = MIN_TECH_SCORE,
@@ -413,7 +413,7 @@ class BacktestEngine:
         max_daily_entries: int = 3,
         trailing_atr_mult: float = 1.5,
         trailing_min_pct: float = 3.0,
-        fundamental_mode: str = "display_only",
+        fundamental_mode: str = "hard_filter",
     ):
         self.pool = pool
         self.backtest_days = backtest_days
@@ -433,6 +433,7 @@ class BacktestEngine:
         self.daily_log: List[Dict] = []
         self.all_data: Optional[pd.DataFrame] = None
         self._tech_cache: Dict = {}  # (ticker, date) → {tech, score, atr, ...}
+        self._mtf_cache: Dict = {}   # ticker → {mtf_score, should_trade, ...}
 
     def _get_pool_tickers(self) -> List[str]:
         """종목 풀 가져오기 (universe_builder 재사용)."""
@@ -463,6 +464,7 @@ class BacktestEngine:
         if shared and shared.get("all_data") is not None:
             self.all_data = shared["all_data"]
             self._tech_cache = dict(shared.get("tech_cache", {}))
+            self._mtf_cache = dict(shared.get("mtf_cache", {}))
             self.fund_data = shared.get("fund_data", {})
             logger.info(f"  ♻️ 캐시 재사용 (데이터 + 기술분석 {len(self._tech_cache)}건 + 재무 {len(self.fund_data)}건)")
         else:
@@ -638,14 +640,15 @@ class BacktestEngine:
                 cached = self._tech_cache[cache_key]
                 if cached is None:
                     continue  # 이전에 분석 실패/과열로 스킵된 종목
-                # min_tech_score만 파라미터 의존 → 매번 체크
-                if cached["score"] < self.min_tech_score:
+                # MTF + 타이밍 점수 포함하여 min_tech_score 체크
+                adjusted = cached["score"] + cached.get("mtf_score", 0.0) + cached.get("timing_score", 0.0)
+                if adjusted < self.min_tech_score:
                     continue
                 candidates.append({
                     "ticker": ticker,
                     "close": cached["close"],
                     "day_ret": cached["day_ret"],
-                    "tech_score": cached["score"],
+                    "tech_score": adjusted,
                     "atr": cached["atr"],
                     "signals": cached["signals"],
                 })
@@ -684,24 +687,56 @@ class BacktestEngine:
             atr = _calc_atr_from_df(g)
             signals = _extract_signals(tech)
 
+            # MTF(멀티 타임프레임) 분석 (종목당 1회만)
+            mtf_score = 0.0
+            if ticker not in self._mtf_cache:
+                try:
+                    from .mtf_analyzer import calculate_mtf_score_from_cache
+                    ticker_full = hist_data[hist_data["ticker"] == ticker]
+                    mtf = calculate_mtf_score_from_cache(ticker_full, ticker)
+                    self._mtf_cache[ticker] = mtf
+                except Exception:
+                    self._mtf_cache[ticker] = {"mtf_score": 0.0, "should_trade": True}
+
+            mtf = self._mtf_cache[ticker]
+
+            # 월봉+주봉 모두 하락 → 진입 금지
+            if not mtf.get("should_trade", True):
+                self._tech_cache[cache_key] = None
+                continue
+
+            mtf_score = mtf.get("mtf_score", 0.0)
+
+            # 진입 타이밍 정밀 분석 (캔들 + 볼린저 + 거래량)
+            timing_score = 0.0
+            try:
+                from .entry_timing import calculate_entry_timing_score
+                timing = calculate_entry_timing_score(g)
+                timing_score = timing.get("timing_score", 0.0)
+            except Exception:
+                pass
+
             # 캐시 저장 (파라미터 독립적인 결과만)
             self._tech_cache[cache_key] = {
                 "close": float(last["Close"]),
                 "day_ret": day_ret,
                 "score": score,
+                "mtf_score": mtf_score,
+                "timing_score": timing_score,
                 "atr": atr,
                 "signals": signals,
             }
 
-            # min_tech_score 필터
-            if score < self.min_tech_score:
+            # min_tech_score 필터 (MTF + 타이밍 점수 반영)
+            adjusted_score = score + mtf_score + timing_score
+            if adjusted_score < self.min_tech_score:
                 continue
 
             candidates.append({
                 "ticker": ticker,
                 "close": float(last["Close"]),
                 "day_ret": day_ret,
-                "tech_score": score,
+                "tech_score": adjusted_score,
                 "atr": atr,
                 "signals": signals,
             })
@@ -1172,7 +1207,7 @@ def main():
     parser = argparse.ArgumentParser(description="Stock Notify Bot 백테스터")
     parser.add_argument("--days", type=int, default=90, help="백테스트 기간 (거래일, 기본 90)")
     parser.add_argument("--top", type=int, default=5, help="일별 선택 종목 수 (기본 5)")
-    parser.add_argument("--pool", type=str, default="nasdaq100", help="종목 풀 (nasdaq100 | sp500)")
+    parser.add_argument("--pool", type=str, default="sp500", help="종목 풀 (sp500 | nasdaq100)")
     parser.add_argument("--min-score", type=float, default=4.0, help="최소 기술 점수 (기본 4.0)")
     parser.add_argument("--hold", type=int, default=7, help="최대 보유일 (기본 7)")
     parser.add_argument("--sl-mult", type=float, default=2.0, help="손절 ATR 배수 (기본 2.0)")

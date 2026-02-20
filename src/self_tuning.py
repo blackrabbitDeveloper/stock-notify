@@ -797,9 +797,9 @@ class SelfTuningEngine:
     7. Discord 알림
     """
 
-    def __init__(self, pool: str = "nasdaq100", backtest_days: int = 60,
+    def __init__(self, pool: str = "sp500", backtest_days: int = 90,
                  max_iterations: int = 20, min_improvement: float = 5.0,
-                 fundamental_mode: str = "display_only"):
+                 fundamental_mode: str = "hard_filter"):
         self.pool = pool
         self.backtest_days = backtest_days
         self.max_iterations = max_iterations
@@ -865,6 +865,7 @@ class SelfTuningEngine:
         # 캐시 보존 (candidate 엔진에 재사용)
         _shared_data = baseline_engine.all_data
         _shared_tech_cache = baseline_engine._tech_cache
+        _shared_mtf_cache = baseline_engine._mtf_cache
         _shared_fund_data = baseline_engine.fund_data if hasattr(baseline_engine, 'fund_data') else {}
 
         if baseline_summary.get("total_trades", 0) < 10:
@@ -940,6 +941,7 @@ class SelfTuningEngine:
                 candidate_engine._shared_cache = {
                     "all_data": _shared_data,
                     "tech_cache": _shared_tech_cache,
+                    "mtf_cache": _shared_mtf_cache,
                     "fund_data": _shared_fund_data,
                 }
                 candidate_result = candidate_engine.run()

@@ -3,7 +3,7 @@
 자기 학습(Self-Tuning) 실행 스크립트
 
 사용법:
-  python run_self_tuning.py              # 기본 실행 (60일 백테스트 → 자동 조정)
+  python run_self_tuning.py              # 기본 실행 (sp500, 90일, 20회, hard_filter)
   python run_self_tuning.py --days 90    # 90일 백테스트 기반
   python run_self_tuning.py --discord    # Discord 알림 포함
   python run_self_tuning.py --dry-run    # 변경사항 미적용 (확인만)
@@ -22,13 +22,13 @@ from src.logger import logger
 
 def main():
     parser = argparse.ArgumentParser(description="자기 학습 전략 엔진")
-    parser.add_argument("--days", type=int, default=504, help="백테스트 기간 거래일 (504=약 2년)")
+    parser.add_argument("--days", type=int, default=90, help="백테스트 기간 거래일 (기본 90)")
     parser.add_argument("--pool", type=str, default="sp500", help="종목 풀")
-    parser.add_argument("--iterations", type=int, default=10, help="탐색 반복 횟수 (기본 10)")
+    parser.add_argument("--iterations", type=int, default=20, help="탐색 반복 횟수 (기본 20)")
     parser.add_argument("--min-improvement", type=float, default=5.0, help="채택 최소 개선률 %% (기본 5.0)")
-    parser.add_argument("--fundamental-mode", type=str, default="soft_score",
+    parser.add_argument("--fundamental-mode", type=str, default="hard_filter",
                         choices=["hard_filter", "soft_score", "display_only", "off"],
-                        help="재무 필터 모드 (기본 soft_score)")
+                        help="재무 필터 모드 (기본 hard_filter)")
     parser.add_argument("--discord", action="store_true", help="Discord 알림 전송")
     parser.add_argument("--dry-run", action="store_true", help="변경사항 미적용 (확인만)")
     args = parser.parse_args()

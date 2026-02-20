@@ -431,6 +431,20 @@ body {{
 .tab:hover {{ color: var(--text); background: var(--surface2); }}
 .tab.active {{ background: var(--accent); color: #0a0e17; font-weight: 600; }}
 
+.news-src-btn {{
+  padding: 5px 12px; border-radius: 6px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--text2); cursor: pointer;
+  font-size: 12px; font-family: var(--font-mono); transition: all 0.2s;
+}}
+.news-src-btn:hover {{ color: var(--text1); border-color: var(--accent); }}
+.news-src-btn.active {{ background: var(--accent); color: #0a0e17; border-color: var(--accent); }}
+.news-item {{
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}}
+.news-item:hover {{ background: var(--surface2); }}
+.news-item:last-child {{ border-bottom: none; }}
+
 .tab-content {{ display: none; }}
 .tab-desc {{
   font-family: var(--font-mono);
@@ -669,6 +683,7 @@ canvas {{ max-height: 320px; }}
     <button class="tab" onclick="showTab('strategy')">⚙️ 전략 설정</button>
     <button class="tab" onclick="showTab('earnings')">📅 실적 캘린더</button>
     <button class="tab" onclick="showTab('reports')">📋 주간 리포트</button>
+    <button class="tab" onclick="showTab('news')">📰 경제 뉴스</button>
   </div>
 </div>
 
@@ -813,6 +828,20 @@ canvas {{ max-height: 320px; }}
   <div id="tab-reports" class="tab-content">
     <p class="tab-desc">매주 일요일 자동 생성되는 주간 리포트 목록입니다.</p>
     <div id="weeklyReportsList"></div>
+  </div>
+
+  <!-- ════ TAB 8: 경제 뉴스 ════ -->
+  <div id="tab-news" class="tab-content">
+    <p class="tab-desc">미국 주식시장 주요 뉴스를 실시간으로 가져옵니다.</p>
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+      <button class="news-src-btn active" onclick="filterNews('all')">📰 전체</button>
+      <button class="news-src-btn" onclick="filterNews('yahoo')">Yahoo Finance</button>
+      <button class="news-src-btn" onclick="filterNews('cnbc')">CNBC</button>
+      <button class="news-src-btn" onclick="filterNews('marketwatch')">MarketWatch</button>
+      <button id="newsRefreshBtn" onclick="loadAllNews()" style="margin-left:auto;padding:6px 14px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--accent);cursor:pointer;font-size:12px;">🔄 새로고침</button>
+    </div>
+    <div id="newsLastUpdated" style="font-size:11px;color:var(--text2);margin-bottom:12px;"></div>
+    <div id="newsList"></div>
   </div>
 </div>
 
@@ -963,6 +992,8 @@ function showTab(id) {{
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById('tab-' + id).classList.add('active');
   event.target.classList.add('active');
+  // 뉴스 탭 진입 시 자동 로드
+  if (id === 'news' && !_newsLoaded) loadAllNews();
 }}
 
 // ── 초기화 ──
@@ -1218,30 +1249,85 @@ function renderOpenPositions() {{
     document.getElementById('openPositionsTable').innerHTML = '<div class="empty-state"><div class="icon">📭</div>오픈 포지션이 없습니다</div>';
     return;
   }}
-  let html = '<table><thead><tr><th>종목</th><th>진입가</th><th>현재가</th><th>P&L</th><th>손절</th><th>익절</th><th>상태</th><th>PER</th><th>ROE</th><th>진입일</th></tr></thead><tbody>';
+
+  // MTF 정렬 아이콘
+  const mtfIcon = {{'strong_bull':'🟢🟢','bull':'🟢','neutral':'🟡','bear':'🔴','strong_bear':'🔴🔴','':'⚪'}};
+
+  let html = '';
   for (const p of open) {{
     const last = p.price_history?.length ? p.price_history[p.price_history.length-1].close : p.entry_price;
     const pnl = ((last - p.entry_price) / p.entry_price * 100);
-    const trail = p.trailing_active ? '🔄' : '';
-    const partial = p.partial_closed ? '½' : '';
-    const status = trail + partial || fmt(p.tech_score,1);
+    const pnlColor = pnl > 0 ? 'var(--green)' : pnl < 0 ? 'var(--red)' : 'var(--text2)';
+
+    // 상태 태그
+    const tags = [];
+    if (p.trailing_active) tags.push('<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:#7c3aed;color:white;">트레일링</span>');
+    if (p.partial_closed) tags.push('<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:#f59e0b;color:white;">부분청산</span>');
+
+    // 재무 데이터
     const fund = p.fundamentals || {{}};
     const per = fund.per != null ? fund.per.toFixed(1) : '—';
     const roe = fund.roe != null ? fund.roe.toFixed(1) + '%' : '—';
-    html += `<tr>
-      <td><strong>${{p.ticker}}</strong></td>
-      <td>${{fmt(p.entry_price)}}</td>
-      <td>${{fmt(last)}}</td>
-      <td class="${{pnlClass(pnl)}}"><strong>${{pnlSign(pnl)}}%</strong></td>
-      <td class="negative">${{fmt(p.stop_loss)}}</td>
-      <td class="positive">${{fmt(p.take_profit)}}</td>
-      <td>${{status}}</td>
-      <td>${{per}}</td>
-      <td>${{roe}}</td>
-      <td>${{p.entry_date}}</td>
-    </tr>`;
+    const opMargin = fund.operating_margin != null ? fund.operating_margin.toFixed(1) + '%' : '—';
+    const revGrowth = fund.revenue_growth != null ? fund.revenue_growth.toFixed(1) + '%' : '—';
+
+    // MTF
+    const mtf = mtfIcon[p.mtf_alignment || ''] || '⚪';
+    const mtfLabel = p.mtf_alignment || '—';
+
+    html += `<div class="card" style="margin-bottom:10px;padding:14px;">
+      <!-- 1행: 종목 + P&L -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:17px;font-weight:700;color:var(--text1);">${{p.ticker}}</span>
+          ${{p.sector ? `<span style="font-size:10px;padding:1px 6px;border-radius:3px;background:var(--surface2);color:var(--text2);">${{p.sector}}</span>` : ''}}
+          ${{tags.join(' ')}}
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:20px;font-weight:700;color:${{pnlColor}};">${{pnl >= 0 ? '+' : ''}}${{pnl.toFixed(2)}}%</div>
+          <div style="font-size:11px;color:var(--text2);">${{fmt(last)}}</div>
+        </div>
+      </div>
+
+      <!-- 2행: 가격 정보 -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px;">
+        <div style="text-align:center;padding:5px;background:var(--bg);border-radius:5px;">
+          <div style="font-size:12px;font-weight:600;">${{fmt(p.entry_price)}}</div>
+          <div style="font-size:9px;color:var(--text2);">진입가</div>
+        </div>
+        <div style="text-align:center;padding:5px;background:var(--bg);border-radius:5px;">
+          <div style="font-size:12px;font-weight:600;color:var(--red);">${{fmt(p.stop_loss)}}</div>
+          <div style="font-size:9px;color:var(--text2);">손절</div>
+        </div>
+        <div style="text-align:center;padding:5px;background:var(--bg);border-radius:5px;">
+          <div style="font-size:12px;font-weight:600;color:var(--green);">${{fmt(p.take_profit)}}</div>
+          <div style="font-size:9px;color:var(--text2);">익절</div>
+        </div>
+        <div style="text-align:center;padding:5px;background:var(--bg);border-radius:5px;">
+          <div style="font-size:12px;font-weight:600;">${{fmt(p.tech_score,1)}}</div>
+          <div style="font-size:9px;color:var(--text2);">점수</div>
+        </div>
+      </div>
+
+      <!-- 3행: MTF + 타이밍 -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
+        <span style="font-size:10px;padding:2px 7px;border-radius:4px;background:var(--surface2);color:var(--text1);">
+          ${{mtf}} MTF: ${{mtfLabel}}${{p.mtf_score ? ' (' + (p.mtf_score > 0 ? '+' : '') + p.mtf_score.toFixed(1) + ')' : ''}}
+        </span>
+        ${{p.timing_details && p.timing_details !== '패턴 없음' ? `<span style="font-size:10px;padding:2px 7px;border-radius:4px;background:#7c3aed22;color:#a78bfa;">⏰ ${{p.timing_details}}</span>` : ''}}
+      </div>
+
+      <!-- 4행: 재무 지표 -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:10px;color:var(--text2);">
+        <span>PER <strong style="color:var(--text1);">${{per}}</strong></span>
+        <span>ROE <strong style="color:var(--text1);">${{roe}}</strong></span>
+        <span>영업이익률 <strong style="color:var(--text1);">${{opMargin}}</strong></span>
+        <span>매출성장 <strong style="color:var(--text1);">${{revGrowth}}</strong></span>
+        <span style="margin-left:auto;">진입 ${{p.entry_date}}</span>
+      </div>
+    </div>`;
   }}
-  html += '</tbody></table>';
+
   document.getElementById('openPositionsTable').innerHTML = html;
 }}
 
@@ -1492,7 +1578,7 @@ function renderStrategy() {{
 
   // 1. 유니버스
   let uhtml = '';
-  uhtml += row('종목 풀', (auto.pool || 'nasdaq100').toUpperCase(), 'accent');
+  uhtml += row('종목 풀', (auto.pool || 'sp500').toUpperCase(), 'accent');
   uhtml += row('최소 가격', '$' + (auto.min_price || 5));
   uhtml += row('최대 가격', '$' + (auto.max_price || 500));
   uhtml += row('최종 유니버스', (auto.max_final_universe || 150) + '종목');
@@ -1587,7 +1673,7 @@ function renderEarnings() {{
   const weekEnd = new Date(today); weekEnd.setDate(today.getDate() + 14);
   const upcoming = earnings.filter(e => {{
     const d = toDate(e.date);
-    return d >= today && d <= weekEnd && e.is_holding;
+    return d >= today && d <= weekEnd;
   }});
 
   let upHtml = '';
@@ -1787,6 +1873,182 @@ async function renderReports() {{
   }}
 
   container.innerHTML = html;
+}}
+
+// ════ TAB 8: 경제 뉴스 (RSS fetch) ════
+const NEWS_FEEDS = {{
+  yahoo: {{
+    name: 'Yahoo Finance',
+    url: 'https://finance.yahoo.com/news/rssindex',
+    color: '#7c3aed',
+  }},
+  cnbc: {{
+    name: 'CNBC',
+    url: 'https://search.cnbc.com/rs/search/combinedcms/view.xml?partnerId=wrss01&id=10001147',
+    color: '#0ea5e9',
+  }},
+  marketwatch: {{
+    name: 'MarketWatch',
+    url: 'https://feeds.content.dowjones.io/public/rss/mw_topstories',
+    color: '#f59e0b',
+  }},
+}};
+
+let _allNewsItems = [];
+let _newsFilter = 'all';
+let _newsLoaded = false;
+
+async function fetchRSS(key, feed) {{
+  const proxy = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(feed.url);
+  try {{
+    const res = await fetch(proxy);
+    if (!res.ok) return [];
+    const text = await res.text();
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(text, 'text/xml');
+    const items = xml.querySelectorAll('item');
+    const results = [];
+    items.forEach((item, i) => {{
+      if (i >= 15) return;
+      const title = item.querySelector('title')?.textContent || '';
+      const link = item.querySelector('link')?.textContent || '';
+      const pubDate = item.querySelector('pubDate')?.textContent || '';
+      const desc = item.querySelector('description')?.textContent || '';
+      // 태그 제거
+      const cleanDesc = desc.replace(/<[^>]*>/g, '').substring(0, 200);
+      results.push({{
+        source: key,
+        sourceName: feed.name,
+        sourceColor: feed.color,
+        title,
+        link,
+        pubDate,
+        date: pubDate ? new Date(pubDate) : new Date(0),
+        desc: cleanDesc,
+      }});
+    }});
+    return results;
+  }} catch (e) {{
+    console.warn(`RSS fetch failed (${{key}}):`, e);
+    return [];
+  }}
+}}
+
+async function translateText(text) {{
+  if (!text || text.length < 3) return text;
+  try {{
+    const url = 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ko&dt=t&q=' + encodeURIComponent(text);
+    const res = await fetch(url);
+    if (!res.ok) return text;
+    const data = await res.json();
+    return data[0].map(s => s[0]).join('') || text;
+  }} catch (e) {{
+    return text;
+  }}
+}}
+
+async function translateBatch(items) {{
+  // 제목 + 설명을 병렬 번역 (최대 30건, 너무 많으면 rate limit)
+  const tasks = [];
+  for (const n of items.slice(0, 30)) {{
+    tasks.push(
+      translateText(n.title).then(t => {{ n.title_ko = t; }}),
+      n.desc ? translateText(n.desc).then(d => {{ n.desc_ko = d; }}) : Promise.resolve()
+    );
+  }}
+  // 5개씩 배치 실행 (rate limit 방지)
+  for (let i = 0; i < tasks.length; i += 10) {{
+    await Promise.all(tasks.slice(i, i + 10));
+    if (i + 10 < tasks.length) await new Promise(r => setTimeout(r, 300));
+  }}
+}}
+
+async function loadAllNews() {{
+  const container = document.getElementById('newsList');
+  const refreshBtn = document.getElementById('newsRefreshBtn');
+  refreshBtn.disabled = true;
+  refreshBtn.textContent = '⏳ 뉴스 수집 중...';
+  container.innerHTML = '<div class="empty-state" style="padding:40px;">📡 뉴스 로딩 중...</div>';
+
+  const fetches = Object.entries(NEWS_FEEDS).map(([k, f]) => fetchRSS(k, f));
+  const results = await Promise.all(fetches);
+  _allNewsItems = results.flat().sort((a, b) => b.date - a.date);
+
+  // 1차: 영어로 먼저 표시
+  _newsLoaded = true;
+  renderNews();
+
+  const now = new Date();
+  document.getElementById('newsLastUpdated').textContent =
+    `마지막 업데이트: ${{now.toLocaleString('ko-KR')}} · ${{_allNewsItems.length}}건 · 🔄 번역 중...`;
+  refreshBtn.textContent = '🔄 번역 중...';
+
+  // 2차: 한글 번역 후 갱신
+  try {{
+    await translateBatch(_allNewsItems);
+    renderNews();
+    document.getElementById('newsLastUpdated').textContent =
+      `마지막 업데이트: ${{now.toLocaleString('ko-KR')}} · ${{_allNewsItems.length}}건 · ✅ 번역 완료`;
+  }} catch (e) {{
+    document.getElementById('newsLastUpdated').textContent =
+      `마지막 업데이트: ${{now.toLocaleString('ko-KR')}} · ${{_allNewsItems.length}}건 · ⚠️ 일부 번역 실패`;
+  }}
+
+  refreshBtn.disabled = false;
+  refreshBtn.textContent = '🔄 새로고침';
+}}
+
+function filterNews(src) {{
+  _newsFilter = src;
+  document.querySelectorAll('.news-src-btn').forEach(btn => {{
+    btn.classList.toggle('active',
+      (src === 'all' && btn.textContent.includes('전체')) ||
+      btn.textContent.toLowerCase().includes(src));
+  }});
+  renderNews();
+}}
+
+function renderNews() {{
+  const container = document.getElementById('newsList');
+  let items = _allNewsItems;
+  if (_newsFilter !== 'all') {{
+    items = items.filter(n => n.source === _newsFilter);
+  }}
+
+  if (!items.length) {{
+    container.innerHTML = '<div class="empty-state" style="padding:40px;">뉴스를 불러올 수 없습니다.</div>';
+    return;
+  }}
+
+  let html = '<div class="card" style="padding:0;overflow:hidden;">';
+  for (const n of items.slice(0, 30)) {{
+    const ago = _timeAgo(n.date);
+    const title = n.title_ko || n.title;
+    const desc = n.desc_ko || n.desc;
+    const hasKo = n.title_ko ? '' : ' style="opacity:0.7;"';
+    html += `<div class="news-item">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+        <span style="font-size:10px;padding:2px 6px;border-radius:4px;background:${{n.sourceColor}};color:white;font-weight:600;">${{n.sourceName}}</span>
+        <span style="font-size:11px;color:var(--text2);">${{ago}}</span>
+      </div>
+      <a href="${{n.link}}" target="_blank" rel="noopener"${{hasKo}} style="color:var(--text1);text-decoration:none;font-size:14px;font-weight:500;line-height:1.4;display:block;">
+        ${{title}}
+      </a>
+      ${{desc ? `<div style="font-size:12px;color:var(--text2);margin-top:4px;line-height:1.4;">${{desc}}</div>` : ''}}
+      ${{n.title_ko ? `<div style="font-size:11px;color:var(--text2);margin-top:2px;opacity:0.5;">${{n.title}}</div>` : ''}}
+    </div>`;
+  }}
+  html += '</div>';
+  container.innerHTML = html;
+}}
+
+function _timeAgo(date) {{
+  if (!date || date.getTime() === 0) return '';
+  const diff = (Date.now() - date.getTime()) / 1000;
+  if (diff < 60) return '방금 전';
+  if (diff < 3600) return Math.floor(diff / 60) + '분 전';
+  if (diff < 86400) return Math.floor(diff / 3600) + '시간 전';
+  return Math.floor(diff / 86400) + '일 전';
 }}
 
 // ── Chart.js 공통 옵션 ──

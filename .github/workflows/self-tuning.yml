@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
     inputs:
       days:
-        description: "백테스트 기간 (거래일, 504=약 2년)"
-        default: "504"
+        description: "백테스트 기간 (거래일, 기본 90)"
+        default: "90"
         type: string
       iterations:
         description: "탐색 반복 횟수 (기본 20)"
@@ -56,7 +56,7 @@ jobs:
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
         run: |
-          ARGS="--days ${{ inputs.days || '504' }} --iterations ${{ inputs.iterations || '20' }} --min-improvement ${{ inputs.min_improvement || '5.0' }}"
+          ARGS="--days ${{ inputs.days || '90' }} --iterations ${{ inputs.iterations || '20' }} --min-improvement ${{ inputs.min_improvement || '5.0' }}"
           if [ "${{ inputs.dry_run }}" = "true" ]; then
             python run_self_tuning.py $ARGS --dry-run --discord
           else
