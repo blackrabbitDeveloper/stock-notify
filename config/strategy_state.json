@@ -3,9 +3,9 @@
   "created_at": "2026-02-15T03:58:48.357414+00:00",
   "current_params": {
     "top_n": 3,
-    "min_tech_score": 5.0,
-    "atr_stop_mult": 1.5,
-    "atr_tp_mult": 3.0,
+    "min_tech_score": 5.5,
+    "atr_stop_mult": 1.0,
+    "atr_tp_mult": 3.25,
     "max_hold_days": 3,
     "sell_threshold": 2.0,
     "max_positions": 4,
@@ -886,8 +886,93 @@
           "perf_score": 0.149
         }
       }
+    },
+    {
+      "timestamp": "2026-02-19T16:56:45.572239+00:00",
+      "regime": "bearish",
+      "params": {
+        "top_n": 3,
+        "min_tech_score": 5.5,
+        "atr_stop_mult": 1.0,
+        "atr_tp_mult": 3.25,
+        "max_hold_days": 3,
+        "sell_threshold": 2.0,
+        "max_positions": 4,
+        "max_daily_entries": 1,
+        "trailing_atr_mult": 1.25,
+        "trailing_min_pct": 2.0
+      },
+      "summary": {
+        "total_trades": 349,
+        "win_rate": 48.71,
+        "avg_pnl_pct": 0.1004,
+        "median_pnl_pct": -0.05,
+        "total_pnl_pct": 35.0433,
+        "std_pnl_pct": 2.489,
+        "avg_win_pct": 1.9988,
+        "avg_loss_pct": -1.7025,
+        "profit_factor": 1.115,
+        "expected_value_pct": 0.1004,
+        "sharpe_ratio": 0.6404,
+        "max_consecutive_wins": 13,
+        "max_consecutive_losses": 10,
+        "avg_hold_days": 2.39,
+        "portfolio_max_drawdown_pct": 46.5526
+      },
+      "param_changes": {
+        "min_tech_score": {
+          "old": 5.0,
+          "new": 5.5
+        },
+        "atr_stop_mult": {
+          "old": 1.5,
+          "new": 1.0
+        },
+        "atr_tp_mult": {
+          "old": 3.0,
+          "new": 3.25
+        }
+      },
+      "weight_changes": {
+        "pullback_score": {
+          "old": 1.202,
+          "new": 1.234,
+          "delta": 0.0263,
+          "perf_score": 0.175
+        },
+        "stoch_cross_up": {
+          "old": 1.359,
+          "new": 1.394,
+          "delta": 0.0261,
+          "perf_score": 0.174
+        },
+        "divergence_score": {
+          "old": 1.019,
+          "new": 0.95,
+          "delta": -0.0681,
+          "perf_score": -0.454
+        },
+        "macd_cross_up": {
+          "old": 1.059,
+          "new": 1.0,
+          "delta": -0.0555,
+          "perf_score": -0.37
+        },
+        "golden_cross": {
+          "old": 0.932,
+          "new": 0.9,
+          "delta": -0.0342,
+          "perf_score": -0.228
+        },
+        "breakout_score": {
+          "old": 1.27,
+          "new": 1.289,
+          "delta": 0.015,
+          "perf_score": 0.1
+        }
+      }
     }
   ],
-  "regime_confidence": 0.56,
-  "last_tuned_at": "2026-02-19T12:04:49.233441+00:00"
+  "regime_confidence": 0.71,
+  "last_tuned_at": "2026-02-19T16:56:45.572239+00:00"
 }
