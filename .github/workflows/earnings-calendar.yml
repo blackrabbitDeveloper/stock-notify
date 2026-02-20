@@ -1,9 +1,8 @@
 name: earnings-calendar
 on:
-  #schedule:
-    # 매월 1일, 15일 UTC 08:00 (KST 17:00)
-    # 어닝 시즌(1/4/7/10월)은 더 자주 실행 가능 (workflow_dispatch)
-    #- cron: "0 8 1,15 * *"
+  schedule:
+    # 어닝 시즌(1/4/7/10월) 1일, 15일 UTC 08:00 (KST 17:00)
+    - cron: "0 8 1,15 1,4,7,10 *"
 
   workflow_dispatch:
     inputs:

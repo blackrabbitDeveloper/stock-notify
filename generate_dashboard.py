@@ -831,24 +831,20 @@ canvas {{ max-height: 320px; }}
         <h3 style="font-size:16px;color:var(--text1);margin:0 0 12px;border-bottom:1px solid var(--border);padding-bottom:6px;">⏰ 자동화 스케줄</h3>
         <div style="display:grid;gap:6px;">
           <div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--bg);border-radius:6px;font-size:12px;">
-            <span style="color:var(--text1);font-weight:600;">🔍 종목 추천</span>
-            <span style="color:var(--text2);">매일 장 전 (KST 22:00)</span>
-          </div>
-          <div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--bg);border-radius:6px;font-size:12px;">
-            <span style="color:var(--text1);font-weight:600;">📈 포지션 업데이트</span>
-            <span style="color:var(--text2);">매일 장 마감 후 (KST 06:00)</span>
+            <span style="color:var(--text1);font-weight:600;">🔍 종목 추천 + 포지션 업데이트</span>
+            <span style="color:var(--text2);">평일 매일 (UTC 21:30 / KST 06:30)</span>
           </div>
           <div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--bg);border-radius:6px;font-size:12px;">
             <span style="color:var(--text1);font-weight:600;">📋 주간 리포트</span>
-            <span style="color:var(--text2);">매주 일요일 (KST 18:00)</span>
+            <span style="color:var(--text2);">매주 일요일 (UTC 09:00 / KST 18:00)</span>
           </div>
           <div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--bg);border-radius:6px;font-size:12px;">
             <span style="color:var(--text1);font-weight:600;">🧠 자기학습</span>
-            <span style="color:var(--text2);">매월 첫 일요일</span>
+            <span style="color:var(--text2);">매월 첫 일요일 (UTC 10:00 / KST 19:00)</span>
           </div>
           <div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--bg);border-radius:6px;font-size:12px;">
             <span style="color:var(--text1);font-weight:600;">📅 실적 캘린더</span>
-            <span style="color:var(--text2);">매월 1일, 15일</span>
+            <span style="color:var(--text2);">어닝 시즌 (1·4·7·10월) 1일, 15일</span>
           </div>
         </div>
       </div>
