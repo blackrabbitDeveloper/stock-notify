@@ -675,7 +675,8 @@ canvas {{ max-height: 320px; }}
     </div>
   </div>
   <div class="tabs">
-    <button class="tab active" onclick="showTab('market')">🌍 시장 현황</button>
+    <button class="tab active" onclick="showTab('guide')">📖 가이드</button>
+    <button class="tab" onclick="showTab('market')">🌍 시장 현황</button>
     <button class="tab" onclick="showTab('positions')">💼 포지션</button>
     <button class="tab" onclick="showTab('performance')">📊 성과</button>
     <button class="tab" onclick="showTab('backtest')">🔬 백테스트</button>
@@ -690,7 +691,192 @@ canvas {{ max-height: 320px; }}
 <div class="container">
 
   <!-- ════ TAB 0: 시장 현황 ════ -->
-  <div id="tab-market" class="tab-content active">
+  <!-- ════ TAB 0: 프로젝트 가이드 ════ -->
+  <div id="tab-guide" class="tab-content active">
+    <div class="card" style="max-width:900px;margin:0 auto;">
+
+      <div style="text-align:center;margin-bottom:24px;">
+        <div style="font-size:42px;margin-bottom:8px;">📈🤖</div>
+        <h2 style="font-size:24px;color:var(--text1);margin:0 0 6px;">AI Stock Trading Bot</h2>
+        <p style="color:var(--text2);font-size:14px;margin:0;">기술적 분석 + 멀티 타임프레임 + 재무 필터 + 자기학습 기반 미국 주식 자동 추천 시스템</p>
+      </div>
+
+      <div style="background:var(--bg);border-radius:8px;padding:16px;margin-bottom:20px;">
+        <div style="font-size:14px;font-weight:600;color:var(--accent);margin-bottom:8px;">⚠️ 면책 조항</div>
+        <div style="font-size:12px;color:var(--text2);line-height:1.6;">
+          이 시스템은 교육 및 정보 제공 목적으로만 사용됩니다. 투자 자문이 아니며, 모든 투자 결정은 본인의 책임입니다.
+          과거 성과가 미래 수익을 보장하지 않습니다.
+        </div>
+      </div>
+
+      <!-- 시스템 개요 -->
+      <div style="margin-bottom:24px;">
+        <h3 style="font-size:16px;color:var(--text1);margin:0 0 12px;border-bottom:1px solid var(--border);padding-bottom:6px;">🔍 시스템 개요</h3>
+        <div style="font-size:13px;color:var(--text2);line-height:1.8;">
+          S&P 500 종목을 대상으로 매일 장 전에 자동으로 종목을 분석하고 추천합니다.
+          <strong style="color:var(--text1);">5단계 필터 체인</strong>으로 종목을 선별합니다:
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:12px;">
+          <div style="background:var(--bg);border-radius:6px;padding:10px;text-align:center;">
+            <div style="font-size:20px;">💰</div>
+            <div style="font-size:11px;font-weight:600;color:var(--text1);">재무 필터</div>
+            <div style="font-size:10px;color:var(--text2);">PER · ROE · 영업이익률<br>매출 성장률 기준 검증</div>
+          </div>
+          <div style="background:var(--bg);border-radius:6px;padding:10px;text-align:center;">
+            <div style="font-size:20px;">📊</div>
+            <div style="font-size:11px;font-weight:600;color:var(--text1);">기술적 분석</div>
+            <div style="font-size:10px;color:var(--text2);">RSI · MACD · 볼린저<br>스토캐스틱 · 눌림목</div>
+          </div>
+          <div style="background:var(--bg);border-radius:6px;padding:10px;text-align:center;">
+            <div style="font-size:20px;">🔭</div>
+            <div style="font-size:11px;font-weight:600;color:var(--text1);">멀티 타임프레임</div>
+            <div style="font-size:10px;color:var(--text2);">월봉 방향 · 주봉 추세<br>일봉 진입 타이밍</div>
+          </div>
+          <div style="background:var(--bg);border-radius:6px;padding:10px;text-align:center;">
+            <div style="font-size:20px;">⏰</div>
+            <div style="font-size:11px;font-weight:600;color:var(--text1);">진입 타이밍</div>
+            <div style="font-size:10px;color:var(--text2);">BB 스퀴즈 확장<br>거래량 폭발 · 캔들 패턴</div>
+          </div>
+          <div style="background:var(--bg);border-radius:6px;padding:10px;text-align:center;">
+            <div style="font-size:20px;">📰</div>
+            <div style="font-size:11px;font-weight:600;color:var(--text1);">뉴스 분석</div>
+            <div style="font-size:10px;color:var(--text2);">실시간 뉴스 감성 분석<br>뉴스 보너스 점수</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 리스크 관리 -->
+      <div style="margin-bottom:24px;">
+        <h3 style="font-size:16px;color:var(--text1);margin:0 0 12px;border-bottom:1px solid var(--border);padding-bottom:6px;">🛡️ 리스크 관리</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+          <div style="background:var(--bg);border-radius:6px;padding:12px;">
+            <div style="font-size:12px;font-weight:600;color:var(--red);margin-bottom:4px;">🔴 손절 (Stop Loss)</div>
+            <div style="font-size:11px;color:var(--text2);line-height:1.6;">ATR 기반 동적 손절가 설정. 진입 시 자동 계산되며 절대 무시하지 않습니다.</div>
+          </div>
+          <div style="background:var(--bg);border-radius:6px;padding:12px;">
+            <div style="font-size:12px;font-weight:600;color:var(--green);margin-bottom:4px;">🟢 익절 (Take Profit)</div>
+            <div style="font-size:11px;color:var(--text2);line-height:1.6;">TP 50%에서 트레일링 스탑 활성화. TP 100%에서 부분 청산(50%).</div>
+          </div>
+          <div style="background:var(--bg);border-radius:6px;padding:12px;">
+            <div style="font-size:12px;font-weight:600;color:var(--accent);margin-bottom:4px;">🔄 트레일링 스탑</div>
+            <div style="font-size:11px;color:var(--text2);line-height:1.6;">수익이 나기 시작하면 손절가를 자동으로 올려 수익을 보호합니다.</div>
+          </div>
+          <div style="background:var(--bg);border-radius:6px;padding:12px;">
+            <div style="font-size:12px;font-weight:600;color:var(--yellow);margin-bottom:4px;">⏱️ 보유 기간 만료</div>
+            <div style="font-size:11px;color:var(--text2);line-height:1.6;">최대 보유일 초과 시 자동 청산. 자금이 묶이는 것을 방지합니다.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 자기학습 -->
+      <div style="margin-bottom:24px;">
+        <h3 style="font-size:16px;color:var(--text1);margin:0 0 12px;border-bottom:1px solid var(--border);padding-bottom:6px;">🧠 자기학습 시스템</h3>
+        <div style="font-size:13px;color:var(--text2);line-height:1.8;">
+          매월 자동으로 전략 파라미터를 최적화합니다:
+        </div>
+        <div style="background:var(--bg);border-radius:6px;padding:14px;margin-top:10px;font-family:var(--font-mono);font-size:11px;color:var(--text2);line-height:1.8;">
+          1️⃣ 현재 파라미터로 기준 백테스트 → 기준 점수<br>
+          2️⃣ 시장 레짐 감지 (강세/약세/횡보)<br>
+          3️⃣ 20회 반복 탐색: 후보 파라미터 생성 → 백테스트 → 비교<br>
+          4️⃣ 복합 점수 평가: 승률 30% + PF 25% + 샤프 20% + 기대값 15% - MDD 10%<br>
+          5️⃣ 5% 이상 개선 시에만 채택 (과적합 방지)
+        </div>
+      </div>
+
+      <!-- 대시보드 탭 설명 -->
+      <div style="margin-bottom:24px;">
+        <h3 style="font-size:16px;color:var(--text1);margin:0 0 12px;border-bottom:1px solid var(--border);padding-bottom:6px;">📑 대시보드 탭 안내</h3>
+        <div style="display:grid;gap:6px;">
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg);border-radius:6px;">
+            <span style="font-size:16px;width:24px;text-align:center;">🌍</span>
+            <div><strong style="font-size:12px;color:var(--text1);">시장 현황</strong> <span style="font-size:11px;color:var(--text2);">— 주요 지수, 포트폴리오 현금/투자 비율, 시장 레짐</span></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg);border-radius:6px;">
+            <span style="font-size:16px;width:24px;text-align:center;">💼</span>
+            <div><strong style="font-size:12px;color:var(--text1);">포지션</strong> <span style="font-size:11px;color:var(--text2);">— 보유 종목 상세 (P&L, MTF, 재무 지표, 트레일링 상태)</span></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg);border-radius:6px;">
+            <span style="font-size:16px;width:24px;text-align:center;">📊</span>
+            <div><strong style="font-size:12px;color:var(--text1);">성과</strong> <span style="font-size:11px;color:var(--text2);">— 누적 P&L 차트, 월별 수익률, 청산 유형 분포</span></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg);border-radius:6px;">
+            <span style="font-size:16px;width:24px;text-align:center;">🔬</span>
+            <div><strong style="font-size:12px;color:var(--text1);">백테스트</strong> <span style="font-size:11px;color:var(--text2);">— 과거 데이터 기반 전략 성과 검증 결과</span></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg);border-radius:6px;">
+            <span style="font-size:16px;width:24px;text-align:center;">🧠</span>
+            <div><strong style="font-size:12px;color:var(--text1);">자기학습</strong> <span style="font-size:11px;color:var(--text2);">— 파라미터 튜닝 이력, 신호 가중치 변화</span></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg);border-radius:6px;">
+            <span style="font-size:16px;width:24px;text-align:center;">⚙️</span>
+            <div><strong style="font-size:12px;color:var(--text1);">전략 설정</strong> <span style="font-size:11px;color:var(--text2);">— 현재 적용 중인 전략 파라미터, 시장 레짐</span></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg);border-radius:6px;">
+            <span style="font-size:16px;width:24px;text-align:center;">📅</span>
+            <div><strong style="font-size:12px;color:var(--text1);">실적 캘린더</strong> <span style="font-size:11px;color:var(--text2);">— 보유 종목 어닝 일정, 월간 실적 캘린더</span></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg);border-radius:6px;">
+            <span style="font-size:16px;width:24px;text-align:center;">📋</span>
+            <div><strong style="font-size:12px;color:var(--text1);">주간 리포트</strong> <span style="font-size:11px;color:var(--text2);">— 매주 일요일 자동 생성, 주간 거래/성과 요약</span></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg);border-radius:6px;">
+            <span style="font-size:16px;width:24px;text-align:center;">📰</span>
+            <div><strong style="font-size:12px;color:var(--text1);">경제 뉴스</strong> <span style="font-size:11px;color:var(--text2);">— 실시간 RSS 뉴스 (Yahoo/CNBC/MarketWatch, 한글 번역)</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 자동화 일정 -->
+      <div style="margin-bottom:24px;">
+        <h3 style="font-size:16px;color:var(--text1);margin:0 0 12px;border-bottom:1px solid var(--border);padding-bottom:6px;">⏰ 자동화 스케줄</h3>
+        <div style="display:grid;gap:6px;">
+          <div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--bg);border-radius:6px;font-size:12px;">
+            <span style="color:var(--text1);font-weight:600;">🔍 종목 추천</span>
+            <span style="color:var(--text2);">매일 장 전 (KST 22:00)</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--bg);border-radius:6px;font-size:12px;">
+            <span style="color:var(--text1);font-weight:600;">📈 포지션 업데이트</span>
+            <span style="color:var(--text2);">매일 장 마감 후 (KST 06:00)</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--bg);border-radius:6px;font-size:12px;">
+            <span style="color:var(--text1);font-weight:600;">📋 주간 리포트</span>
+            <span style="color:var(--text2);">매주 일요일 (KST 18:00)</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--bg);border-radius:6px;font-size:12px;">
+            <span style="color:var(--text1);font-weight:600;">🧠 자기학습</span>
+            <span style="color:var(--text2);">매월 첫 일요일</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:8px 12px;background:var(--bg);border-radius:6px;font-size:12px;">
+            <span style="color:var(--text1);font-weight:600;">📅 실적 캘린더</span>
+            <span style="color:var(--text2);">매월 1일, 15일</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 기술 스택 -->
+      <div style="margin-bottom:16px;">
+        <h3 style="font-size:16px;color:var(--text1);margin:0 0 12px;border-bottom:1px solid var(--border);padding-bottom:6px;">🛠️ 기술 스택</h3>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+          <span style="font-size:10px;padding:3px 8px;border-radius:4px;background:#3b82f620;color:#60a5fa;">Python</span>
+          <span style="font-size:10px;padding:3px 8px;border-radius:4px;background:#f59e0b20;color:#fbbf24;">yfinance</span>
+          <span style="font-size:10px;padding:3px 8px;border-radius:4px;background:#10b98120;color:#34d399;">pandas</span>
+          <span style="font-size:10px;padding:3px 8px;border-radius:4px;background:#8b5cf620;color:#a78bfa;">GitHub Actions</span>
+          <span style="font-size:10px;padding:3px 8px;border-radius:4px;background:#ef444420;color:#f87171;">Discord Webhook</span>
+          <span style="font-size:10px;padding:3px 8px;border-radius:4px;background:#06b6d420;color:#22d3ee;">GitHub Pages</span>
+          <span style="font-size:10px;padding:3px 8px;border-radius:4px;background:#ec489920;color:#f472b6;">Chart.js</span>
+        </div>
+      </div>
+
+      <div style="text-align:center;padding-top:12px;border-top:1px solid var(--border);">
+        <a href="https://github.com/blackrabbitDeveloper/stock-notify" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:none;font-size:13px;">
+          ⭐ GitHub Repository →
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="tab-market" class="tab-content">
     <p class="tab-desc">주요 시장 지수와 환율, 원자재 시세를 실시간으로 확인합니다.</p>
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
       <span style="color:var(--text2);font-size:14px;">📅 기간:</span>
