@@ -1,0 +1,2769 @@
+{
+  "config": {
+    "pool": "sp500",
+    "backtest_days": 90,
+    "top_n": 6,
+    "min_tech_score": 5.25,
+    "max_hold_days": 5,
+    "atr_stop_mult": 2.0,
+    "atr_tp_mult": 4.5,
+    "sell_threshold": 3.0,
+    "max_positions": 6,
+    "max_daily_entries": 2,
+    "fundamental_mode": "hard_filter",
+    "commission_pct": 0.0,
+    "slippage_pct": 0.05
+  },
+  "summary": {
+    "total_trades": 103,
+    "win_rate": 66.02,
+    "avg_pnl_pct": 0.8937,
+    "median_pnl_pct": 1.0272,
+    "total_pnl_pct": 92.0495,
+    "std_pnl_pct": 2.798,
+    "avg_win_pct": 2.4245,
+    "avg_loss_pct": -2.0805,
+    "profit_factor": 2.2641,
+    "expected_value_pct": 0.8937,
+    "sharpe_ratio": 5.0704,
+    "max_consecutive_wins": 12,
+    "max_consecutive_losses": 3,
+    "avg_hold_days": 3.92,
+    "portfolio_max_drawdown_pct": 19.0982,
+    "benchmark_spy_pct": 2.1688,
+    "benchmark_qqq_pct": -0.7576,
+    "alpha_vs_spy": 89.8807,
+    "alpha_vs_qqq": 92.8071
+  },
+  "exit_breakdown": {
+    "take_profit": 0,
+    "stop_loss": 10,
+    "expired": 58,
+    "sell_signal": 23,
+    "trailing_stop": 10,
+    "partial_closed": 0,
+    "tp_rate": 0.0,
+    "sl_rate": 9.71,
+    "exp_rate": 56.31,
+    "sell_rate": 22.33,
+    "trail_rate": 9.71
+  },
+  "monthly_returns": [
+    {
+      "month": "2025-11",
+      "trades": 7,
+      "total_pnl_pct": -5.72,
+      "win_rate": 42.9
+    },
+    {
+      "month": "2025-12",
+      "trades": 31,
+      "total_pnl_pct": 28.03,
+      "win_rate": 67.7
+    },
+    {
+      "month": "2026-01",
+      "trades": 34,
+      "total_pnl_pct": 24.61,
+      "win_rate": 67.6
+    },
+    {
+      "month": "2026-02",
+      "trades": 29,
+      "total_pnl_pct": 45.13,
+      "win_rate": 72.4
+    }
+  ],
+  "top_traded_tickers": [
+    {
+      "ticker": "NRG",
+      "trades": 3
+    },
+    {
+      "ticker": "AVY",
+      "trades": 3
+    },
+    {
+      "ticker": "EXC",
+      "trades": 3
+    },
+    {
+      "ticker": "LNT",
+      "trades": 2
+    },
+    {
+      "ticker": "EVRG",
+      "trades": 2
+    },
+    {
+      "ticker": "RMD",
+      "trades": 2
+    },
+    {
+      "ticker": "JPM",
+      "trades": 2
+    },
+    {
+      "ticker": "PSX",
+      "trades": 2
+    },
+    {
+      "ticker": "SBAC",
+      "trades": 2
+    },
+    {
+      "ticker": "DE",
+      "trades": 2
+    }
+  ],
+  "best_tickers": [
+    {
+      "ticker": "PSX",
+      "avg_pnl": 3.08,
+      "trades": 2
+    },
+    {
+      "ticker": "EXC",
+      "avg_pnl": 3.03,
+      "trades": 3
+    },
+    {
+      "ticker": "ACGL",
+      "avg_pnl": 2.77,
+      "trades": 2
+    },
+    {
+      "ticker": "PEG",
+      "avg_pnl": 2.25,
+      "trades": 2
+    },
+    {
+      "ticker": "COR",
+      "avg_pnl": 2.2,
+      "trades": 2
+    }
+  ],
+  "worst_tickers": [
+    {
+      "ticker": "SBAC",
+      "avg_pnl": -1.42,
+      "trades": 2
+    },
+    {
+      "ticker": "HON",
+      "avg_pnl": -1.06,
+      "trades": 2
+    },
+    {
+      "ticker": "INCY",
+      "avg_pnl": -0.75,
+      "trades": 2
+    },
+    {
+      "ticker": "ETR",
+      "avg_pnl": -0.53,
+      "trades": 2
+    },
+    {
+      "ticker": "BRK-B",
+      "avg_pnl": -0.46,
+      "trades": 2
+    }
+  ],
+  "signal_performance": [
+    {
+      "signal": "20MA눌림목",
+      "count": 96,
+      "avg_pnl": 0.95,
+      "win_rate": 66.7
+    },
+    {
+      "signal": "50MA눌림목",
+      "count": 95,
+      "avg_pnl": 0.9,
+      "win_rate": 66.3
+    },
+    {
+      "signal": "BB하단반등",
+      "count": 88,
+      "avg_pnl": 0.83,
+      "win_rate": 64.8
+    },
+    {
+      "signal": "스토캐스틱크로스",
+      "count": 78,
+      "avg_pnl": 0.74,
+      "win_rate": 64.1
+    },
+    {
+      "signal": "이평정배열",
+      "count": 17,
+      "avg_pnl": 0.65,
+      "win_rate": 64.7
+    },
+    {
+      "signal": "강세다이버전스",
+      "count": 13,
+      "avg_pnl": 0.72,
+      "win_rate": 61.5
+    },
+    {
+      "signal": "MACD상향",
+      "count": 12,
+      "avg_pnl": 1.01,
+      "win_rate": 75.0
+    },
+    {
+      "signal": "돌파(20d_high_breakout)",
+      "count": 8,
+      "avg_pnl": 0.79,
+      "win_rate": 75.0
+    },
+    {
+      "signal": "골든크로스",
+      "count": 7,
+      "avg_pnl": 0.3,
+      "win_rate": 71.4
+    },
+    {
+      "signal": "스퀴즈돌파",
+      "count": 6,
+      "avg_pnl": 0.96,
+      "win_rate": 83.3
+    },
+    {
+      "signal": "거래량1.6x",
+      "count": 5,
+      "avg_pnl": 1.01,
+      "win_rate": 80.0
+    },
+    {
+      "signal": "거래량1.7x",
+      "count": 2,
+      "avg_pnl": 2.24,
+      "win_rate": 100.0
+    },
+    {
+      "signal": "거래량2.0x",
+      "count": 2,
+      "avg_pnl": 2.47,
+      "win_rate": 100.0
+    },
+    {
+      "signal": "거래량1.5x",
+      "count": 2,
+      "avg_pnl": 2.06,
+      "win_rate": 100.0
+    },
+    {
+      "signal": "거래량2.1x",
+      "count": 1,
+      "avg_pnl": -0.61,
+      "win_rate": 0.0
+    },
+    {
+      "signal": "거래량2.5x",
+      "count": 1,
+      "avg_pnl": 0.37,
+      "win_rate": 100.0
+    },
+    {
+      "signal": "거래량1.9x",
+      "count": 1,
+      "avg_pnl": 1.96,
+      "win_rate": 100.0
+    },
+    {
+      "signal": "거래량2.3x",
+      "count": 1,
+      "avg_pnl": 0.55,
+      "win_rate": 100.0
+    },
+    {
+      "signal": "거래량2.2x",
+      "count": 1,
+      "avg_pnl": 2.18,
+      "win_rate": 100.0
+    },
+    {
+      "signal": "거래량2.4x",
+      "count": 1,
+      "avg_pnl": -0.57,
+      "win_rate": 0.0
+    },
+    {
+      "signal": "거래량1.8x",
+      "count": 1,
+      "avg_pnl": 4.32,
+      "win_rate": 100.0
+    }
+  ],
+  "score_bracket_performance": [],
+  "trades": [
+    {
+      "ticker": "WFC",
+      "entry_date": "2025-11-14",
+      "entry_price": 85.05,
+      "stop_loss": 81.0786,
+      "take_profit": 93.9857,
+      "tech_score": 11.3,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2025-11-21",
+      "exit_price": 81.0786,
+      "pnl_pct": -4.7195,
+      "status": "stop_loss",
+      "hold_days": 5,
+      "max_drawdown_pct": -4.7031,
+      "max_favorable_pct": 1.164,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "ABNB",
+      "entry_date": "2025-11-14",
+      "entry_price": 122.02,
+      "stop_loss": 115.3131,
+      "take_profit": 137.1104,
+      "tech_score": 10.7,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2025-11-19",
+      "exit_price": 115.3131,
+      "pnl_pct": -5.5465,
+      "status": "stop_loss",
+      "hold_days": 3,
+      "max_drawdown_pct": -6.5112,
+      "max_favorable_pct": 0.0,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "LNT",
+      "entry_date": "2025-11-17",
+      "entry_price": 68.1,
+      "stop_loss": 66.1857,
+      "take_profit": 72.4071,
+      "tech_score": 11.8,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "골든크로스",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2025-11-24",
+      "exit_price": 68.41,
+      "pnl_pct": 0.4052,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -1.4684,
+      "max_favorable_pct": 1.0132,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "EVRG",
+      "entry_date": "2025-11-17",
+      "entry_price": 77.12,
+      "stop_loss": 74.8014,
+      "take_profit": 82.3368,
+      "tech_score": 11.8,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2025-11-24",
+      "exit_price": 77.02,
+      "pnl_pct": -0.1797,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -2.8786,
+      "max_favorable_pct": 0.5057,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "NRG",
+      "entry_date": "2025-11-18",
+      "entry_price": 166.45,
+      "stop_loss": 150.2929,
+      "take_profit": 202.8036,
+      "tech_score": 11.3,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2025-11-25",
+      "exit_price": 163.81,
+      "pnl_pct": -1.6361,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -6.6446,
+      "max_favorable_pct": 4.9745,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "RMD",
+      "entry_date": "2025-11-18",
+      "entry_price": 246.22,
+      "stop_loss": 232.4471,
+      "take_profit": 277.2089,
+      "tech_score": 11.2,
+      "signals": [
+        "20MA눌림목",
+        "BB하단반등",
+        "강세다이버전스",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2025-11-25",
+      "exit_price": 255.8,
+      "pnl_pct": 3.8408,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -1.7911,
+      "max_favorable_pct": 4.3782,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "BKR",
+      "entry_date": "2025-11-19",
+      "entry_price": 48.48,
+      "stop_loss": 45.5271,
+      "take_profit": 55.1239,
+      "tech_score": 11.8,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "이평정배열",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2025-11-26",
+      "exit_price": 49.53,
+      "pnl_pct": 2.1158,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -1.4645,
+      "max_favorable_pct": 3.8573,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "CMS",
+      "entry_date": "2025-11-21",
+      "entry_price": 74.04,
+      "stop_loss": 71.8529,
+      "take_profit": 78.9611,
+      "tech_score": 11.8,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2025-12-01",
+      "exit_price": 73.16,
+      "pnl_pct": -1.2385,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -1.2291,
+      "max_favorable_pct": 2.0124,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "BK",
+      "entry_date": "2025-11-24",
+      "entry_price": 108.07,
+      "stop_loss": 103.5743,
+      "take_profit": 118.1854,
+      "tech_score": 11.8,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "거래량1.7x",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2025-12-02",
+      "exit_price": 112.08,
+      "pnl_pct": 3.6606,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -0.6107,
+      "max_favorable_pct": 4.5896,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "KLAC",
+      "entry_date": "2025-11-24",
+      "entry_price": 1136.73,
+      "stop_loss": 1044.5629,
+      "take_profit": 1344.106,
+      "tech_score": 11.8,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2025-12-02",
+      "exit_price": 1189.86,
+      "pnl_pct": 4.6239,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -2.5784,
+      "max_favorable_pct": 5.3812,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "JPM",
+      "entry_date": "2025-11-25",
+      "entry_price": 303.0,
+      "stop_loss": 288.5986,
+      "take_profit": 335.4032,
+      "tech_score": 11.21,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등"
+      ],
+      "exit_date": "2025-12-03",
+      "exit_price": 312.13,
+      "pnl_pct": 2.9632,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": 0.0,
+      "max_favorable_pct": 3.6436,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "PSX",
+      "entry_date": "2025-11-25",
+      "entry_price": 134.13,
+      "stop_loss": 125.8343,
+      "take_profit": 152.7954,
+      "tech_score": 11.21,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등"
+      ],
+      "exit_date": "2025-12-03",
+      "exit_price": 139.85,
+      "pnl_pct": 4.2145,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -0.1864,
+      "max_favorable_pct": 4.9057,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "SBAC",
+      "entry_date": "2025-11-26",
+      "entry_price": 194.79,
+      "stop_loss": 186.55,
+      "take_profit": 213.33,
+      "tech_score": 11.3,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2025-12-02",
+      "exit_price": 186.55,
+      "pnl_pct": -4.2802,
+      "status": "stop_loss",
+      "hold_days": 3,
+      "max_drawdown_pct": -4.3585,
+      "max_favorable_pct": 0.3132,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "DE",
+      "entry_date": "2025-12-01",
+      "entry_price": 468.11,
+      "stop_loss": 445.6657,
+      "take_profit": 518.6096,
+      "tech_score": 11.3,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2025-12-08",
+      "exit_price": 466.35,
+      "pnl_pct": -0.426,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -0.6815,
+      "max_favorable_pct": 4.4605,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "CSX",
+      "entry_date": "2025-12-02",
+      "entry_price": 34.97,
+      "stop_loss": 33.6986,
+      "take_profit": 37.8307,
+      "tech_score": 10.3,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등"
+      ],
+      "exit_date": "2025-12-04",
+      "exit_price": 36.18,
+      "pnl_pct": 3.4101,
+      "status": "sell_signal",
+      "hold_days": 2,
+      "max_drawdown_pct": 0.0,
+      "max_favorable_pct": 3.889,
+      "sell_signals": [
+        "stoch_overbought",
+        "bb_upper_reject"
+      ],
+      "sell_score": 3.0
+    },
+    {
+      "ticker": "NDSN",
+      "entry_date": "2025-12-02",
+      "entry_price": 236.53,
+      "stop_loss": 227.1357,
+      "take_profit": 257.6671,
+      "tech_score": 10.3,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "이평정배열",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2025-12-04",
+      "exit_price": 238.41,
+      "pnl_pct": 0.7448,
+      "status": "sell_signal",
+      "hold_days": 2,
+      "max_drawdown_pct": -0.4693,
+      "max_favorable_pct": 1.7503,
+      "sell_signals": [
+        "bearish_divergence",
+        "stoch_overbought"
+      ],
+      "sell_score": 3.5
+    },
+    {
+      "ticker": "SCHW",
+      "entry_date": "2025-12-03",
+      "entry_price": 93.99,
+      "stop_loss": 89.7943,
+      "take_profit": 103.4304,
+      "tech_score": 11.07,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "MACD상향",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2025-12-10",
+      "exit_price": 95.81,
+      "pnl_pct": 1.8864,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -1.3193,
+      "max_favorable_pct": 2.5428,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "DLR",
+      "entry_date": "2025-12-03",
+      "entry_price": 159.69,
+      "stop_loss": 152.1543,
+      "take_profit": 176.6454,
+      "tech_score": 10.72,
+      "signals": [
+        "20MA눌림목",
+        "강세다이버전스",
+        "MACD상향",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2025-12-10",
+      "exit_price": 159.51,
+      "pnl_pct": -0.1627,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -0.645,
+      "max_favorable_pct": 3.9514,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "SPG",
+      "entry_date": "2025-12-04",
+      "entry_price": 183.32,
+      "stop_loss": 177.69,
+      "take_profit": 195.9875,
+      "tech_score": 11.8,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "이평정배열",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2025-12-11",
+      "exit_price": 181.85,
+      "pnl_pct": -0.8519,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -2.2147,
+      "max_favorable_pct": 0.2182,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "SBAC",
+      "entry_date": "2025-12-04",
+      "entry_price": 190.0,
+      "stop_loss": 183.0229,
+      "take_profit": 205.6986,
+      "tech_score": 11.21,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등"
+      ],
+      "exit_date": "2025-12-11",
+      "exit_price": 192.83,
+      "pnl_pct": 1.4395,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -1.2579,
+      "max_favorable_pct": 2.1316,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "AVY",
+      "entry_date": "2025-12-05",
+      "entry_price": 179.33,
+      "stop_loss": 171.7686,
+      "take_profit": 196.3432,
+      "tech_score": 10.39,
+      "signals": [
+        "돌파(20d_high_breakout)",
+        "이평정배열",
+        "거래량1.6x",
+        "스토캐스틱크로스",
+        "스퀴즈돌파"
+      ],
+      "exit_date": "2025-12-12",
+      "exit_price": 182.6,
+      "pnl_pct": 1.7735,
+      "status": "sell_signal",
+      "hold_days": 5,
+      "max_drawdown_pct": -4.0874,
+      "max_favorable_pct": 2.5205,
+      "sell_signals": [
+        "stoch_overbought",
+        "bb_upper_reject"
+      ],
+      "sell_score": 3.0
+    },
+    {
+      "ticker": "ADBE",
+      "entry_date": "2025-12-05",
+      "entry_price": 346.26,
+      "stop_loss": 328.4071,
+      "take_profit": 386.429,
+      "tech_score": 10.34,
+      "signals": [
+        "50MA눌림목",
+        "돌파(20d_high_breakout)",
+        "골든크로스",
+        "거래량2.1x"
+      ],
+      "exit_date": "2025-12-09",
+      "exit_price": 344.32,
+      "pnl_pct": -0.6103,
+      "status": "sell_signal",
+      "hold_days": 2,
+      "max_drawdown_pct": -2.3682,
+      "max_favorable_pct": 0.6411,
+      "sell_signals": [
+        "stoch_overbought",
+        "bb_upper_reject"
+      ],
+      "sell_score": 3.0
+    },
+    {
+      "ticker": "KO",
+      "entry_date": "2025-12-08",
+      "entry_price": 70.25,
+      "stop_loss": 68.2486,
+      "take_profit": 74.7532,
+      "tech_score": 10.3,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2025-12-15",
+      "exit_price": 70.97,
+      "pnl_pct": 0.9749,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -2.0783,
+      "max_favorable_pct": 1.5231,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "NRG",
+      "entry_date": "2025-12-09",
+      "entry_price": 166.75,
+      "stop_loss": 153.1257,
+      "take_profit": 197.4047,
+      "tech_score": 11.8,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "골든크로스",
+        "MACD상향",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2025-12-16",
+      "exit_price": 160.15,
+      "pnl_pct": -4.008,
+      "status": "sell_signal",
+      "hold_days": 5,
+      "max_drawdown_pct": -5.5772,
+      "max_favorable_pct": 3.3883,
+      "sell_signals": [
+        "dead_cross",
+        "ma_reverse_alignment"
+      ],
+      "sell_score": 3.5
+    },
+    {
+      "ticker": "CINF",
+      "entry_date": "2025-12-10",
+      "entry_price": 162.62,
+      "stop_loss": 157.4043,
+      "take_profit": 174.3553,
+      "tech_score": 11.8,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "거래량2.0x",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2025-12-17",
+      "exit_price": 167.11,
+      "pnl_pct": 2.711,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": 0.0,
+      "max_favorable_pct": 3.3698,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "DE",
+      "entry_date": "2025-12-10",
+      "entry_price": 468.9,
+      "stop_loss": 442.0286,
+      "take_profit": 529.3607,
+      "tech_score": 11.8,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2025-12-17",
+      "exit_price": 481.0,
+      "pnl_pct": 2.5305,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": 0.0,
+      "max_favorable_pct": 4.5895,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "BRK-B",
+      "entry_date": "2025-12-11",
+      "entry_price": 495.85,
+      "stop_loss": 481.4957,
+      "take_profit": 528.1471,
+      "tech_score": 11.8,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2025-12-18",
+      "exit_price": 503.39,
+      "pnl_pct": 1.4706,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -0.2723,
+      "max_favorable_pct": 2.4705,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "HWM",
+      "entry_date": "2025-12-11",
+      "entry_price": 195.89,
+      "stop_loss": 185.3986,
+      "take_profit": 219.4957,
+      "tech_score": 11.8,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2025-12-18",
+      "exit_price": 198.0,
+      "pnl_pct": 1.0271,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -2.4708,
+      "max_favorable_pct": 2.9455,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "ED",
+      "entry_date": "2025-12-12",
+      "entry_price": 97.53,
+      "stop_loss": 94.3486,
+      "take_profit": 104.6882,
+      "tech_score": 11.21,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등"
+      ],
+      "exit_date": "2025-12-19",
+      "exit_price": 98.06,
+      "pnl_pct": 0.4934,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -0.041,
+      "max_favorable_pct": 2.8709,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "PM",
+      "entry_date": "2025-12-12",
+      "entry_price": 153.65,
+      "stop_loss": 146.7314,
+      "take_profit": 169.2168,
+      "tech_score": 10.44,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등"
+      ],
+      "exit_date": "2025-12-19",
+      "exit_price": 156.84,
+      "pnl_pct": 2.0261,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -0.0781,
+      "max_favorable_pct": 4.0482,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "ETR",
+      "entry_date": "2025-12-15",
+      "entry_price": 93.75,
+      "stop_loss": 90.3257,
+      "take_profit": 101.4546,
+      "tech_score": 11.3,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2025-12-22",
+      "exit_price": 91.99,
+      "pnl_pct": -1.9273,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -3.072,
+      "max_favorable_pct": 0.48,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "HON",
+      "entry_date": "2025-12-17",
+      "entry_price": 199.89,
+      "stop_loss": 194.2886,
+      "take_profit": 212.4932,
+      "tech_score": 12.08,
+      "signals": [
+        "50MA눌림목",
+        "돌파(20d_high_breakout)",
+        "이평정배열",
+        "거래량1.6x",
+        "스퀴즈돌파"
+      ],
+      "exit_date": "2025-12-24",
+      "exit_price": 196.93,
+      "pnl_pct": -1.5308,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -2.5864,
+      "max_favorable_pct": 0.7204,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "AEP",
+      "entry_date": "2025-12-18",
+      "entry_price": 115.58,
+      "stop_loss": 111.71,
+      "take_profit": 124.2875,
+      "tech_score": 11.8,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "강세다이버전스",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2025-12-26",
+      "exit_price": 115.67,
+      "pnl_pct": 0.0279,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -1.5055,
+      "max_favorable_pct": 0.7008,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "GD",
+      "entry_date": "2025-12-18",
+      "entry_price": 337.34,
+      "stop_loss": 325.1386,
+      "take_profit": 364.7932,
+      "tech_score": 11.8,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2025-12-26",
+      "exit_price": 342.2,
+      "pnl_pct": 1.3907,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -0.1008,
+      "max_favorable_pct": 2.994,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "EA",
+      "entry_date": "2025-12-19",
+      "entry_price": 203.92,
+      "stop_loss": 202.4629,
+      "take_profit": 207.1986,
+      "tech_score": 11.8,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "이평정배열",
+        "거래량2.5x"
+      ],
+      "exit_date": "2025-12-24",
+      "exit_price": 204.78,
+      "pnl_pct": 0.3717,
+      "status": "sell_signal",
+      "hold_days": 3,
+      "max_drawdown_pct": -0.0834,
+      "max_favorable_pct": 0.4512,
+      "sell_signals": [
+        "bearish_divergence",
+        "rsi_overbought"
+      ],
+      "sell_score": 3.5
+    },
+    {
+      "ticker": "HUBB",
+      "entry_date": "2025-12-19",
+      "entry_price": 442.51,
+      "stop_loss": 418.9129,
+      "take_profit": 495.6035,
+      "tech_score": 11.8,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "MACD상향",
+        "거래량1.9x"
+      ],
+      "exit_date": "2025-12-29",
+      "exit_price": 451.39,
+      "pnl_pct": 1.9567,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": 0.0,
+      "max_favorable_pct": 4.0428,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "IBM",
+      "entry_date": "2025-12-22",
+      "entry_price": 302.79,
+      "stop_loss": 290.2186,
+      "take_profit": 331.0757,
+      "tech_score": 11.71,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등"
+      ],
+      "exit_date": "2025-12-30",
+      "exit_price": 302.05,
+      "pnl_pct": -0.2944,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -0.7068,
+      "max_favorable_pct": 2.3812,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "HON",
+      "entry_date": "2025-12-24",
+      "entry_price": 196.93,
+      "stop_loss": 191.0828,
+      "take_profit": 210.0861,
+      "tech_score": 11.8,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "이평정배열",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-01-02",
+      "exit_price": 195.88,
+      "pnl_pct": -0.5832,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -1.8179,
+      "max_favorable_pct": 0.3402,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "EBAY",
+      "entry_date": "2025-12-24",
+      "entry_price": 84.6,
+      "stop_loss": 81.0357,
+      "take_profit": 92.6196,
+      "tech_score": 11.2,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "이평정배열",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2025-12-29",
+      "exit_price": 87.74,
+      "pnl_pct": 3.6616,
+      "status": "sell_signal",
+      "hold_days": 2,
+      "max_drawdown_pct": -0.5792,
+      "max_favorable_pct": 3.8061,
+      "sell_signals": [
+        "stoch_overbought",
+        "bb_upper_reject"
+      ],
+      "sell_score": 3.0
+    },
+    {
+      "ticker": "PEP",
+      "entry_date": "2025-12-26",
+      "entry_price": 143.78,
+      "stop_loss": 139.1257,
+      "take_profit": 154.2521,
+      "tech_score": 11.2,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-01-05",
+      "exit_price": 139.92,
+      "pnl_pct": -2.7347,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -3.0463,
+      "max_favorable_pct": 1.0363,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "RMD",
+      "entry_date": "2025-12-26",
+      "entry_price": 244.76,
+      "stop_loss": 234.08,
+      "take_profit": 268.79,
+      "tech_score": 11.2,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-01-05",
+      "exit_price": 245.36,
+      "pnl_pct": 0.1951,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -1.9448,
+      "max_favorable_pct": 1.0337,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "HOLX",
+      "entry_date": "2025-12-29",
+      "entry_price": 74.51,
+      "stop_loss": 74.0529,
+      "take_profit": 75.5386,
+      "tech_score": 12.22,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-01-08",
+      "exit_price": 74.88,
+      "pnl_pct": 0.4466,
+      "status": "trailing_stop",
+      "hold_days": 7,
+      "max_drawdown_pct": -0.0671,
+      "max_favorable_pct": 0.7784,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "CTRA",
+      "entry_date": "2025-12-29",
+      "entry_price": 26.2,
+      "stop_loss": 25.1314,
+      "take_profit": 28.6043,
+      "tech_score": 10.71,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등"
+      ],
+      "exit_date": "2026-01-05",
+      "exit_price": 25.1314,
+      "pnl_pct": -4.1285,
+      "status": "stop_loss",
+      "hold_days": 4,
+      "max_drawdown_pct": -4.6565,
+      "max_favorable_pct": 1.9084,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "MO",
+      "entry_date": "2025-12-30",
+      "entry_price": 57.77,
+      "stop_loss": 56.3286,
+      "take_profit": 61.0132,
+      "tech_score": 11.2,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-01-05",
+      "exit_price": 56.3286,
+      "pnl_pct": -2.5451,
+      "status": "stop_loss",
+      "hold_days": 3,
+      "max_drawdown_pct": -3.9294,
+      "max_favorable_pct": 0.2423,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "META",
+      "entry_date": "2025-12-30",
+      "entry_price": 665.95,
+      "stop_loss": 631.4429,
+      "take_profit": 743.591,
+      "tech_score": 11.2,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "이평정배열",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-01-07",
+      "exit_price": 648.69,
+      "pnl_pct": -2.6418,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -3.3711,
+      "max_favorable_pct": 0.0,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "MTCH",
+      "entry_date": "2025-12-31",
+      "entry_price": 32.29,
+      "stop_loss": 31.0664,
+      "take_profit": 35.043,
+      "tech_score": 10.7,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-01-08",
+      "exit_price": 32.65,
+      "pnl_pct": 1.0649,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -1.9511,
+      "max_favorable_pct": 2.2762,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "CME",
+      "entry_date": "2026-01-05",
+      "entry_price": 275.06,
+      "stop_loss": 265.85,
+      "take_profit": 295.7825,
+      "tech_score": 11.3,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "MACD상향",
+        "이평정배열",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-01-06",
+      "exit_price": 265.85,
+      "pnl_pct": -3.3984,
+      "status": "stop_loss",
+      "hold_days": 1,
+      "max_drawdown_pct": -3.8246,
+      "max_favorable_pct": 0.0,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "WRB",
+      "entry_date": "2026-01-05",
+      "entry_price": 70.71,
+      "stop_loss": 68.6471,
+      "take_profit": 75.3514,
+      "tech_score": 11.3,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "강세다이버전스",
+        "이평정배열",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-01-07",
+      "exit_price": 68.6471,
+      "pnl_pct": -2.9674,
+      "status": "stop_loss",
+      "hold_days": 2,
+      "max_drawdown_pct": -3.7901,
+      "max_favorable_pct": 0.0141,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "LNT",
+      "entry_date": "2026-01-06",
+      "entry_price": 65.38,
+      "stop_loss": 63.7929,
+      "take_profit": 68.9511,
+      "tech_score": 11.3,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "강세다이버전스",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-01-13",
+      "exit_price": 66.17,
+      "pnl_pct": 1.1583,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -1.5907,
+      "max_favorable_pct": 1.4531,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "EVRG",
+      "entry_date": "2026-01-06",
+      "entry_price": 73.1,
+      "stop_loss": 71.3314,
+      "take_profit": 77.0793,
+      "tech_score": 11.3,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "강세다이버전스",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-01-13",
+      "exit_price": 73.93,
+      "pnl_pct": 1.0854,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -1.4774,
+      "max_favorable_pct": 1.327,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "CBOE",
+      "entry_date": "2026-01-07",
+      "entry_price": 255.16,
+      "stop_loss": 245.71,
+      "take_profit": 276.4225,
+      "tech_score": 10.3,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "거래량2.0x",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-01-09",
+      "exit_price": 260.95,
+      "pnl_pct": 2.2192,
+      "status": "sell_signal",
+      "hold_days": 2,
+      "max_drawdown_pct": -0.5212,
+      "max_favorable_pct": 2.9589,
+      "sell_signals": [
+        "stoch_overbought",
+        "bb_upper_reject"
+      ],
+      "sell_score": 3.0
+    },
+    {
+      "ticker": "PSX",
+      "entry_date": "2026-01-07",
+      "entry_price": 137.88,
+      "stop_loss": 131.1486,
+      "take_profit": 153.0257,
+      "tech_score": 10.3,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "골든크로스",
+        "거래량1.6x"
+      ],
+      "exit_date": "2026-01-12",
+      "exit_price": 140.6314,
+      "pnl_pct": 1.9455,
+      "status": "trailing_stop",
+      "hold_days": 3,
+      "max_drawdown_pct": -0.8631,
+      "max_favorable_pct": 5.6571,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "AOS",
+      "entry_date": "2026-01-08",
+      "entry_price": 70.4,
+      "stop_loss": 67.8114,
+      "take_profit": 76.2243,
+      "tech_score": 11.82,
+      "signals": [
+        "돌파(20d_high_breakout)",
+        "골든크로스",
+        "MACD상향",
+        "거래량1.7x",
+        "스토캐스틱크로스",
+        "스퀴즈돌파"
+      ],
+      "exit_date": "2026-01-12",
+      "exit_price": 71.01,
+      "pnl_pct": 0.8165,
+      "status": "sell_signal",
+      "hold_days": 2,
+      "max_drawdown_pct": -1.2216,
+      "max_favorable_pct": 1.8182,
+      "sell_signals": [
+        "stoch_overbought",
+        "bb_upper_reject"
+      ],
+      "sell_score": 3.0
+    },
+    {
+      "ticker": "AVY",
+      "entry_date": "2026-01-08",
+      "entry_price": 186.02,
+      "stop_loss": 179.8557,
+      "take_profit": 199.8897,
+      "tech_score": 11.8,
+      "signals": [
+        "20MA눌림목",
+        "BB하단반등",
+        "돌파(20d_high_breakout)",
+        "거래량1.5x",
+        "스토캐스틱크로스",
+        "스퀴즈돌파"
+      ],
+      "exit_date": "2026-01-15",
+      "exit_price": 189.08,
+      "pnl_pct": 1.595,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -0.5591,
+      "max_favorable_pct": 2.3385,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "ETR",
+      "entry_date": "2026-01-09",
+      "entry_price": 93.52,
+      "stop_loss": 90.4486,
+      "take_profit": 100.4307,
+      "tech_score": 11.8,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "MACD상향",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-01-13",
+      "exit_price": 94.37,
+      "pnl_pct": 0.8589,
+      "status": "sell_signal",
+      "hold_days": 2,
+      "max_drawdown_pct": -0.7592,
+      "max_favorable_pct": 0.9089,
+      "sell_signals": [
+        "stoch_overbought",
+        "bb_upper_reject"
+      ],
+      "sell_score": 3.0
+    },
+    {
+      "ticker": "PEG",
+      "entry_date": "2026-01-09",
+      "entry_price": 78.68,
+      "stop_loss": 75.8043,
+      "take_profit": 85.1504,
+      "tech_score": 11.8,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-01-16",
+      "exit_price": 79.42,
+      "pnl_pct": 0.8905,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -0.9024,
+      "max_favorable_pct": 1.3727,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "COR",
+      "entry_date": "2026-01-12",
+      "entry_price": 342.16,
+      "stop_loss": 329.7629,
+      "take_profit": 370.0536,
+      "tech_score": 11.8,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "MACD상향",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-01-14",
+      "exit_price": 349.93,
+      "pnl_pct": 2.2209,
+      "status": "sell_signal",
+      "hold_days": 2,
+      "max_drawdown_pct": 0.0,
+      "max_favorable_pct": 2.2855,
+      "sell_signals": [
+        "stoch_overbought",
+        "bb_upper_reject"
+      ],
+      "sell_score": 3.0
+    },
+    {
+      "ticker": "MCK",
+      "entry_date": "2026-01-12",
+      "entry_price": 825.62,
+      "stop_loss": 796.9857,
+      "take_profit": 890.0472,
+      "tech_score": 11.8,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "MACD상향",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-01-16",
+      "exit_price": 840.46,
+      "pnl_pct": 1.7474,
+      "status": "sell_signal",
+      "hold_days": 4,
+      "max_drawdown_pct": -0.6771,
+      "max_favorable_pct": 2.6986,
+      "sell_signals": [
+        "stoch_overbought",
+        "bb_upper_reject"
+      ],
+      "sell_score": 3.0
+    },
+    {
+      "ticker": "ED",
+      "entry_date": "2026-01-13",
+      "entry_price": 100.21,
+      "stop_loss": 97.18,
+      "take_profit": 107.0275,
+      "tech_score": 11.3,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "이평정배열",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-01-15",
+      "exit_price": 102.58,
+      "pnl_pct": 2.315,
+      "status": "sell_signal",
+      "hold_days": 2,
+      "max_drawdown_pct": -0.1198,
+      "max_favorable_pct": 2.5646,
+      "sell_signals": [
+        "stoch_overbought",
+        "bb_upper_reject"
+      ],
+      "sell_score": 3.0
+    },
+    {
+      "ticker": "EXC",
+      "entry_date": "2026-01-13",
+      "entry_price": 43.32,
+      "stop_loss": 42.03,
+      "take_profit": 46.2225,
+      "tech_score": 11.3,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-01-16",
+      "exit_price": 44.73,
+      "pnl_pct": 3.2048,
+      "status": "sell_signal",
+      "hold_days": 3,
+      "max_drawdown_pct": 0.0,
+      "max_favorable_pct": 3.4626,
+      "sell_signals": [
+        "stoch_overbought",
+        "bb_upper_reject"
+      ],
+      "sell_score": 3.0
+    },
+    {
+      "ticker": "PODD",
+      "entry_date": "2026-01-14",
+      "entry_price": 282.89,
+      "stop_loss": 268.3457,
+      "take_profit": 315.6147,
+      "tech_score": 11.8,
+      "signals": [
+        "20MA눌림목",
+        "BB하단반등",
+        "강세다이버전스",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-01-22",
+      "exit_price": 280.0,
+      "pnl_pct": -1.0716,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -2.7467,
+      "max_favorable_pct": 2.2518,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "FE",
+      "entry_date": "2026-01-14",
+      "entry_price": 46.15,
+      "stop_loss": 45.0157,
+      "take_profit": 48.7021,
+      "tech_score": 11.62,
+      "signals": [
+        "50MA눌림목",
+        "돌파(20d_high_breakout)",
+        "이평정배열",
+        "거래량1.5x",
+        "스퀴즈돌파"
+      ],
+      "exit_date": "2026-01-16",
+      "exit_price": 47.34,
+      "pnl_pct": 2.5285,
+      "status": "sell_signal",
+      "hold_days": 2,
+      "max_drawdown_pct": -0.1083,
+      "max_favorable_pct": 2.6652,
+      "sell_signals": [
+        "rsi_overbought",
+        "stoch_overbought",
+        "bb_upper_reject"
+      ],
+      "sell_score": 4.5
+    },
+    {
+      "ticker": "JPM",
+      "entry_date": "2026-01-15",
+      "entry_price": 309.26,
+      "stop_loss": 296.2843,
+      "take_profit": 338.4554,
+      "tech_score": 11.2,
+      "signals": [
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-01-23",
+      "exit_price": 297.72,
+      "pnl_pct": -3.7815,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -4.1227,
+      "max_favorable_pct": 2.5706,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "EXC",
+      "entry_date": "2026-01-16",
+      "entry_price": 44.73,
+      "stop_loss": 43.3243,
+      "take_profit": 47.8929,
+      "tech_score": 12.3,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "돌파(20d_high_breakout)",
+        "강세다이버전스",
+        "골든크로스",
+        "거래량2.3x",
+        "스퀴즈돌파"
+      ],
+      "exit_date": "2026-01-21",
+      "exit_price": 45.0,
+      "pnl_pct": 0.5536,
+      "status": "sell_signal",
+      "hold_days": 2,
+      "max_drawdown_pct": -1.4085,
+      "max_favorable_pct": 1.1178,
+      "sell_signals": [
+        "stoch_overbought",
+        "bb_upper_reject"
+      ],
+      "sell_score": 3.0
+    },
+    {
+      "ticker": "BRK-B",
+      "entry_date": "2026-01-16",
+      "entry_price": 493.29,
+      "stop_loss": 481.7657,
+      "take_profit": 519.2197,
+      "tech_score": 11.3,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-01-21",
+      "exit_price": 481.7657,
+      "pnl_pct": -2.3862,
+      "status": "stop_loss",
+      "hold_days": 2,
+      "max_drawdown_pct": -2.3759,
+      "max_favorable_pct": 0.0,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "VRTX",
+      "entry_date": "2026-01-20",
+      "entry_price": 442.08,
+      "stop_loss": 418.3743,
+      "take_profit": 495.4178,
+      "tech_score": 11.8,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-01-29",
+      "exit_price": 475.68,
+      "pnl_pct": 7.5504,
+      "status": "trailing_stop",
+      "hold_days": 7,
+      "max_drawdown_pct": -0.4909,
+      "max_favorable_pct": 9.7087,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "ACGL",
+      "entry_date": "2026-01-20",
+      "entry_price": 91.8,
+      "stop_loss": 88.2657,
+      "take_profit": 99.7521,
+      "tech_score": 11.3,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-01-27",
+      "exit_price": 93.46,
+      "pnl_pct": 1.7583,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -1.3617,
+      "max_favorable_pct": 2.8867,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "AIZ",
+      "entry_date": "2026-01-21",
+      "entry_price": 238.23,
+      "stop_loss": 228.6286,
+      "take_profit": 259.8332,
+      "tech_score": 11.44,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-01-28",
+      "exit_price": 237.29,
+      "pnl_pct": -0.4446,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -2.867,
+      "max_favorable_pct": 0.0,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "REGN",
+      "entry_date": "2026-01-21",
+      "entry_price": 749.33,
+      "stop_loss": 704.6086,
+      "take_profit": 849.9532,
+      "tech_score": 11.21,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등"
+      ],
+      "exit_date": "2026-01-28",
+      "exit_price": 751.13,
+      "pnl_pct": 0.1902,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -0.2709,
+      "max_favorable_pct": 3.5925,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "CB",
+      "entry_date": "2026-01-22",
+      "entry_price": 300.92,
+      "stop_loss": 289.9114,
+      "take_profit": 325.6893,
+      "tech_score": 11.3,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "거래량1.6x"
+      ],
+      "exit_date": "2026-01-29",
+      "exit_price": 306.17,
+      "pnl_pct": 1.6946,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -0.7976,
+      "max_favorable_pct": 2.5322,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "HCA",
+      "entry_date": "2026-01-22",
+      "entry_price": 466.34,
+      "stop_loss": 444.5186,
+      "take_profit": 515.4382,
+      "tech_score": 11.3,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-01-27",
+      "exit_price": 511.1839,
+      "pnl_pct": 9.5661,
+      "status": "trailing_stop",
+      "hold_days": 3,
+      "max_drawdown_pct": -0.5768,
+      "max_favorable_pct": 13.1256,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "TEL",
+      "entry_date": "2026-01-27",
+      "entry_price": 230.78,
+      "stop_loss": 217.9614,
+      "take_profit": 259.6218,
+      "tech_score": 11.44,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-02-03",
+      "exit_price": 226.35,
+      "pnl_pct": -1.9696,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -4.2161,
+      "max_favorable_pct": 0.0,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "PLD",
+      "entry_date": "2026-01-27",
+      "entry_price": 128.7,
+      "stop_loss": 123.0729,
+      "take_profit": 141.3611,
+      "tech_score": 11.3,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-02-03",
+      "exit_price": 131.88,
+      "pnl_pct": 2.4209,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -1.5773,
+      "max_favorable_pct": 2.8827,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "ACGL",
+      "entry_date": "2026-01-28",
+      "entry_price": 94.17,
+      "stop_loss": 90.5429,
+      "take_profit": 102.3311,
+      "tech_score": 11.3,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "MACD상향"
+      ],
+      "exit_date": "2026-02-04",
+      "exit_price": 97.7796,
+      "pnl_pct": 3.7831,
+      "status": "trailing_stop",
+      "hold_days": 5,
+      "max_drawdown_pct": 0.0,
+      "max_favorable_pct": 6.7219,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "TT",
+      "entry_date": "2026-01-28",
+      "entry_price": 394.2,
+      "stop_loss": 376.8129,
+      "take_profit": 433.3211,
+      "tech_score": 10.93,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "이평정배열"
+      ],
+      "exit_date": "2026-01-29",
+      "exit_price": 416.8296,
+      "pnl_pct": 5.6906,
+      "status": "trailing_stop",
+      "hold_days": 1,
+      "max_drawdown_pct": 0.0,
+      "max_favorable_pct": 9.0487,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "ROST",
+      "entry_date": "2026-01-29",
+      "entry_price": 186.5,
+      "stop_loss": 179.9543,
+      "take_profit": 201.2279,
+      "tech_score": 11.8,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-02-04",
+      "exit_price": 188.9807,
+      "pnl_pct": 1.2801,
+      "status": "trailing_stop",
+      "hold_days": 4,
+      "max_drawdown_pct": -0.4504,
+      "max_favorable_pct": 3.9625,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "AJG",
+      "entry_date": "2026-01-29",
+      "entry_price": 245.84,
+      "stop_loss": 232.7,
+      "take_profit": 275.405,
+      "tech_score": 11.2,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-02-05",
+      "exit_price": 242.75,
+      "pnl_pct": -1.3069,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -1.6189,
+      "max_favorable_pct": 4.3768,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "KDP",
+      "entry_date": "2026-01-30",
+      "entry_price": 27.44,
+      "stop_loss": 26.2443,
+      "take_profit": 30.1304,
+      "tech_score": 11.44,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-02-06",
+      "exit_price": 28.41,
+      "pnl_pct": 3.485,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -0.8746,
+      "max_favorable_pct": 4.5918,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "AVY",
+      "entry_date": "2026-01-30",
+      "entry_price": 185.51,
+      "stop_loss": 178.7257,
+      "take_profit": 200.7746,
+      "tech_score": 11.3,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "이평정배열"
+      ],
+      "exit_date": "2026-02-04",
+      "exit_price": 189.1918,
+      "pnl_pct": 1.9347,
+      "status": "trailing_stop",
+      "hold_days": 3,
+      "max_drawdown_pct": -0.8409,
+      "max_favorable_pct": 4.7275,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "CTSH",
+      "entry_date": "2026-02-02",
+      "entry_price": 82.91,
+      "stop_loss": 78.8957,
+      "take_profit": 91.9421,
+      "tech_score": 11.8,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-02-03",
+      "exit_price": 78.8957,
+      "pnl_pct": -4.8917,
+      "status": "stop_loss",
+      "hold_days": 1,
+      "max_drawdown_pct": -11.7115,
+      "max_favorable_pct": 0.0,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "SRE",
+      "entry_date": "2026-02-03",
+      "entry_price": 87.0,
+      "stop_loss": 82.9686,
+      "take_profit": 96.0707,
+      "tech_score": 11.3,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-02-10",
+      "exit_price": 89.7,
+      "pnl_pct": 3.0534,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -1.5747,
+      "max_favorable_pct": 3.5172,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "WRB",
+      "entry_date": "2026-02-03",
+      "entry_price": 69.19,
+      "stop_loss": 65.7729,
+      "take_profit": 76.8786,
+      "tech_score": 11.3,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "골든크로스",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-02-05",
+      "exit_price": 71.29,
+      "pnl_pct": 2.9851,
+      "status": "sell_signal",
+      "hold_days": 2,
+      "max_drawdown_pct": 0.0,
+      "max_favorable_pct": 3.4832,
+      "sell_signals": [
+        "stoch_overbought",
+        "bb_upper_reject"
+      ],
+      "sell_score": 3.0
+    },
+    {
+      "ticker": "AVB",
+      "entry_date": "2026-02-04",
+      "entry_price": 177.81,
+      "stop_loss": 170.0743,
+      "take_profit": 195.2154,
+      "tech_score": 11.2,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-02-05",
+      "exit_price": 170.0743,
+      "pnl_pct": -4.4006,
+      "status": "stop_loss",
+      "hold_days": 1,
+      "max_drawdown_pct": -5.0503,
+      "max_favorable_pct": 2.0021,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "INVH",
+      "entry_date": "2026-02-04",
+      "entry_price": 26.47,
+      "stop_loss": 25.2589,
+      "take_profit": 29.1951,
+      "tech_score": 11.2,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "강세다이버전스",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-02-11",
+      "exit_price": 27.2,
+      "pnl_pct": 2.7078,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -1.53,
+      "max_favorable_pct": 3.8156,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "INCY",
+      "entry_date": "2026-02-05",
+      "entry_price": 102.76,
+      "stop_loss": 95.81,
+      "take_profit": 118.3975,
+      "tech_score": 10.71,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등"
+      ],
+      "exit_date": "2026-02-12",
+      "exit_price": 100.75,
+      "pnl_pct": -2.006,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -5.362,
+      "max_favorable_pct": 6.5395,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "COR",
+      "entry_date": "2026-02-05",
+      "entry_price": 352.16,
+      "stop_loss": 329.9857,
+      "take_profit": 402.0521,
+      "tech_score": 10.3,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "거래량2.2x",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-02-10",
+      "exit_price": 360.0,
+      "pnl_pct": 2.1763,
+      "status": "sell_signal",
+      "hold_days": 3,
+      "max_drawdown_pct": -0.2016,
+      "max_favorable_pct": 4.2935,
+      "sell_signals": [
+        "dead_cross",
+        "stoch_overbought"
+      ],
+      "sell_score": 4.0
+    },
+    {
+      "ticker": "NRG",
+      "entry_date": "2026-02-06",
+      "entry_price": 153.32,
+      "stop_loss": 140.9643,
+      "take_profit": 181.1204,
+      "tech_score": 10.57,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "MACD상향",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-02-11",
+      "exit_price": 160.63,
+      "pnl_pct": 4.7178,
+      "status": "sell_signal",
+      "hold_days": 3,
+      "max_drawdown_pct": -0.3457,
+      "max_favorable_pct": 4.983,
+      "sell_signals": [
+        "stoch_overbought",
+        "bb_upper_reject"
+      ],
+      "sell_score": 3.0
+    },
+    {
+      "ticker": "RTX",
+      "entry_date": "2026-02-06",
+      "entry_price": 198.66,
+      "stop_loss": 188.2543,
+      "take_profit": 222.0729,
+      "tech_score": 10.48,
+      "signals": [
+        "20MA눌림목",
+        "BB하단반등",
+        "이평정배열",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-02-13",
+      "exit_price": 200.06,
+      "pnl_pct": 0.6547,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -2.8088,
+      "max_favorable_pct": 2.537,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "PEG",
+      "entry_date": "2026-02-09",
+      "entry_price": 81.18,
+      "stop_loss": 77.7443,
+      "take_profit": 88.9104,
+      "tech_score": 11.34,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등"
+      ],
+      "exit_date": "2026-02-11",
+      "exit_price": 84.15,
+      "pnl_pct": 3.6085,
+      "status": "sell_signal",
+      "hold_days": 2,
+      "max_drawdown_pct": 0.0,
+      "max_favorable_pct": 3.7324,
+      "sell_signals": [
+        "stoch_overbought",
+        "bb_upper_reject"
+      ],
+      "sell_score": 3.0
+    },
+    {
+      "ticker": "NXPI",
+      "entry_date": "2026-02-09",
+      "entry_price": 228.91,
+      "stop_loss": 209.5143,
+      "take_profit": 272.5504,
+      "tech_score": 11.2,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-02-11",
+      "exit_price": 249.75,
+      "pnl_pct": 9.054,
+      "status": "sell_signal",
+      "hold_days": 2,
+      "max_drawdown_pct": -0.7077,
+      "max_favorable_pct": 9.5889,
+      "sell_signals": [
+        "stoch_overbought",
+        "bb_upper_reject"
+      ],
+      "sell_score": 3.0
+    },
+    {
+      "ticker": "EXC",
+      "entry_date": "2026-02-10",
+      "entry_price": 44.64,
+      "stop_loss": 42.7729,
+      "take_profit": 48.8411,
+      "tech_score": 11.27,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-02-12",
+      "exit_price": 47.0396,
+      "pnl_pct": 5.3255,
+      "status": "trailing_stop",
+      "hold_days": 2,
+      "max_drawdown_pct": -0.672,
+      "max_favorable_pct": 8.5125,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "EG",
+      "entry_date": "2026-02-10",
+      "entry_price": 330.48,
+      "stop_loss": 313.2957,
+      "take_profit": 369.1447,
+      "tech_score": 10.7,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "MACD상향",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-02-12",
+      "exit_price": 336.12,
+      "pnl_pct": 1.6566,
+      "status": "sell_signal",
+      "hold_days": 2,
+      "max_drawdown_pct": -0.938,
+      "max_favorable_pct": 2.2755,
+      "sell_signals": [
+        "stoch_overbought",
+        "bb_upper_reject"
+      ],
+      "sell_score": 3.0
+    },
+    {
+      "ticker": "AIG",
+      "entry_date": "2026-02-11",
+      "entry_price": 78.44,
+      "stop_loss": 74.8014,
+      "take_profit": 86.6268,
+      "tech_score": 13.07,
+      "signals": [
+        "50MA눌림목",
+        "돌파(20d_high_breakout)",
+        "이평정배열",
+        "거래량1.6x",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-02-17",
+      "exit_price": 79.4,
+      "pnl_pct": 1.1739,
+      "status": "sell_signal",
+      "hold_days": 3,
+      "max_drawdown_pct": -1.9888,
+      "max_favorable_pct": 1.9888,
+      "sell_signals": [
+        "stoch_overbought",
+        "bb_upper_reject"
+      ],
+      "sell_score": 3.0
+    },
+    {
+      "ticker": "EW",
+      "entry_date": "2026-02-11",
+      "entry_price": 79.33,
+      "stop_loss": 74.97,
+      "take_profit": 89.14,
+      "tech_score": 10.66,
+      "signals": [
+        "20MA눌림목",
+        "BB하단반등",
+        "거래량2.4x",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-02-19",
+      "exit_price": 78.92,
+      "pnl_pct": -0.5668,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -4.8153,
+      "max_favorable_pct": 1.374,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "INCY",
+      "entry_date": "2026-02-12",
+      "entry_price": 100.75,
+      "stop_loss": 93.0929,
+      "take_profit": 117.9786,
+      "tech_score": 11.8,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-02-20",
+      "exit_price": 101.32,
+      "pnl_pct": 0.5158,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -0.7444,
+      "max_favorable_pct": 3.1266,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "LLY",
+      "entry_date": "2026-02-12",
+      "entry_price": 1038.27,
+      "stop_loss": 947.4301,
+      "take_profit": 1242.6599,
+      "tech_score": 10.3,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-02-20",
+      "exit_price": 1009.52,
+      "pnl_pct": -2.819,
+      "status": "expired",
+      "hold_days": 5,
+      "max_drawdown_pct": -3.449,
+      "max_favorable_pct": 2.7671,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "GEHC",
+      "entry_date": "2026-02-13",
+      "entry_price": 80.34,
+      "stop_loss": 75.5406,
+      "take_profit": 91.1387,
+      "tech_score": 10.7,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "강세다이버전스"
+      ],
+      "exit_date": "2026-02-20",
+      "exit_price": 83.5204,
+      "pnl_pct": 3.9087,
+      "status": "trailing_stop",
+      "hold_days": 4,
+      "max_drawdown_pct": -0.3485,
+      "max_favorable_pct": 8.4391,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "DXCM",
+      "entry_date": "2026-02-13",
+      "entry_price": 70.02,
+      "stop_loss": 64.59,
+      "take_profit": 82.2375,
+      "tech_score": 10.41,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "거래량1.8x",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-02-20",
+      "exit_price": 73.08,
+      "pnl_pct": 4.3202,
+      "status": "expired",
+      "hold_days": 4,
+      "max_drawdown_pct": -0.2999,
+      "max_favorable_pct": 4.7844,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "PFG",
+      "entry_date": "2026-02-17",
+      "entry_price": 91.98,
+      "stop_loss": 86.8043,
+      "take_profit": 103.6254,
+      "tech_score": 11.44,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-02-20",
+      "exit_price": 95.76,
+      "pnl_pct": 4.0596,
+      "status": "expired",
+      "hold_days": 3,
+      "max_drawdown_pct": -1.2394,
+      "max_favorable_pct": 4.1205,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "J",
+      "entry_date": "2026-02-17",
+      "entry_price": 136.46,
+      "stop_loss": 123.8529,
+      "take_profit": 164.8261,
+      "tech_score": 10.37,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "강세다이버전스",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-02-20",
+      "exit_price": 137.93,
+      "pnl_pct": 1.0272,
+      "status": "expired",
+      "hold_days": 3,
+      "max_drawdown_pct": -0.1392,
+      "max_favorable_pct": 4.4335,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "ORLY",
+      "entry_date": "2026-02-19",
+      "entry_price": 94.17,
+      "stop_loss": 88.9643,
+      "take_profit": 105.8829,
+      "tech_score": 11.2,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "강세다이버전스",
+        "스토캐스틱크로스"
+      ],
+      "exit_date": "2026-02-20",
+      "exit_price": 93.5,
+      "pnl_pct": -0.7615,
+      "status": "expired",
+      "hold_days": 1,
+      "max_drawdown_pct": -1.9539,
+      "max_favorable_pct": 0.977,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "EA",
+      "entry_date": "2026-02-20",
+      "entry_price": 200.4,
+      "stop_loss": 196.3028,
+      "take_profit": 209.6186,
+      "tech_score": 11.3,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등",
+        "강세다이버전스"
+      ],
+      "exit_date": null,
+      "exit_price": null,
+      "pnl_pct": 0.0,
+      "status": "no_data",
+      "hold_days": 0,
+      "max_drawdown_pct": 0.0,
+      "max_favorable_pct": 0.0,
+      "sell_signals": [],
+      "sell_score": 0.0
+    },
+    {
+      "ticker": "MS",
+      "entry_date": "2026-02-20",
+      "entry_price": 175.41,
+      "stop_loss": 162.1386,
+      "take_profit": 205.2707,
+      "tech_score": 10.71,
+      "signals": [
+        "20MA눌림목",
+        "50MA눌림목",
+        "BB하단반등"
+      ],
+      "exit_date": null,
+      "exit_price": null,
+      "pnl_pct": 0.0,
+      "status": "no_data",
+      "hold_days": 0,
+      "max_drawdown_pct": 0.0,
+      "max_favorable_pct": 0.0,
+      "sell_signals": [],
+      "sell_score": 0.0
+    }
+  ]
+}

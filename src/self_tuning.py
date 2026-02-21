@@ -579,14 +579,20 @@ class ParameterTuner:
         복합 성과 점수 (높을수록 좋음).
 
         구성:
-          승률 가중 (30%) + Profit Factor (25%) + 샤프 비율 (20%)
-          + 기대값 (15%) - MDD 페널티 (10%)
+          승률 (25%) + Profit Factor (20%) + 샤프 비율 (15%)
+          + 기대값 (10%) + 알파(벤치마크 초과수익) (20%)
+          - MDD 페널티 (10%)
         """
         pf = max(0, summary.get("profit_factor", 0))
         wr = max(0, summary.get("win_rate", 0))
         sharpe = summary.get("sharpe_ratio", 0)
         ev = summary.get("expected_value_pct", 0)
         max_dd = abs(summary.get("portfolio_max_drawdown_pct", 0))
+
+        # 벤치마크 초과수익 (SPY, QQQ 중 높은 것 대비)
+        alpha_spy = summary.get("alpha_vs_spy", 0)
+        alpha_qqq = summary.get("alpha_vs_qqq", 0)
+        alpha = min(alpha_spy, alpha_qqq)  # 보수적: 둘 다 이겨야 높은 점수
 
         # 정규화
         wr_score = wr / 100.0                          # 0~1
@@ -595,14 +601,22 @@ class ParameterTuner:
         ev_score = max(0, min((ev + 2) / 6.0, 1.0))     # -2~4 → 0~1
         mdd_penalty = min(max_dd / 30.0, 1.0)           # 0~1 (MDD 30%면 최대 페널티)
 
+        # 알파 점수: -10% ~ +20% → 0~1
+        # 시장 못 이기면 0, +10% 초과수익이면 0.5, +20%면 만점
+        alpha_score = max(0, min((alpha + 10) / 30.0, 1.0))
+        # 시장 대비 마이너스면 강한 페널티
+        alpha_penalty = max(0, -alpha / 20.0) if alpha < 0 else 0
+
         score = (
-            wr_score * 0.30
-            + pf_score * 0.25
-            + sharpe_score * 0.20
-            + ev_score * 0.15
+            wr_score * 0.25
+            + pf_score * 0.20
+            + sharpe_score * 0.15
+            + ev_score * 0.10
+            + alpha_score * 0.20
             - mdd_penalty * 0.10
+            - alpha_penalty * 0.10  # 시장도 못 이기면 추가 감점
         )
-        return round(score, 6)
+        return round(max(0, score), 6)
 
     def _performance_based_adjustment(self, params: Dict, summary: Dict,
                                        backtest_result: Dict) -> Dict:
@@ -880,6 +894,12 @@ class SelfTuningEngine:
                      f"PF: {baseline_summary.get('profit_factor', 0):.2f}  "
                      f"샤프: {baseline_summary.get('sharpe_ratio', 0):.2f}  "
                      f"MDD: {baseline_summary.get('portfolio_max_drawdown_pct', 0):.1f}%")
+        # 벤치마크 대비
+        spy_ret = baseline_summary.get("benchmark_spy_pct", 0)
+        qqq_ret = baseline_summary.get("benchmark_qqq_pct", 0)
+        total_pnl = baseline_summary.get("total_pnl_pct", 0)
+        logger.info(f"  📈 벤치마크 비교: 전략 {total_pnl:+.2f}% | SPY {spy_ret:+.2f}% | QQQ {qqq_ret:+.2f}%")
+        logger.info(f"  📊 알파: vs SPY {total_pnl - spy_ret:+.2f}% | vs QQQ {total_pnl - qqq_ret:+.2f}%")
 
         print_report(baseline_result)
 
@@ -1026,8 +1046,67 @@ class SelfTuningEngine:
             logger.info(f"  ❌ 기각 (개선 {total_improvement:+.1f}% < 기준 {self.min_improvement}%)")
             logger.info(f"  → 현재 파라미터 유지")
 
+        # ── 알파 부족 감지: 시장 수익률을 못 이길 때 보수적 모드 전환 ──
+        final_summary = best_summary if adopted else baseline_summary
+        alpha_spy = final_summary.get("alpha_vs_spy", None)
+        alpha_qqq = final_summary.get("alpha_vs_qqq", None)
+
+        if alpha_spy is not None and alpha_qqq is not None:
+            worse_alpha = min(alpha_spy, alpha_qqq)
+            spy_ret = final_summary.get("benchmark_spy_pct", 0)
+            strategy_ret = final_summary.get("total_pnl_pct", 0)
+
+            logger.info(f"\n  📈 알파 체크: 전략 {strategy_ret:+.2f}% vs SPY {spy_ret:+.2f}% → α={alpha_spy:+.2f}%")
+
+            if worse_alpha < -3.0:
+                # 시장보다 3% 이상 뒤처짐 → 보수적 전환
+                logger.warning(f"  ⚠️ 시장 대비 {worse_alpha:+.1f}% 부진 → 보수적 안전 모드 전환")
+                conservative_adj = {
+                    "min_tech_score": max(new_params.get("min_tech_score", 5.0), 6.0),
+                    "max_positions": min(new_params.get("max_positions", 10), 5),
+                    "max_daily_entries": min(new_params.get("max_daily_entries", 3), 2),
+                    "atr_stop_mult": min(new_params.get("atr_stop_mult", 2.0), 1.5),
+                    "atr_tp_mult": max(new_params.get("atr_tp_mult", 3.0), 3.5),
+                }
+                for k, v in conservative_adj.items():
+                    if k in new_params and new_params[k] != v:
+                        if k not in param_changes:
+                            param_changes[k] = {"old": new_params[k], "new": v}
+                        else:
+                            param_changes[k]["new"] = v
+                        new_params[k] = v
+
+                report["alpha_warning"] = {
+                    "triggered": True,
+                    "alpha_spy": round(alpha_spy, 2),
+                    "alpha_qqq": round(alpha_qqq, 2),
+                    "action": "conservative_mode",
+                    "adjustments": conservative_adj,
+                }
+                logger.info(f"    → 최소 점수 ↑{conservative_adj['min_tech_score']} | "
+                             f"최대 포지션 ↓{conservative_adj['max_positions']} | "
+                             f"손절 타이트 ↓{conservative_adj['atr_stop_mult']} | "
+                             f"익절 확대 ↑{conservative_adj['atr_tp_mult']}")
+            elif worse_alpha < 0:
+                # 시장과 비슷하거나 약간 뒤처짐 → 경고만
+                logger.info(f"  ⚡ 시장과 유사한 성과 (α={worse_alpha:+.1f}%). 다음 주기 주시 필요.")
+                report["alpha_warning"] = {
+                    "triggered": False,
+                    "alpha_spy": round(alpha_spy, 2),
+                    "alpha_qqq": round(alpha_qqq, 2),
+                    "action": "monitor",
+                }
+            else:
+                logger.info(f"  ✅ 시장 초과 성과 (α={worse_alpha:+.1f}%)")
+                report["alpha_warning"] = {
+                    "triggered": False,
+                    "alpha_spy": round(alpha_spy, 2),
+                    "alpha_qqq": round(alpha_qqq, 2),
+                    "action": "outperforming",
+                }
+
         report["param_changes"] = param_changes
-        report["backtest_summary"] = best_summary if adopted else baseline_summary
+        report["backtest_summary"] = final_summary
 
         # ══════════════════════════════════════════════
         # 6단계: 신호 가중치 조정
@@ -1251,6 +1330,16 @@ def send_tuning_report_to_discord(report: Dict):
                 "inline": True,
             },
             {
+                "name": "📈 벤치마크 비교",
+                "value": (
+                    f"SPY: {summary.get('benchmark_spy_pct', 0):+.1f}%\n"
+                    f"QQQ: {summary.get('benchmark_qqq_pct', 0):+.1f}%\n"
+                    f"α(SPY): {summary.get('alpha_vs_spy', 0):+.1f}%\n"
+                    f"α(QQQ): {summary.get('alpha_vs_qqq', 0):+.1f}%"
+                ),
+                "inline": True,
+            },
+            {
                 "name": "🌍 시장 레짐",
                 "value": (
                     f"**{regime.get('type', '?')}** "
@@ -1263,6 +1352,19 @@ def send_tuning_report_to_discord(report: Dict):
             {"name": "📡 신호 가중치 변경", "value": weight_text},
         ],
     }
+
+    # 알파 경고 시 추가 필드
+    alpha_warn = report.get("alpha_warning", {})
+    if alpha_warn.get("triggered"):
+        embed["fields"].append({
+            "name": "⚠️ 시장 부진 경고",
+            "value": (
+                f"α(SPY): {alpha_warn.get('alpha_spy', 0):+.1f}%\n"
+                f"α(QQQ): {alpha_warn.get('alpha_qqq', 0):+.1f}%\n"
+                f"→ **보수적 안전 모드** 전환됨"
+            ),
+        })
+        embed["color"] = 0xff6600  # 주황색 경고
 
     payload = {"content": "**🧠 주간 자기 학습 리포트**", "embeds": [embed]}
 

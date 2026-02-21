@@ -501,6 +501,8 @@ class BacktestEngine:
             bt_dates = bt_dates[-self.backtest_days:]
 
         logger.info(f"백테스트 기간: {bt_dates[0].date()} ~ {bt_dates[-1].date()} ({len(bt_dates)}거래일)")
+        self._bt_start = bt_dates[0]
+        self._bt_end = bt_dates[-1]
 
         # 재무 데이터 사전 수집 (캐시 없을 때만)
         if not hasattr(self, 'fund_data') or not self.fund_data:
@@ -836,6 +838,9 @@ class BacktestEngine:
         # 점수 구간별 성과
         score_brackets = self._calc_score_bracket_performance(completed)
 
+        # 벤치마크 수익률 (SPY, QQQ)
+        benchmark = self._calculate_benchmark()
+
         result = {
             "config": {
                 "pool": self.pool,
@@ -868,6 +873,10 @@ class BacktestEngine:
                 "max_consecutive_losses": max_consec_losses,
                 "avg_hold_days": round(avg_hold, 2),
                 "portfolio_max_drawdown_pct": round(portfolio_dd, 4),
+                "benchmark_spy_pct": benchmark.get("spy", 0),
+                "benchmark_qqq_pct": benchmark.get("qqq", 0),
+                "alpha_vs_spy": round(total_pnl - benchmark.get("spy", 0), 4),
+                "alpha_vs_qqq": round(total_pnl - benchmark.get("qqq", 0), 4),
             },
             "exit_breakdown": {
                 "take_profit": len(tp_trades),
@@ -997,6 +1006,43 @@ class BacktestEngine:
                 "avg_pnl": round(np.mean(pnls), 2),
                 "win_rate": round(sum(1 for p in pnls if p > 0) / len(pnls) * 100, 1),
             })
+        return result
+
+    def _calculate_benchmark(self) -> Dict[str, float]:
+        """백테스트 기간과 동일한 기간의 SPY, QQQ 수익률 계산."""
+        result = {"spy": 0.0, "qqq": 0.0}
+        try:
+            bt_start = getattr(self, '_bt_start', None)
+            bt_end = getattr(self, '_bt_end', None)
+            if bt_start is None or bt_end is None:
+                return result
+
+            start_str = str(pd.Timestamp(bt_start).date())
+            end_str = str(pd.Timestamp(bt_end).date())
+
+            import yfinance as yf
+            bench = yf.download(
+                ["SPY", "QQQ"],
+                start=start_str,
+                end=end_str,
+                group_by="ticker",
+                progress=False,
+            )
+            if bench.empty:
+                return result
+
+            for ticker, key in [("SPY", "spy"), ("QQQ", "qqq")]:
+                try:
+                    closes = bench[ticker]["Close"].dropna()
+                    if len(closes) >= 2:
+                        ret = (closes.iloc[-1] / closes.iloc[0] - 1) * 100
+                        result[key] = round(ret, 4)
+                except Exception:
+                    pass
+
+            logger.info(f"[벤치마크] SPY: {result['spy']:+.2f}% | QQQ: {result['qqq']:+.2f}% ({start_str} ~ {end_str})")
+        except Exception as e:
+            logger.warning(f"[벤치마크] 계산 실패: {e}")
         return result
 
     def _empty_result(self) -> Dict:
