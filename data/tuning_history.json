@@ -1294,5 +1294,118 @@
         "perf_score": 0.183
       }
     }
+  },
+  {
+    "timestamp": "2026-02-22T10:13:14.994247+00:00",
+    "regime": "bullish",
+    "params": {
+      "top_n": 5,
+      "min_tech_score": 4.75,
+      "atr_stop_mult": 2.5,
+      "atr_tp_mult": 5.0,
+      "max_hold_days": 5,
+      "sell_threshold": 4.0,
+      "max_positions": 8,
+      "max_daily_entries": 1,
+      "trailing_atr_mult": 1.5,
+      "trailing_min_pct": 3.5
+    },
+    "summary": {
+      "total_trades": 68,
+      "win_rate": 63.24,
+      "avg_pnl_pct": 0.7431,
+      "median_pnl_pct": 0.5046,
+      "total_pnl_pct": 50.5325,
+      "std_pnl_pct": 3.4784,
+      "avg_win_pct": 2.6324,
+      "avg_loss_pct": -2.5064,
+      "profit_factor": 1.8064,
+      "expected_value_pct": 0.7431,
+      "sharpe_ratio": 3.3915,
+      "max_consecutive_wins": 8,
+      "max_consecutive_losses": 3,
+      "avg_hold_days": 4.66,
+      "portfolio_max_drawdown_pct": 12.0524,
+      "benchmark_spy_pct": 0.4569,
+      "benchmark_qqq_pct": -2.7102,
+      "alpha_vs_spy": 50.0756,
+      "alpha_vs_qqq": 53.2427
+    },
+    "param_changes": {
+      "top_n": {
+        "old": 6,
+        "new": 5
+      },
+      "min_tech_score": {
+        "old": 5.0,
+        "new": 4.75
+      },
+      "atr_stop_mult": {
+        "old": 2.25,
+        "new": 2.5
+      },
+      "atr_tp_mult": {
+        "old": 4.75,
+        "new": 5.0
+      },
+      "max_hold_days": {
+        "old": 7,
+        "new": 5
+      },
+      "sell_threshold": {
+        "old": 3.5,
+        "new": 4.0
+      },
+      "max_positions": {
+        "old": 7,
+        "new": 8
+      },
+      "max_daily_entries": {
+        "old": 3,
+        "new": 1
+      },
+      "trailing_min_pct": {
+        "old": 2.5,
+        "new": 3.5
+      }
+    },
+    "weight_changes": {
+      "pullback_score": {
+        "old": 1.615,
+        "new": 1.722,
+        "delta": 0.0662,
+        "perf_score": 0.441
+      },
+      "stoch_cross_up": {
+        "old": 1.7,
+        "new": 1.816,
+        "delta": 0.0684,
+        "perf_score": 0.456
+      },
+      "ma_alignment": {
+        "old": 0.8,
+        "new": 0.834,
+        "delta": 0.0425,
+        "perf_score": 0.283
+      },
+      "breakout_score": {
+        "old": 1.358,
+        "new": 1.402,
+        "delta": 0.0325,
+        "perf_score": 0.217
+      },
+      "macd_cross_up": {
+        "old": 1.123,
+        "new": 1.159,
+        "delta": 0.0325,
+        "perf_score": 0.217
+      },
+      "golden_cross": {
+        "old": 0.92,
+        "new": 0.935,
+        "delta": 0.016,
+        "perf_score": 0.107
+      }
+    }
   }
 ]
